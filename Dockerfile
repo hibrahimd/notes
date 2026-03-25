@@ -1,9 +1,12 @@
 FROM node:20-alpine AS base
+RUN apk add --no-cache python3 make g++
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
+COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN npm ci
 
 # Build the app
@@ -12,10 +15,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Generate Prisma client
-RUN npx prisma generate
-
-# Build Next.js
+# Build Next.js (prisma generate runs as part of build script)
 RUN npm run build
 
 # Production image
