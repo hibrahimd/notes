@@ -19,17 +19,6 @@ services:
       redis:
         condition: service_healthy
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.notal.rule=Host(`notes.kronomondo.org`)"
-      - "traefik.http.routers.notal.entrypoints=https"
-      - "traefik.http.routers.notal.tls=true"
-      - "traefik.http.routers.notal.tls.certresolver=letsencrypt"
-      - "traefik.http.services.notal.loadbalancer.server.port=3000"
-      - "traefik.http.routers.notal-http.rule=Host(`notes.kronomondo.org`)"
-      - "traefik.http.routers.notal-http.entrypoints=http"
-      - "traefik.http.routers.notal-http.middlewares=redirect-to-https"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
     networks:
       - notal-network
       - coolify
