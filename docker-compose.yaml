@@ -24,6 +24,11 @@ services:
       - "traefik.http.routers.notal.rule=Host(`notes.kronomondo.org`)"
       - "traefik.http.routers.notal.entrypoints=http"
       - "traefik.http.services.notal.loadbalancer.server.port=3000"
+      - "traefik.http.routers.notal-secure.rule=Host(`notes.kronomondo.org`)"
+      - "traefik.http.routers.notal-secure.entrypoints=https"
+      - "traefik.http.routers.notal-secure.tls=true"
+      - "traefik.http.routers.notal-secure.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.notal-secure.service=notal"
     networks:
       - notal-network
       - coolify
