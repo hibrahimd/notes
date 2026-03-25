@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  passwordHash        String?  @map("password_hash")
+  role                String   @default("user") // admin, user
+  preferredLanguage   String   @default("tr") @map("preferred_language")
+  translationLanguage String   @default("tr") @map("translation_language")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  loginCodes   LoginCode[]
+  settings     UserSettings?
+  apiKeys      ApiKey[]
+  notes        Note[]
+  shares       Share[]
+
+  @@map("users")
+}
+
+model LoginCode {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  codeHash   String    @map("code_hash")
+  expiresAt  DateTime  @map("expires_at")
+  consumedAt DateTime? @map("consumed_at")
+  ipAddress  String?   @map("ip_address")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_codes")
+}
+
+model UserSettings {
+  id                    String   @id @default(uuid())
+  userId                String   @unique @map("user_id")
+  deeplApiKeyEncrypted  String?  @map("deepl_api_key_encrypted")
+  openaiApiKeyEncrypted String?  @map("openai_api_key_encrypted")
+  autoSummarize         Boolean  @default(true) @map("auto_summarize")
+  autoTranslate         Boolean  @default(true) @map("auto_translate")
+  autoTranscribe        Boolean  @default(true) @map("auto_transcribe")
+  autoCategorize        Boolean  @default(true) @map("auto_categorize")
+  shortcutTokenHash     String?  @map("shortcut_token_hash")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+model ApiKey {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  name       String
+  keyHash    String    @map("key_hash")
+  keyPrefix  String    @map("key_prefix")
+  lastUsedAt DateTime? @map("last_used_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+model Note {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  type             String   @default("link") // link, article, video, image, text, mixed
+  sourceUrl        String?  @map("source_url")
+  originalText     String?  @map("original_text")
+  title            String?
+  status           String   @default("pending") // pending, analyzing, queued, downloading, extracting, transcribing, translating, summarizing, categorizing, ready, failed
+  visibility       String   @default("private") // private, public
+  publicToken      String?  @unique @map("public_token")
+  languageDetected String?  @map("language_detected")
+  category         String?
+  tags             String[] @default([])
+  summary          String?
+  translatedTitle  String?  @map("translated_title")
+  translatedText   String?  @map("translated_text")
+  metadataJson     Json?    @map("metadata_json")
+  siteName         String?  @map("site_name")
+  coverImage       String?  @map("cover_image")
+  readingTime      Int?     @map("reading_time")
+  importance       Int?     @default(0)
+  inbox            Boolean  @default(true)
+  favorite         Boolean  @default(false)
+  archived         Boolean  @default(false)
+  errorText        String?  @map("error_text")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media      NoteMedia[]
+  transcripts Transcript[]
+  jobs       NoteJob[]
+  shares     Share[]
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, status])
+  @@index([userId, category])
+  @@map("notes")
+}
+
+model NoteMedia {
+  id          String   @id @default(uuid())
+  noteId      String   @map("note_id")
+  mediaType   String   @map("media_type") // video, audio, image, subtitle
+  storagePath String   @map("storage_path")
+  mimeType    String?  @map("mime_type")
+  duration    Int?
+  size        Int?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("note_media")
+}
+
+model Transcript {
+  id              String   @id @default(uuid())
+  noteId          String   @map("note_id")
+  language        String
+  transcriptText  String   @map("transcript_text")
+  translatedText  String?  @map("translated_text")
+  subtitleVttPath String?  @map("subtitle_vtt_path")
+  subtitleSrtPath String?  @map("subtitle_srt_path")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("transcripts")
+}
+
+model NoteJob {
+  id         String    @id @default(uuid())
+  noteId     String    @map("note_id")
+  jobType    String    @map("job_type") // analyze, download, extract, transcribe, translate, summarize, categorize
+  status     String    @default("pending") // pending, running, completed, failed
+  progress   Int       @default(0)
+  message    String?
+  startedAt  DateTime? @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  errorText  String?   @map("error_text")
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("note_jobs")
+}
+
+model Share {
+  id              String    @id @default(uuid())
+  noteId          String    @map("note_id")
+  createdByUserId String    @map("created_by_user_id")
+  token           String    @unique
+  expiresAt       DateTime? @map("expires_at")
+  passwordHash    String?   @map("password_hash")
+  maxViews        Int?      @map("max_views")
+  currentViews    Int       @default(0) @map("current_views")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  @@map("shares")
+}
+
+model SystemSettings {
+  id                    String   @id @default("default")
+  smtpHost              String?  @map("smtp_host")
+  smtpPort              Int?     @default(587) @map("smtp_port")
+  smtpUsername          String?  @map("smtp_username")
+  smtpPasswordEncrypted String?  @map("smtp_password_encrypted")
+  smtpFromName          String?  @default("Not Al") @map("smtp_from_name")
+  smtpFromEmail         String?  @map("smtp_from_email")
+  smtpSecure            Boolean  @default(false) @map("smtp_secure")
+  openaiApiKey          String?  @map("openai_api_key")
+  openaiModel           String?  @default("gpt-4o-mini") @map("openai_model")
+  defaultLanguage       String   @default("tr") @map("default_language")
+  supportedLanguages    String[] @default(["tr", "en", "de", "fr", "es"]) @map("supported_languages")
+  maxNoteSize           Int      @default(10485760) @map("max_note_size")
+  maxVideoDuration      Int      @default(3600) @map("max_video_duration")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
