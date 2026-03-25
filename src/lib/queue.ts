@@ -1,12 +1,19 @@
 import { Queue } from "bullmq";
-import { redis } from "./redis";
+import { getRedis } from "./redis";
 
-export const noteQueue = new Queue("note-processing", {
-  connection: redis,
-  defaultJobOptions: {
-    removeOnComplete: { count: 100 },
-    removeOnFail: { count: 50 },
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-  },
-});
+let _noteQueue: Queue | null = null;
+
+export function getNoteQueue(): Queue {
+  if (!_noteQueue) {
+    _noteQueue = new Queue("note-processing", {
+      connection: getRedis(),
+      defaultJobOptions: {
+        removeOnComplete: { count: 100 },
+        removeOnFail: { count: 50 },
+        attempts: 3,
+        backoff: { type: "exponential", delay: 5000 },
+      },
+    });
+  }
+  return _noteQueue;
+}

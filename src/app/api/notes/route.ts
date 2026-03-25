@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { noteQueue } from "@/lib/queue";
+import { getNoteQueue } from "@/lib/queue";
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Queue for processing
-    await noteQueue.add(
+    await getNoteQueue().add(
       "process-note",
       { noteId: note.id, userId: session.userId },
       { jobId: `note-${note.id}` }

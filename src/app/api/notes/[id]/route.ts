@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { noteQueue } from "@/lib/queue";
+
 
 export async function GET(
   req: NextRequest,

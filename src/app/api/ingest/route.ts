@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { noteQueue } from "@/lib/queue";
+import { getNoteQueue } from "@/lib/queue";
 import bcryptjs from "bcryptjs";
 
 async function authenticateByToken(req: NextRequest) {
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await noteQueue.add(
+    await getNoteQueue().add(
       "process-note",
       { noteId: note.id, userId: user.id },
       { jobId: `note-${note.id}` }
