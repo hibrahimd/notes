@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://notal:${DB_PASSWORD}@postgres:5432/notal
+      - DATABASE_URL=postgresql://notal:notalSecure2025db@postgres:5432/notal
       - REDIS_URL=redis://redis:6379
       - SESSION_SECRET=${SESSION_SECRET}
       - STORAGE_PATH=/data/notal-storage
@@ -38,7 +38,7 @@ services:
       context: .
       dockerfile: Dockerfile.worker
     environment:
-      - DATABASE_URL=postgresql://notal:${DB_PASSWORD}@postgres:5432/notal
+      - DATABASE_URL=postgresql://notal:notalSecure2025db@postgres:5432/notal
       - REDIS_URL=redis://redis:6379
       - STORAGE_PATH=/data/notal-storage
       - NODE_ENV=production
@@ -57,7 +57,7 @@ services:
     image: postgres:16-alpine
     environment:
       - POSTGRES_USER=notal
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_PASSWORD=notalSecure2025db
       - POSTGRES_DB=notal
     volumes:
       - postgres-data:/var/lib/postgresql/data
