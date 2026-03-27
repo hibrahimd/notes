@@ -141,15 +141,15 @@ export function NoteDetail({ note }: NoteProps) {
         <div className="flex items-center gap-1">
           <button
             onClick={toggleFavorite}
-            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
+            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
           >
             <Star size={20} fill={note.favorite ? "currentColor" : "none"} />
           </button>
           <button
             onClick={toggleArchive}
-            className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
+            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.archived ? "text-blue-500" : "text-zinc-400"}`}
           >
-            <Archive size={20} />
+            <Archive size={20} fill={note.archived ? "currentColor" : "none"} />
           </button>
           {note.status === "failed" && (
             <Button variant="outline" size="sm" onClick={handleReprocess} loading={reprocessing}>
@@ -269,12 +269,9 @@ export function NoteDetail({ note }: NoteProps) {
           </div>
         ) : (
           <Button variant="outline" size="sm" onClick={async () => {
-            await fetch(`/api/notes/${note.id}`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ visibility: "public" }),
+            await fetch(`/api/notes/${note.id}/share`, {
+              method: "POST",
             });
-            // TODO: create share link via API
             router.refresh();
           }}>
             <Share2 size={16} /> Paylaşım Linki Oluştur

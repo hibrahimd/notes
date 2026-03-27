@@ -11,6 +11,7 @@ export default function ShortcutPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -43,6 +44,34 @@ export default function ShortcutPage() {
     setTimeout(() => setCopied(null), 2000);
   }
 
+  async function downloadShortcut() {
+    if (!token && !hasToken) {
+      alert("Önce bir token oluşturun");
+      return;
+    }
+    setDownloading(true);
+    try {
+      const res = await fetch("/api/shortcut/download", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: token || "TOKEN_PLACEHOLDER" }),
+      });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "Notlarima-Ekle.shortcut";
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download error:", error);
+      alert("İndirme hatası oluştu");
+    }
+    setDownloading(false);
+  }
+
   if (loading) return <div className="text-zinc-400">Yükleniyor...</div>;
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -61,12 +90,17 @@ export default function ShortcutPage() {
       <Card className="mb-6">
         <div className="flex items-start gap-4">
           <Smartphone size={24} className="text-zinc-400 mt-1 shrink-0" />
-          <div>
+          <div className="flex-1">
             <CardTitle>iPhone Kısayolu</CardTitle>
-            <CardDescription className="mt-1">
+            <CardDescription className="mt-1 mb-3">
               iPhone paylaşım menüsünden içeriklerinizi doğrudan Not Al&apos;a gönderebilirsiniz.
               Herhangi bir uygulamadan paylaş butonuna basıp &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
             </CardDescription>
+            {(token || hasToken) && (
+              <Button onClick={downloadShortcut} loading={downloading} size="sm">
+                <Smartphone size={16} /> Kısayolu İndir (.shortcut)
+              </Button>
+            )}
           </div>
         </div>
       </Card>
@@ -226,12 +260,19 @@ export default function ShortcutPage() {
       {/* Help */}
       <Card>
         <CardTitle>Yardım</CardTitle>
-        <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-2">
-          <p>
-            <strong>API Anahtarları</strong> sayfasından oluşturulan anahtarlar da bu API ile çalışır.
-            Kısayol token&apos;ı yalnızca iOS kısayolları için önerilir.
+        <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-3">
+          <div>
+            <p className="font-semibold text-zinc-700 dark:text-zinc-300 mb-1">API Anahtarları vs Kısayol Token</p>
+            <ul className="list-disc list-inside space-y-1 text-xs">
+              <li><strong>Kısayol Token:</strong> Sadece iOS Shortcuts için. Tek bir token, kolayca yenilenebilir.</li>
+              <li><strong>API Anahtarları:</strong> Birden fazla uygulama/cihaz için. Her biri ayrı ayrı yönetilebilir, son kullanım takibi var.</li>
+              <li>Her ikisi de <code className="bg-zinc-100 dark:bg-zinc-800 px-1 rounded">/api/ingest</code> endpoint&apos;ini kullanır.</li>
+            </ul>
+          </div>
+          <p className="text-xs">
+            <strong>Öneri:</strong> iOS kısayolları için bu sayfadaki token&apos;ı kullanın. Diğer uygulamalar için API Anahtarları sayfasından ayrı key oluşturun.
           </p>
-          <p>
+          <p className="text-xs">
             Kısayolunuz çalışmıyorsa token&apos;ı yeniden oluşturup kısayola yapıştırın.
           </p>
           <a

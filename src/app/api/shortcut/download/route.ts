@@ -1,0 +1,348 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
+
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+  }
+
+  const { token } = await req.json();
+  const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
+  const ingestUrl = `${baseUrl}/api/ingest`;
+
+  // iOS Shortcuts plist format
+  const shortcutPlist = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>WFWorkflowActions</key>
+  <array>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.gettext</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFTextActionText</key>
+        <dict>
+          <key>Value</key>
+          <dict>
+            <key>attachmentsByRange</key>
+            <dict>
+              <key>{0, 1}</key>
+              <dict>
+                <key>Type</key>
+                <string>ExtensionInput</string>
+              </dict>
+            </dict>
+            <key>string</key>
+            <string>￼</string>
+          </dict>
+          <key>WFSerializationType</key>
+          <string>WFTextTokenString</string>
+        </dict>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.detect.link</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict/>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.list</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFItems</key>
+        <array>
+          <string>Oku</string>
+          <string>İncele</string>
+          <string>İzle</string>
+        </array>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.choosefromlist</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFChooseFromListActionPrompt</key>
+        <string>Kategori seçin</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.downloadurl</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFURL</key>
+        <string>${ingestUrl}</string>
+        <key>WFHTTPMethod</key>
+        <string>POST</string>
+        <key>WFHTTPBodyType</key>
+        <string>Json</string>
+        <key>WFJSONValues</key>
+        <dict>
+          <key>Value</key>
+          <dict>
+            <key>WFDictionaryFieldValueItems</key>
+            <array>
+              <dict>
+                <key>WFItemType</key>
+                <integer>0</integer>
+                <key>WFKey</key>
+                <dict>
+                  <key>Value</key>
+                  <dict>
+                    <key>string</key>
+                    <string>url</string>
+                  </dict>
+                  <key>WFSerializationType</key>
+                  <string>WFTextTokenString</string>
+                </dict>
+                <key>WFValue</key>
+                <dict>
+                  <key>Value</key>
+                  <dict>
+                    <key>attachmentsByRange</key>
+                    <dict>
+                      <key>{0, 1}</key>
+                      <dict>
+                        <key>OutputName</key>
+                        <string>URLs</string>
+                        <key>OutputUUID</key>
+                        <string>DETECT-LINK-UUID</string>
+                        <key>Type</key>
+                        <string>ActionOutput</string>
+                      </dict>
+                    </dict>
+                    <key>string</key>
+                    <string>￼</string>
+                  </dict>
+                  <key>WFSerializationType</key>
+                  <string>WFTextTokenString</string>
+                </dict>
+              </dict>
+              <dict>
+                <key>WFItemType</key>
+                <integer>0</integer>
+                <key>WFKey</key>
+                <dict>
+                  <key>Value</key>
+                  <dict>
+                    <key>string</key>
+                    <string>source</string>
+                  </dict>
+                  <key>WFSerializationType</key>
+                  <string>WFTextTokenString</string>
+                </dict>
+                <key>WFValue</key>
+                <dict>
+                  <key>Value</key>
+                  <dict>
+                    <key>attachmentsByRange</key>
+                    <dict>
+                      <key>{0, 1}</key>
+                      <dict>
+                        <key>OutputName</key>
+                        <string>Chosen Item</string>
+                        <key>OutputUUID</key>
+                        <string>CHOOSE-UUID</string>
+                        <key>Type</key>
+                        <string>ActionOutput</string>
+                      </dict>
+                    </dict>
+                    <key>string</key>
+                    <string>￼</string>
+                  </dict>
+                  <key>WFSerializationType</key>
+                  <string>WFTextTokenString</string>
+                </dict>
+              </dict>
+            </array>
+          </dict>
+          <key>WFSerializationType</key>
+          <string>WFDictionaryFieldValue</string>
+        </dict>
+        <key>WFHTTPHeaders</key>
+        <dict>
+          <key>Value</key>
+          <dict>
+            <key>WFDictionaryFieldValueItems</key>
+            <array>
+              <dict>
+                <key>WFItemType</key>
+                <integer>0</integer>
+                <key>WFKey</key>
+                <dict>
+                  <key>Value</key>
+                  <dict>
+                    <key>string</key>
+                    <string>Authorization</string>
+                  </dict>
+                  <key>WFSerializationType</key>
+                  <string>WFTextTokenString</string>
+                </dict>
+                <key>WFValue</key>
+                <dict>
+                  <key>Value</key>
+                  <dict>
+                    <key>string</key>
+                    <string>Bearer ${token}</string>
+                  </dict>
+                  <key>WFSerializationType</key>
+                  <string>WFTextTokenString</string>
+                </dict>
+              </dict>
+            </array>
+          </dict>
+          <key>WFSerializationType</key>
+          <string>WFDictionaryFieldValue</string>
+        </dict>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.getvalueforkey</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFDictionaryKey</key>
+        <string>message</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.conditional</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFInput</key>
+        <dict>
+          <key>Type</key>
+          <string>Variable</string>
+          <key>Variable</key>
+          <dict>
+            <key>Value</key>
+            <dict>
+              <key>OutputName</key>
+              <string>Dictionary Value</string>
+              <key>OutputUUID</key>
+              <string>VALUE-UUID</string>
+              <key>Type</key>
+              <string>ActionOutput</string>
+            </dict>
+            <key>WFSerializationType</key>
+            <string>WFTextTokenAttachment</string>
+          </dict>
+        </dict>
+        <key>WFCondition</key>
+        <string>Contains</string>
+        <key>WFConditionalActionString</key>
+        <string>kaydedildi</string>
+        <key>GroupingIdentifier</key>
+        <string>CONDITION-UUID</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.notification</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFNotificationActionBody</key>
+        <string>Not başarıyla kaydedildi! ✓</string>
+        <key>WFNotificationActionSound</key>
+        <true/>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.conditional</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFControlFlowMode</key>
+        <integer>1</integer>
+        <key>GroupingIdentifier</key>
+        <string>CONDITION-UUID</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.notification</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFNotificationActionBody</key>
+        <dict>
+          <key>Value</key>
+          <dict>
+            <key>attachmentsByRange</key>
+            <dict>
+              <key>{6, 1}</key>
+              <dict>
+                <key>OutputName</key>
+                <string>Dictionary Value</string>
+                <key>OutputUUID</key>
+                <string>VALUE-UUID</string>
+                <key>Type</key>
+                <string>ActionOutput</string>
+              </dict>
+            </dict>
+            <key>string</key>
+            <string>Hata: ￼</string>
+          </dict>
+          <key>WFSerializationType</key>
+          <string>WFTextTokenString</string>
+        </dict>
+        <key>WFNotificationActionSound</key>
+        <true/>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.conditional</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFControlFlowMode</key>
+        <integer>2</integer>
+        <key>GroupingIdentifier</key>
+        <string>CONDITION-UUID</string>
+      </dict>
+    </dict>
+  </array>
+  <key>WFWorkflowClientRelease</key>
+  <string>1200</string>
+  <key>WFWorkflowClientVersion</key>
+  <string>1200</string>
+  <key>WFWorkflowIcon</key>
+  <dict>
+    <key>WFWorkflowIconGlyphNumber</key>
+    <integer>59511</integer>
+    <key>WFWorkflowIconStartColor</key>
+    <integer>4282601983</integer>
+  </dict>
+  <key>WFWorkflowImportQuestions</key>
+  <array/>
+  <key>WFWorkflowInputContentItemClasses</key>
+  <array>
+    <string>WFStringContentItem</string>
+    <string>WFURLContentItem</string>
+  </array>
+  <key>WFWorkflowMinimumClientRelease</key>
+  <integer>900</integer>
+  <key>WFWorkflowMinimumClientVersion</key>
+  <integer>900</integer>
+  <key>WFWorkflowName</key>
+  <string>Notlarıma Ekle</string>
+  <key>WFWorkflowTypes</key>
+  <array>
+    <string>ActionExtension</string>
+  </array>
+</dict>
+</plist>`;
+
+  return new NextResponse(shortcutPlist, {
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": 'attachment; filename="Notlarima-Ekle.shortcut"',
+    },
+  });
+}

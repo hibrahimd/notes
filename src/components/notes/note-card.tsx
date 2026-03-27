@@ -124,15 +124,15 @@ export function NoteCard({ note }: NoteCardProps) {
         <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={toggleFavorite}
-            className={`p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
+            className={`p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
           >
             <Star size={16} fill={note.favorite ? "currentColor" : "none"} />
           </button>
           <button
             onClick={toggleArchive}
-            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
+            className={`p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.archived ? "text-blue-500" : "text-zinc-400"}`}
           >
-            <Archive size={16} />
+            <Archive size={16} fill={note.archived ? "currentColor" : "none"} />
           </button>
           {note.sourceUrl && (
             <a
