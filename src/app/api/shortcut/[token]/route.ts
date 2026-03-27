@@ -9,31 +9,6 @@ function generateShortcutPlist(ingestUrl: string, token: string) {
   <array>
     <dict>
       <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.gettext</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFTextActionText</key>
-        <dict>
-          <key>Value</key>
-          <dict>
-            <key>attachmentsByRange</key>
-            <dict>
-              <key>{0, 1}</key>
-              <dict>
-                <key>Type</key>
-                <string>ExtensionInput</string>
-              </dict>
-            </dict>
-            <key>string</key>
-            <string>&#xFFFC;</string>
-          </dict>
-          <key>WFSerializationType</key>
-          <string>WFTextTokenString</string>
-        </dict>
-      </dict>
-    </dict>
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
       <string>is.workflow.actions.downloadurl</string>
       <key>WFWorkflowActionParameters</key>
       <dict>
@@ -70,10 +45,8 @@ function generateShortcutPlist(ingestUrl: string, token: string) {
                     <dict>
                       <key>{0, 1}</key>
                       <dict>
-                        <key>OutputName</key>
-                        <string>Text</string>
                         <key>Type</key>
-                        <string>ActionOutput</string>
+                        <string>ExtensionInput</string>
                       </dict>
                     </dict>
                     <key>string</key>
@@ -125,24 +98,13 @@ function generateShortcutPlist(ingestUrl: string, token: string) {
         </dict>
       </dict>
     </dict>
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.notification</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFNotificationActionTitle</key>
-        <string>✅ Not Kaydedildi</string>
-        <key>WFNotificationActionBody</key>
-        <string>Not Al'a gönderildi!</string>
-        <key>WFNotificationActionSound</key>
-        <true/>
-      </dict>
-    </dict>
   </array>
   <key>WFWorkflowClientRelease</key>
-  <string>2600.0.5</string>
+  <string>1169.0.5</string>
   <key>WFWorkflowClientVersion</key>
-  <integer>2600</integer>
+  <integer>1169</integer>
+  <key>WFWorkflowHasShortcutInputVariables</key>
+  <true/>
   <key>WFWorkflowIcon</key>
   <dict>
     <key>WFWorkflowIconGlyphNumber</key>
