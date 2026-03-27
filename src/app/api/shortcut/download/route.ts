@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
+import { prisma } from "@/lib/prisma";
 
-export async function POST(req: NextRequest) {
-  const session = await getSession();
-  if (!session.userId) {
-    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  }
+function generateShortcutPlist(ingestUrl: string, token: string) {
 
-  const { token } = await req.json();
-  const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
-  const ingestUrl = `${baseUrl}/api/ingest`;
-
-  // iOS Shortcuts plist format
-  const shortcutPlist = `<?xml version="1.0" encoding="UTF-8"?>
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -48,28 +40,6 @@ export async function POST(req: NextRequest) {
       <string>is.workflow.actions.detect.link</string>
       <key>WFWorkflowActionParameters</key>
       <dict/>
-    </dict>
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.list</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFItems</key>
-        <array>
-          <string>Oku</string>
-          <string>İncele</string>
-          <string>İzle</string>
-        </array>
-      </dict>
-    </dict>
-    <dict>
-      <key>WFWorkflowActionIdentifier</key>
-      <string>is.workflow.actions.choosefromlist</string>
-      <key>WFWorkflowActionParameters</key>
-      <dict>
-        <key>WFChooseFromListActionPrompt</key>
-        <string>Kategori seçin</string>
-      </dict>
     </dict>
     <dict>
       <key>WFWorkflowActionIdentifier</key>
@@ -113,42 +83,6 @@ export async function POST(req: NextRequest) {
                         <string>URLs</string>
                         <key>OutputUUID</key>
                         <string>DETECT-LINK-UUID</string>
-                        <key>Type</key>
-                        <string>ActionOutput</string>
-                      </dict>
-                    </dict>
-                    <key>string</key>
-                    <string>￼</string>
-                  </dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-              </dict>
-              <dict>
-                <key>WFItemType</key>
-                <integer>0</integer>
-                <key>WFKey</key>
-                <dict>
-                  <key>Value</key>
-                  <dict>
-                    <key>string</key>
-                    <string>source</string>
-                  </dict>
-                  <key>WFSerializationType</key>
-                  <string>WFTextTokenString</string>
-                </dict>
-                <key>WFValue</key>
-                <dict>
-                  <key>Value</key>
-                  <dict>
-                    <key>attachmentsByRange</key>
-                    <dict>
-                      <key>{0, 1}</key>
-                      <dict>
-                        <key>OutputName</key>
-                        <string>Chosen Item</string>
-                        <key>OutputUUID</key>
-                        <string>CHOOSE-UUID</string>
                         <key>Type</key>
                         <string>ActionOutput</string>
                       </dict>
@@ -208,7 +142,7 @@ export async function POST(req: NextRequest) {
       <key>WFWorkflowActionParameters</key>
       <dict>
         <key>WFDictionaryKey</key>
-        <string>message</string>
+        <string>success</string>
       </dict>
     </dict>
     <dict>
@@ -227,7 +161,7 @@ export async function POST(req: NextRequest) {
               <key>OutputName</key>
               <string>Dictionary Value</string>
               <key>OutputUUID</key>
-              <string>VALUE-UUID</string>
+              <string>SUCCESS-UUID</string>
               <key>Type</key>
               <string>ActionOutput</string>
             </dict>
@@ -236,9 +170,9 @@ export async function POST(req: NextRequest) {
           </dict>
         </dict>
         <key>WFCondition</key>
-        <string>Contains</string>
+        <string>Is</string>
         <key>WFConditionalActionString</key>
-        <string>kaydedildi</string>
+        <string>true</string>
         <key>GroupingIdentifier</key>
         <string>CONDITION-UUID</string>
       </dict>
@@ -248,8 +182,10 @@ export async function POST(req: NextRequest) {
       <string>is.workflow.actions.notification</string>
       <key>WFWorkflowActionParameters</key>
       <dict>
+        <key>WFNotificationActionTitle</key>
+        <string>✅ Başarılı</string>
         <key>WFNotificationActionBody</key>
-        <string>Not başarıyla kaydedildi! ✓</string>
+        <string>Not kaydedildi!</string>
         <key>WFNotificationActionSound</key>
         <true/>
       </dict>
@@ -267,27 +203,57 @@ export async function POST(req: NextRequest) {
     </dict>
     <dict>
       <key>WFWorkflowActionIdentifier</key>
+      <string>is.workflow.actions.getvalueforkey</string>
+      <key>WFWorkflowActionParameters</key>
+      <dict>
+        <key>WFDictionaryKey</key>
+        <string>error</string>
+        <key>WFInput</key>
+        <dict>
+          <key>Type</key>
+          <string>Variable</string>
+          <key>Variable</key>
+          <dict>
+            <key>Value</key>
+            <dict>
+              <key>OutputName</key>
+              <string>Contents of URL</string>
+              <key>OutputUUID</key>
+              <string>DOWNLOAD-UUID</string>
+              <key>Type</key>
+              <string>ActionOutput</string>
+            </dict>
+            <key>WFSerializationType</key>
+            <string>WFTextTokenAttachment</string>
+          </dict>
+        </dict>
+      </dict>
+    </dict>
+    <dict>
+      <key>WFWorkflowActionIdentifier</key>
       <string>is.workflow.actions.notification</string>
       <key>WFWorkflowActionParameters</key>
       <dict>
+        <key>WFNotificationActionTitle</key>
+        <string>❌ Hata</string>
         <key>WFNotificationActionBody</key>
         <dict>
           <key>Value</key>
           <dict>
             <key>attachmentsByRange</key>
             <dict>
-              <key>{6, 1}</key>
+              <key>{0, 1}</key>
               <dict>
                 <key>OutputName</key>
                 <string>Dictionary Value</string>
                 <key>OutputUUID</key>
-                <string>VALUE-UUID</string>
+                <string>ERROR-UUID</string>
                 <key>Type</key>
                 <string>ActionOutput</string>
               </dict>
             </dict>
             <key>string</key>
-            <string>Hata: ￼</string>
+            <string>￼</string>
           </dict>
           <key>WFSerializationType</key>
           <string>WFTextTokenString</string>
@@ -338,6 +304,45 @@ export async function POST(req: NextRequest) {
   </array>
 </dict>
 </plist>`;
+}
+
+export async function GET(req: NextRequest) {
+  const session = await getSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+  }
+
+  // Get user's shortcut token
+  const userSettings = await prisma.userSettings.findUnique({
+    where: { userId: session.userId },
+  });
+
+  if (!userSettings?.shortcutTokenHash) {
+    return NextResponse.json({ error: "Önce bir token oluşturun" }, { status: 400 });
+  }
+
+  const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
+  const ingestUrl = `${baseUrl}/api/ingest`;
+  const shortcutPlist = generateShortcutPlist(ingestUrl, "TOKEN_PLACEHOLDER");
+
+  return new NextResponse(shortcutPlist, {
+    headers: {
+      "Content-Type": "application/octet-stream",
+      "Content-Disposition": 'attachment; filename="Notlarima-Ekle.shortcut"',
+    },
+  });
+}
+
+export async function POST(req: NextRequest) {
+  const session = await getSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+  }
+
+  const { token } = await req.json();
+  const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
+  const ingestUrl = `${baseUrl}/api/ingest`;
+  const shortcutPlist = generateShortcutPlist(ingestUrl, token);
 
   return new NextResponse(shortcutPlist, {
     headers: {

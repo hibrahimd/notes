@@ -97,9 +97,25 @@ export default function ShortcutPage() {
               Herhangi bir uygulamadan paylaş butonuna basıp &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
             </CardDescription>
             {(token || hasToken) && (
-              <Button onClick={downloadShortcut} loading={downloading} size="sm">
-                <Smartphone size={16} /> Kısayolu İndir (.shortcut)
-              </Button>
+              <div className="flex gap-2">
+                <Button onClick={downloadShortcut} loading={downloading} size="sm">
+                  <Smartphone size={16} /> Kısayolu İndir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const shortcutUrl = `${window.location.origin}/api/shortcut/download`;
+                    const whatsappText = `Not Al kısayolunu iPhone'una indir:
+${shortcutUrl}
+
+Tıklayarak direkt indirebilirsin!`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(whatsappText)}`, "_blank");
+                  }}
+                >
+                  WhatsApp ile Paylaş
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -169,23 +185,6 @@ export default function ShortcutPage() {
           <li className="flex gap-3">
             <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
             <div>
-              <strong>&quot;Liste&quot;</strong> aksiyonu ekleyin. Öğe olarak şunları girin:
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium">Oku</span>
-                <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium">İncele</span>
-                <span className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium">İzle</span>
-              </div>
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
-            <div>
-              <strong>&quot;Listeden Seç&quot;</strong> aksiyonu ekleyin → Girişi <strong>Liste</strong> olarak ayarlayın.
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">5</span>
-            <div>
               <strong>&quot;URL İçeriğini Al&quot;</strong> aksiyonu ekleyin ve şu ayarları yapın:
               <div className="mt-2 space-y-2 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg">
                 <div className="flex justify-between items-center">
@@ -217,20 +216,23 @@ export default function ShortcutPage() {
                   <p className="text-xs text-zinc-500 mb-1 font-medium">JSON Gövdesi:</p>
                   <div className="space-y-1">
                     <div className="flex justify-between"><code className="text-xs">url</code><code className="text-xs text-blue-500">Kestirme Girişi</code></div>
-                    <div className="flex justify-between"><code className="text-xs">source</code><code className="text-xs text-blue-500">Seçilen Öğe</code></div>
                   </div>
                 </div>
               </div>
             </div>
           </li>
           <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">6</span>
+            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
             <div>
-              <strong>&quot;Eğer&quot;</strong> aksiyonu ekleyin → API Sonucu girişindeki <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-xs">success</code> değerini kontrol edin.
-              <ul className="mt-1 ml-4 space-y-1 list-disc text-zinc-500">
-                <li><strong>Eğer başarılı:</strong> Bildirim göster → &quot;Merhaba dünya!&quot; (veya &quot;Not kaydedildi!&quot;)</li>
-                <li><strong>Aksi halde:</strong> Bildirim göster → Hata mesajını göster</li>
+              <strong>Bildirimler ekleyin:</strong>
+              <ul className="mt-1 ml-4 space-y-1 list-disc text-zinc-500 text-xs">
+                <li>API yanıtındaki <code className="bg-zinc-100 dark:bg-zinc-800 px-1 rounded">success</code> alanını kontrol edin</li>
+                <li><strong>Başarılı ise:</strong> Yeşil bildirim → &quot;✅ Başarılı - Not kaydedildi!&quot;</li>
+                <li><strong>Hatalı ise:</strong> Kırmızı bildirim → &quot;❌ Hata - [hata mesajı]&quot;</li>
               </ul>
+              <p className="mt-2 text-xs text-zinc-500">
+                <strong>Veya:</strong> Yukarıdaki &quot;Kısayolu İndir&quot; butonuna tıklayarak hazır kısayolu indirin - tüm ayarlar otomatik!
+              </p>
             </div>
           </li>
         </ol>

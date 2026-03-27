@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   try {
     const user = await authenticateByToken(req);
     if (!user) {
-      return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Yetkisiz" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     if (!url && !text) {
       return NextResponse.json(
-        { error: "URL veya metin gerekli" },
+        { success: false, error: "URL veya metin gerekli" },
         { status: 400 }
       );
     }
@@ -84,13 +84,13 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: "Not kaydedildi", noteId: note.id },
+      { success: true, message: "Not kaydedildi", noteId: note.id },
       { status: 201 }
     );
   } catch (error) {
     console.error("Ingest error:", error);
     return NextResponse.json(
-      { error: "Not kaydedilirken hata oluştu" },
+      { success: false, error: "Not kaydedilirken hata oluştu" },
       { status: 500 }
     );
   }
