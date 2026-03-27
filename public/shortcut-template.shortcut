@@ -122,7 +122,7 @@
 	<key>WFWorkflowClientRelease</key>
 	<string>1169.0.5</string>
 	<key>WFWorkflowClientVersion</key>
-	<integer>1169</integer>
+	<string>1169</string>
 	<key>WFWorkflowHasShortcutInputVariables</key>
 	<true/>
 	<key>WFWorkflowIcon</key>
@@ -155,7 +155,7 @@
 	<key>WFWorkflowMinimumClientRelease</key>
 	<string>900.0.0</string>
 	<key>WFWorkflowMinimumClientVersion</key>
-	<integer>900</integer>
+	<string>900</string>
 	<key>WFWorkflowName</key>
 	<string>Notlarıma Ekle</string>
 	<key>WFWorkflowTypes</key>
