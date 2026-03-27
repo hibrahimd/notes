@@ -87,41 +87,7 @@ export default function ShortcutPage() {
     <>
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">Kısayollar</h1>
 
-      <Card className="mb-6">
-        <div className="flex items-start gap-4">
-          <Smartphone size={24} className="text-zinc-400 mt-1 shrink-0" />
-          <div className="flex-1">
-            <CardTitle>iPhone Kısayolu</CardTitle>
-            <CardDescription className="mt-1 mb-3">
-              iPhone paylaşım menüsünden içeriklerinizi doğrudan Not Al&apos;a gönderebilirsiniz.
-              Herhangi bir uygulamadan paylaş butonuna basıp &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
-            </CardDescription>
-            {(token || hasToken) && (
-              <div className="flex gap-2">
-                <Button onClick={downloadShortcut} loading={downloading} size="sm">
-                  <Smartphone size={16} /> Kısayolu İndir
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const shortcutUrl = `${window.location.origin}/api/shortcut/download`;
-                    const whatsappText = `Not Al kısayolunu iPhone'una indir:
-${shortcutUrl}
-
-Tıklayarak direkt indirebilirsin!`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(whatsappText)}`, "_blank");
-                  }}
-                >
-                  WhatsApp ile Paylaş
-                </Button>
-              </div>
-            )}
-          </div>
-        </div>
-      </Card>
-
-      {/* Token Management */}
+      {/* Token Management - FIRST */}
       <Card className="mb-6">
         <CardTitle>API Token</CardTitle>
         <p className="text-sm text-zinc-500 mt-1 mb-4">
@@ -162,80 +128,40 @@ Tıklayarak direkt indirebilirsin!`;
         </div>
       </Card>
 
-      {/* iOS Shortcut Setup */}
+      {/* iPhone Shortcut - SECOND */}
       <Card className="mb-6">
-        <CardTitle>iOS Kısayol Kurulumu</CardTitle>
-        <p className="text-sm text-zinc-500 mt-2 mb-4">
-          Aşağıdaki adımları iPhone&apos;unuzdaki <strong>Kısayollar</strong> uygulamasında uygulayın.
-        </p>
-        <ol className="space-y-5 text-sm text-zinc-700 dark:text-zinc-300">
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</span>
-            <div>
-              <strong>Yeni kısayol oluşturun</strong> ve adını <code className="bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded text-xs">Notlarıma Ekle</code> yapın.
-              Kısayol ayarlarından <strong>&quot;Paylaşım Sayfasında Göster&quot;</strong> seçeneğini aktifleştirin.
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</span>
-            <div>
-              <strong>&quot;Kestirme Girişi&quot;</strong> aksiyonu ekleyin → Girişten <strong>URL&apos;leri al</strong> seçin.
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</span>
-            <div>
-              <strong>&quot;URL İçeriğini Al&quot;</strong> aksiyonu ekleyin ve şu ayarları yapın:
-              <div className="mt-2 space-y-2 bg-zinc-50 dark:bg-zinc-800/50 p-3 rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-zinc-500">URL:</span>
-                  <div className="flex items-center gap-1">
-                    <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded break-all">{ingestUrl}</code>
-                    <Button variant="ghost" size="sm" onClick={() => copyText(ingestUrl, "url")} className="shrink-0">
-                      {copied === "url" ? <Check size={14} /> : <Copy size={14} />}
-                    </Button>
-                  </div>
-                </div>
-                <div className="flex justify-between"><span className="text-zinc-500">Yöntem:</span><code className="text-xs">POST</code></div>
-                <div className="flex justify-between"><span className="text-zinc-500">Gövde:</span><code className="text-xs">JSON</code></div>
-                <div className="border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-2">
-                  <p className="text-xs text-zinc-500 mb-1 font-medium">Başlık Ekle:</p>
-                  <div className="flex justify-between items-center">
-                    <code className="text-xs">Authorization</code>
-                    <div className="flex items-center gap-1">
-                      <code className="text-xs bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded">Bearer {token ? token.slice(0, 8) + "..." : "TOKEN"}</code>
-                      {token && (
-                        <Button variant="ghost" size="sm" onClick={() => copyText(`Bearer ${token}`, "bearer")} className="shrink-0">
-                          {copied === "bearer" ? <Check size={14} /> : <Copy size={14} />}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="border-t border-zinc-200 dark:border-zinc-700 pt-2 mt-2">
-                  <p className="text-xs text-zinc-500 mb-1 font-medium">JSON Gövdesi:</p>
-                  <div className="space-y-1">
-                    <div className="flex justify-between"><code className="text-xs">url</code><code className="text-xs text-blue-500">Kestirme Girişi</code></div>
-                  </div>
-                </div>
+        <div className="flex items-start gap-4">
+          <Smartphone size={24} className="text-zinc-400 mt-1 shrink-0" />
+          <div className="flex-1">
+            <CardTitle>iPhone Kısayolu</CardTitle>
+            <CardDescription className="mt-1 mb-3">
+              iPhone paylaşım menüsünden içeriklerinizi doğrudan Not Al&apos;a gönderebilirsiniz.
+              Herhangi bir uygulamadan paylaş butonuna basıp &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
+            </CardDescription>
+            {(token || hasToken) && (
+              <div className="flex gap-2">
+                <Button onClick={downloadShortcut} loading={downloading} size="sm">
+                  <Smartphone size={16} /> Kısayolu İndir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const currentToken = token || "TOKEN_PLACEHOLDER";
+                    const shortcutUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(currentToken)}`;
+                    const whatsappText = `Not Al kısayolunu iPhone'una indir:
+${shortcutUrl}
+
+Tıklayarak direkt indirebilirsin!`;
+                    window.open(`https://wa.me/?text=${encodeURIComponent(whatsappText)}`, "_blank");
+                  }}
+                >
+                  WhatsApp ile Paylaş
+                </Button>
               </div>
-            </div>
-          </li>
-          <li className="flex gap-3">
-            <span className="w-6 h-6 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</span>
-            <div>
-              <strong>Bildirimler ekleyin:</strong>
-              <ul className="mt-1 ml-4 space-y-1 list-disc text-zinc-500 text-xs">
-                <li>API yanıtındaki <code className="bg-zinc-100 dark:bg-zinc-800 px-1 rounded">success</code> alanını kontrol edin</li>
-                <li><strong>Başarılı ise:</strong> Yeşil bildirim → &quot;✅ Başarılı - Not kaydedildi!&quot;</li>
-                <li><strong>Hatalı ise:</strong> Kırmızı bildirim → &quot;❌ Hata - [hata mesajı]&quot;</li>
-              </ul>
-              <p className="mt-2 text-xs text-zinc-500">
-                <strong>Veya:</strong> Yukarıdaki &quot;Kısayolu İndir&quot; butonuna tıklayarak hazır kısayolu indirin - tüm ayarlar otomatik!
-              </p>
-            </div>
-          </li>
-        </ol>
+            )}
+          </div>
+        </div>
       </Card>
 
       {/* API Test */}
@@ -259,34 +185,6 @@ Tıklayarak direkt indirebilirsin!`;
         </div>
       </Card>
 
-      {/* Help */}
-      <Card>
-        <CardTitle>Yardım</CardTitle>
-        <div className="mt-3 text-sm text-zinc-600 dark:text-zinc-400 space-y-3">
-          <div>
-            <p className="font-semibold text-zinc-700 dark:text-zinc-300 mb-1">API Anahtarları vs Kısayol Token</p>
-            <ul className="list-disc list-inside space-y-1 text-xs">
-              <li><strong>Kısayol Token:</strong> Sadece iOS Shortcuts için. Tek bir token, kolayca yenilenebilir.</li>
-              <li><strong>API Anahtarları:</strong> Birden fazla uygulama/cihaz için. Her biri ayrı ayrı yönetilebilir, son kullanım takibi var.</li>
-              <li>Her ikisi de <code className="bg-zinc-100 dark:bg-zinc-800 px-1 rounded">/api/ingest</code> endpoint&apos;ini kullanır.</li>
-            </ul>
-          </div>
-          <p className="text-xs">
-            <strong>Öneri:</strong> iOS kısayolları için bu sayfadaki token&apos;ı kullanın. Diğer uygulamalar için API Anahtarları sayfasından ayrı key oluşturun.
-          </p>
-          <p className="text-xs">
-            Kısayolunuz çalışmıyorsa token&apos;ı yeniden oluşturup kısayola yapıştırın.
-          </p>
-          <a
-            href="https://support.apple.com/tr-tr/guide/shortcuts/apd735880972/ios"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            <ExternalLink size={14} /> Apple Kısayollar Rehberi
-          </a>
-        </div>
-      </Card>
     </>
   );
 }

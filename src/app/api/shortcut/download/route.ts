@@ -307,6 +307,24 @@ function generateShortcutPlist(ingestUrl: string, token: string) {
 }
 
 export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const tokenParam = searchParams.get("token");
+
+  // If token provided in URL (for WhatsApp sharing), use it directly
+  if (tokenParam) {
+    const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
+    const ingestUrl = `${baseUrl}/api/ingest`;
+    const shortcutPlist = generateShortcutPlist(ingestUrl, tokenParam);
+
+    return new NextResponse(shortcutPlist, {
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Content-Disposition": 'attachment; filename="Notlarima-Ekle.shortcut"',
+      },
+    });
+  }
+
+  // Otherwise require session
   const session = await getSession();
   if (!session.userId) {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
