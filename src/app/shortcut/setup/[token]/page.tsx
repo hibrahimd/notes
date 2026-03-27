@@ -2,8 +2,10 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
-// iCloud shortcut link — replace with actual link after creating the shortcut on iPhone
-const ICLOUD_SHORTCUT_LINK = "https://www.icloud.com/shortcuts/PLACEHOLDER";
+// Signed shortcut served from /public/shortcut.shortcut
+// To regenerate: shortcuts sign -i public/shortcut-template.shortcut -o public/shortcut.shortcut -m anyone
+const SHORTCUT_INSTALL_URL =
+  "shortcuts://import-shortcut?url=https://notes.kronomondo.org/shortcut.shortcut&name=Notlarima-Ekle";
 
 export default async function ShortcutSetupPage({ params }: Props) {
   const { token } = await params;
@@ -138,7 +140,7 @@ export default async function ShortcutSetupPage({ params }: Props) {
             </div>
           </div>
 
-          <a href={ICLOUD_SHORTCUT_LINK} className="btn">
+          <a href={SHORTCUT_INSTALL_URL} className="btn">
             Kısayolu Kur
           </a>
           <p className="note">
