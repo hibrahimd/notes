@@ -148,9 +148,8 @@ export default function ShortcutPage() {
                         alert("Lütfen önce token oluşturun");
                         return;
                       }
-                      const downloadUrl = `${window.location.origin}/api/shortcut/${token}`;
-                      const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}&name=Notlarima-Ekle`;
-                      navigator.clipboard.writeText(importUrl);
+                      const setupUrl = `${window.location.origin}/shortcut/setup/${token}`;
+                      navigator.clipboard.writeText(setupUrl);
                       setCopied("link");
                       setTimeout(() => setCopied(null), 2000);
                     }}
