@@ -147,16 +147,13 @@ export default function ShortcutPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const currentToken = token || "TOKEN_PLACEHOLDER";
-                    const shortcutUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(currentToken)}`;
-                    const whatsappText = `Not Al kısayolunu iPhone'una indir:
-${shortcutUrl}
-
-Tıklayarak direkt indirebilirsin!`;
-                    window.open(`https://wa.me/?text=${encodeURIComponent(whatsappText)}`, "_blank");
+                    const shortcutUrl = `${window.location.origin}/api/shortcut/download`;
+                    navigator.clipboard.writeText(shortcutUrl);
+                    setCopied("link");
+                    setTimeout(() => setCopied(null), 2000);
                   }}
                 >
-                  WhatsApp ile Paylaş
+                  {copied === "link" ? <Check size={16} /> : <Copy size={16} />} Linki Kopyala
                 </Button>
               </div>
             )}
