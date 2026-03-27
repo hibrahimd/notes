@@ -154,27 +154,36 @@ export default function ShortcutPage() {
               Herhangi bir uygulamadan paylaş butonuna basıp &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
             </CardDescription>
             {(token || hasToken) && (
-              <div className="flex gap-2">
-                <Button onClick={downloadShortcut} loading={downloading} size="sm">
-                  <Smartphone size={16} /> Kısayolu İndir
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (!token) {
-                      alert("Lütfen önce token oluşturun");
-                      return;
-                    }
-                    const shortcutUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
-                    navigator.clipboard.writeText(shortcutUrl);
-                    setCopied("link");
-                    setTimeout(() => setCopied(null), 2000);
-                  }}
-                >
-                  {copied === "link" ? <Check size={16} /> : <Copy size={16} />} Linki Kopyala
-                </Button>
-              </div>
+              <>
+                <div className="flex gap-2 mb-3">
+                  <Button onClick={downloadShortcut} loading={downloading} size="sm">
+                    <Smartphone size={16} /> Kısayolu İndir
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!token) {
+                        alert("Lütfen önce token oluşturun");
+                        return;
+                      }
+                      const shortcutUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
+                      navigator.clipboard.writeText(shortcutUrl);
+                      setCopied("link");
+                      setTimeout(() => setCopied(null), 2000);
+                    }}
+                  >
+                    {copied === "link" ? <Check size={16} /> : <Copy size={16} />} Linki Kopyala
+                  </Button>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
+                  <p className="text-amber-800 dark:text-amber-200 font-medium mb-1">⚠️ Güvenlik Uyarısı</p>
+                  <p className="text-amber-700 dark:text-amber-300 text-xs">
+                    iOS, imzalanmamış kısayollar için güvenlik uyarısı gösterir. 
+                    Bu normal bir davranıştır. Kısayolu kurmak için <strong>&quot;Tamam&quot;</strong> butonuna basın.
+                  </p>
+                </div>
+              </>
             )}
           </div>
         </div>
