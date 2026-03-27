@@ -63,8 +63,8 @@ export default function ShortcutPage() {
       alert("Lütfen önce token oluşturun");
       return;
     }
-    const downloadUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
-    const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}`;
+    const downloadUrl = `${window.location.origin}/api/shortcut/${token}`;
+    const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}&name=Notlarima-Ekle`;
     window.location.href = importUrl;
   }
 
@@ -148,8 +148,8 @@ export default function ShortcutPage() {
                         alert("Lütfen önce token oluşturun");
                         return;
                       }
-                      const downloadUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
-                      const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}`;
+                      const downloadUrl = `${window.location.origin}/api/shortcut/${token}`;
+                      const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}&name=Notlarima-Ekle`;
                       navigator.clipboard.writeText(importUrl);
                       setCopied("link");
                       setTimeout(() => setCopied(null), 2000);
