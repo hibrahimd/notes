@@ -18,6 +18,13 @@ export default function ShortcutPage() {
       .then((r) => r.json())
       .then((data) => {
         setHasToken(!!data.settings?.shortcutTokenHash);
+        // Load token from localStorage if exists
+        if (typeof window !== "undefined") {
+          const savedToken = localStorage.getItem("shortcutToken");
+          if (savedToken) {
+            setToken(savedToken);
+          }
+        }
         setLoading(false);
       });
   }, []);
@@ -28,6 +35,10 @@ export default function ShortcutPage() {
     const data = await res.json();
     setToken(data.token);
     setHasToken(true);
+    // Save to localStorage for sharing link
+    if (typeof window !== "undefined") {
+      localStorage.setItem("shortcutToken", data.token);
+    }
     setGenerating(false);
   }
 
@@ -36,6 +47,10 @@ export default function ShortcutPage() {
     await fetch("/api/settings/shortcut-token", { method: "DELETE" });
     setToken(null);
     setHasToken(false);
+    // Clear from localStorage
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shortcutToken");
+    }
   }
 
   function copyText(text: string, label: string) {
@@ -147,7 +162,11 @@ export default function ShortcutPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => {
-                    const shortcutUrl = `${window.location.origin}/api/shortcut/download`;
+                    if (!token) {
+                      alert("Lütfen önce token oluşturun");
+                      return;
+                    }
+                    const shortcutUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
                     navigator.clipboard.writeText(shortcutUrl);
                     setCopied("link");
                     setTimeout(() => setCopied(null), 2000);
