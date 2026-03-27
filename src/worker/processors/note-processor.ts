@@ -116,8 +116,7 @@ async function processLink(noteId: string, url: string, userId: string) {
 
       const user = await prisma.user.findUnique({ where: { id: userId } });
 
-      const apiKey =
-        userSettings?.openaiApiKeyEncrypted || settings?.openaiApiKey;
+      const apiKey = userSettings?.openaiApiKeyEncrypted;
 
       if (apiKey && article.textContent) {
         // Summarize
@@ -263,7 +262,7 @@ async function processText(noteId: string, text: string, userId: string) {
   });
   const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  const apiKey = userSettings?.openaiApiKeyEncrypted || settings?.openaiApiKey;
+  const apiKey = userSettings?.openaiApiKeyEncrypted;
 
   if (apiKey && text.length > 50) {
     if (userSettings?.autoSummarize !== false) {

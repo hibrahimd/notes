@@ -121,7 +121,7 @@ export default function UserSettingsPage() {
         <Card>
           <CardTitle>API Anahtarları (Kişisel)</CardTitle>
           <p className="text-sm text-zinc-500 mt-1 mb-4">
-            Kendi API anahtarlarınızı girerseniz, sistem genelindeki anahtarlar yerine bunlar kullanılır.
+            Notlarınızın otomatik özetlenmesi, çevirisi ve kategorilenmesi için API anahtarlarınızı girin.
           </p>
           <div className="space-y-4">
             <Input

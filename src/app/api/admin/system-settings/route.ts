@@ -31,7 +31,6 @@ export async function GET() {
     settings: {
       ...settings,
       smtpPasswordEncrypted: settings.smtpPasswordEncrypted ? "••••••••" : null,
-      openaiApiKey: settings.openaiApiKey ? "sk-••••" + settings.openaiApiKey.slice(-4) : null,
     },
   });
 }
@@ -52,12 +51,8 @@ export async function PUT(req: NextRequest) {
     "smtpFromName",
     "smtpFromEmail",
     "smtpSecure",
-    "openaiApiKey",
-    "openaiModel",
     "defaultLanguage",
     "supportedLanguages",
-    "maxNoteSize",
-    "maxVideoDuration",
   ];
 
   const updateData: Record<string, unknown> = {};

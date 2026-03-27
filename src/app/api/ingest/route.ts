@@ -73,11 +73,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    await getNoteQueue().add(
-      "process-note",
-      { noteId: note.id, userId: user.id },
-      { jobId: `note-${note.id}` }
-    );
+    try {
+      await getNoteQueue().add(
+        "process-note",
+        { noteId: note.id, userId: user.id },
+        { jobId: `note-${note.id}` }
+      );
+    } catch (queueError) {
+      console.error("Queue error (note still created):", queueError);
+    }
 
     return NextResponse.json(
       { message: "Not kaydedildi", noteId: note.id },

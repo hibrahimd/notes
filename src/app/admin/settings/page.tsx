@@ -8,12 +8,8 @@ import { Save } from "lucide-react";
 
 export default function SystemSettingsPage() {
   const [settings, setSettings] = useState({
-    openaiApiKey: "",
-    openaiModel: "gpt-4o-mini",
     defaultLanguage: "tr",
     supportedLanguages: ["tr", "en", "de", "fr", "es"],
-    maxNoteSize: 10485760,
-    maxVideoDuration: 3600,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -59,26 +55,6 @@ export default function SystemSettingsPage() {
 
       <form onSubmit={handleSave} className="space-y-6">
         <Card>
-          <CardTitle>OpenAI</CardTitle>
-          <div className="mt-4 space-y-4">
-            <Input
-              id="openaiApiKey"
-              label="OpenAI API Key"
-              type="password"
-              placeholder="sk-..."
-              value={settings.openaiApiKey || ""}
-              onChange={(e) => setSettings({ ...settings, openaiApiKey: e.target.value })}
-            />
-            <Input
-              id="openaiModel"
-              label="Model"
-              value={settings.openaiModel || ""}
-              onChange={(e) => setSettings({ ...settings, openaiModel: e.target.value })}
-            />
-          </div>
-        </Card>
-
-        <Card>
           <CardTitle>Dil Ayarları</CardTitle>
           <div className="mt-4 space-y-4">
             <Input
@@ -97,26 +73,6 @@ export default function SystemSettingsPage() {
                   supportedLanguages: e.target.value.split(",").map((s) => s.trim()),
                 })
               }
-            />
-          </div>
-        </Card>
-
-        <Card>
-          <CardTitle>Limitler</CardTitle>
-          <div className="mt-4 space-y-4">
-            <Input
-              id="maxNoteSize"
-              label="Maks. Not Boyutu (byte)"
-              type="number"
-              value={settings.maxNoteSize}
-              onChange={(e) => setSettings({ ...settings, maxNoteSize: parseInt(e.target.value) })}
-            />
-            <Input
-              id="maxVideoDuration"
-              label="Maks. Video Süresi (saniye)"
-              type="number"
-              value={settings.maxVideoDuration}
-              onChange={(e) => setSettings({ ...settings, maxVideoDuration: parseInt(e.target.value) })}
             />
           </div>
         </Card>

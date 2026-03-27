@@ -10,14 +10,19 @@ export async function getMailTransporter() {
     throw new Error("SMTP ayarları yapılandırılmamış");
   }
 
+  const port = settings.smtpPort || 587;
+  // Port 465 = implicit SSL, Port 587 = STARTTLS (secure must be false)
+  const secure = port === 465;
+
   return nodemailer.createTransport({
     host: settings.smtpHost,
-    port: settings.smtpPort || 587,
-    secure: settings.smtpSecure,
+    port,
+    secure,
     auth: {
       user: settings.smtpUsername,
       pass: settings.smtpPasswordEncrypted || "",
     },
+    ...(!secure ? { tls: { rejectUnauthorized: false } } : {}),
   });
 }
 

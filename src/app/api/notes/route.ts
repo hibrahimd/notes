@@ -94,12 +94,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Queue for processing
-    await getNoteQueue().add(
-      "process-note",
-      { noteId: note.id, userId: session.userId },
-      { jobId: `note-${note.id}` }
-    );
+    // Queue for processing (don't fail the request if queue is unavailable)
+    try {
+      await getNoteQueue().add(
+        "process-note",
+        { noteId: note.id, userId: session.userId },
+        { jobId: `note-${note.id}` }
+      );
+    } catch (queueError) {
+      console.error("Queue error (note still created):", queueError);
+    }
 
     return NextResponse.json({ note }, { status: 201 });
   } catch (error) {

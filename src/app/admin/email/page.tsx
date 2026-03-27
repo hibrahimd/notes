@@ -14,7 +14,6 @@ export default function EmailSettingsPage() {
     smtpPasswordEncrypted: "",
     smtpFromName: "Not Al",
     smtpFromEmail: "",
-    smtpSecure: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -35,7 +34,6 @@ export default function EmailSettingsPage() {
             smtpPasswordEncrypted: "",
             smtpFromName: data.settings.smtpFromName || "Not Al",
             smtpFromEmail: data.settings.smtpFromEmail || "",
-            smtpSecure: data.settings.smtpSecure || false,
           }));
         }
         setLoading(false);
@@ -141,17 +139,9 @@ export default function EmailSettingsPage() {
               onChange={(e) => setSettings({ ...settings, smtpFromEmail: e.target.value })}
             />
           </div>
-          <div className="mt-4">
-            <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
-              <input
-                type="checkbox"
-                checked={settings.smtpSecure}
-                onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
-                className="rounded border-zinc-300"
-              />
-              SSL/TLS Kullan
-            </label>
-          </div>
+          <p className="mt-4 text-xs text-zinc-400">
+            Port 465 → SSL/TLS, Port 587 → STARTTLS otomatik kullanılır.
+          </p>
         </Card>
 
         {message && (
