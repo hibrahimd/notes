@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle, CardDescription } from "@/components/ui/card";
-import { Copy, Check, RefreshCw, Trash2, Smartphone, ExternalLink } from "lucide-react";
+import { Copy, Check, RefreshCw, Trash2, Smartphone } from "lucide-react";
 
 export default function ShortcutPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -11,7 +11,6 @@ export default function ShortcutPage() {
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
-  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -59,32 +58,14 @@ export default function ShortcutPage() {
     setTimeout(() => setCopied(null), 2000);
   }
 
-  async function downloadShortcut() {
-    if (!token && !hasToken) {
-      alert("Önce bir token oluşturun");
+  function openShortcut() {
+    if (!token) {
+      alert("Lütfen önce token oluşturun");
       return;
     }
-    setDownloading(true);
-    try {
-      const res = await fetch("/api/shortcut/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: token || "TOKEN_PLACEHOLDER" }),
-      });
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "Notlarima-Ekle.shortcut";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Download error:", error);
-      alert("İndirme hatası oluştu");
-    }
-    setDownloading(false);
+    const downloadUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
+    const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}`;
+    window.location.href = importUrl;
   }
 
   if (loading) return <div className="text-zinc-400">Yükleniyor...</div>;
@@ -156,8 +137,8 @@ export default function ShortcutPage() {
             {(token || hasToken) && (
               <>
                 <div className="flex gap-2 mb-3">
-                  <Button onClick={downloadShortcut} loading={downloading} size="sm">
-                    <Smartphone size={16} /> Kısayolu İndir
+                  <Button onClick={openShortcut} size="sm">
+                    <Smartphone size={16} /> iPhone&apos;a Kur
                   </Button>
                   <Button
                     variant="outline"
@@ -167,8 +148,9 @@ export default function ShortcutPage() {
                         alert("Lütfen önce token oluşturun");
                         return;
                       }
-                      const shortcutUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
-                      navigator.clipboard.writeText(shortcutUrl);
+                      const downloadUrl = `${window.location.origin}/api/shortcut/download?token=${encodeURIComponent(token)}`;
+                      const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}`;
+                      navigator.clipboard.writeText(importUrl);
                       setCopied("link");
                       setTimeout(() => setCopied(null), 2000);
                     }}
@@ -176,13 +158,9 @@ export default function ShortcutPage() {
                     {copied === "link" ? <Check size={16} /> : <Copy size={16} />} Linki Kopyala
                   </Button>
                 </div>
-                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 text-sm">
-                  <p className="text-amber-800 dark:text-amber-200 font-medium mb-1">⚠️ Güvenlik Uyarısı</p>
-                  <p className="text-amber-700 dark:text-amber-300 text-xs">
-                    iOS, imzalanmamış kısayollar için güvenlik uyarısı gösterir. 
-                    Bu normal bir davranıştır. Kısayolu kurmak için <strong>&quot;Tamam&quot;</strong> butonuna basın.
-                  </p>
-                </div>
+                <p className="text-xs text-zinc-400">
+                  Butona iPhone&apos;dan Safari ile tıklayın veya linki kopyalayıp iPhone&apos;da açın.
+                </p>
               </>
             )}
           </div>
