@@ -154,13 +154,18 @@ export function Sidebar({ role }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile toggle */}
-      <button
-        onClick={() => setMobileOpen(!mobileOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-white dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-sm"
-      >
-        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      {/* Mobil ust bar: buton serbest gezmek yerine kendi satirinda durur,
+          boylece sayfa basliklarinin uzerine binmez */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 flex items-center gap-2 px-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
+        <button
+          onClick={() => setMobileOpen(!mobileOpen)}
+          aria-label={mobileOpen ? "Menüyü kapat" : "Menüyü aç"}
+          className="p-2 -ml-2 rounded-lg text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+        >
+          {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+        <span className="font-semibold text-zinc-900 dark:text-zinc-100">Not Al</span>
+      </div>
 
       {/* Mobile overlay */}
       {mobileOpen && (

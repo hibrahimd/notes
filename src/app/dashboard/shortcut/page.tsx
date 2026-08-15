@@ -58,14 +58,15 @@ export default function ShortcutPage() {
     setTimeout(() => setCopied(null), 2000);
   }
 
+  // Kurulum sayfasina yonlendirir: oradaki buton token'i panoya kopyalayip
+  // imzali kisayolu acar. Dogrudan /api/shortcut/<token> imzasiz plist
+  // uretiyor ve iOS imzasiz kisayollari reddediyor.
   function openShortcut() {
     if (!token) {
       alert("Lütfen önce token oluşturun");
       return;
     }
-    const downloadUrl = `${window.location.origin}/api/shortcut/${token}`;
-    const importUrl = `shortcuts://import-shortcut?url=${encodeURIComponent(downloadUrl)}&name=Notlarima-Ekle`;
-    window.location.href = importUrl;
+    window.location.href = `${window.location.origin}/shortcut/setup/${token}`;
   }
 
   if (loading) return <div className="text-zinc-400">Yükleniyor...</div>;

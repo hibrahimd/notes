@@ -104,15 +104,34 @@ export default async function ShortcutSetupPage({ params }: Props) {
           .note { font-size: 12px; color: #aeaeb2; text-align: center; margin-top: 12px; line-height: 1.5; }
         `}</style>
         <script dangerouslySetInnerHTML={{ __html: `
+          var TOKEN = ${JSON.stringify(token)};
+          var INSTALL_URL = ${JSON.stringify(SHORTCUT_INSTALL_URL)};
+
           function copyToken() {
-            navigator.clipboard.writeText('${token}').then(function() {
+            return navigator.clipboard.writeText(TOKEN).then(function() {
               var el = document.getElementById('copy-hint');
               el.textContent = '\u2705 Kopyaland\u0131!';
               setTimeout(function() { el.textContent = 'Kopyalamak i\u00e7in dokun'; }, 2000);
             });
           }
+
+          // Kurulum tek dokunus: once token panoya yazilir, sonra Kisayollar
+          // acilir. Import ekraninda tek yapmasi gereken yapistirmak.
+          function installShortcut(e) {
+            e.preventDefault();
+            var btn = document.getElementById('install-btn');
+            btn.textContent = 'Token kopyalandi, aciliyor...';
+            var go = function() { window.location.href = INSTALL_URL; };
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(TOKEN).then(go, go);
+            } else {
+              go();
+            }
+          }
+
           document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('token-box').addEventListener('click', copyToken);
+            document.getElementById('install-btn').addEventListener('click', installShortcut);
           });
         `}} />
       </head>
@@ -125,28 +144,33 @@ export default async function ShortcutSetupPage({ params }: Props) {
           <div className="step">
             <div className="step-num">1</div>
             <div className="step-body">
-              <div className="step-title">API Token&apos;ınızı kopyalayın</div>
-              <div className="step-desc">Aşağıya dokunarak token&apos;ı kopyalayın. Kurulum sırasında yapıştırmanız istenecek.</div>
-              <div className="token-box" id="token-box">{token}</div>
-              <div className="copy-hint" id="copy-hint">Kopyalamak için dokun</div>
+              <div className="step-title">Butona basın</div>
+              <div className="step-desc">Token&apos;ınız otomatik olarak panoya kopyalanır ve Kısayollar uygulaması açılır.</div>
             </div>
           </div>
 
           <div className="step">
             <div className="step-num">2</div>
             <div className="step-body">
-              <div className="step-title">Kısayolu kurun</div>
-              <div className="step-desc">Aşağıdaki butona basın, Kısayollar uygulaması açılacak. Sorulduğunda token&apos;ı yapıştırın.</div>
+              <div className="step-title">Token alanına yapıştırın</div>
+              <div className="step-desc">Kısayollar &quot;API Token&apos;ınızı girin&quot; diye soracak. Alana uzun basıp <b>Yapıştır</b> deyin, sonra <b>Kısayolu Ekle</b>.</div>
             </div>
           </div>
 
-          <a href={SHORTCUT_INSTALL_URL} className="btn">
+          <a href={SHORTCUT_INSTALL_URL} className="btn" id="install-btn">
             Kısayolu Kur
           </a>
           <p className="note">
-            iPhone&apos;dan Safari ile açın.<br />
-            Kısayollar uygulaması kurulum sırasında token&apos;ı soracak.
+            iPhone&apos;dan Safari ile açın.
           </p>
+
+          <hr className="divider" />
+
+          <div className="step-desc" style={{ fontSize: 12 }}>
+            Token otomatik kopyalanmazsa aşağıya dokunup elle kopyalayabilirsiniz:
+          </div>
+          <div className="token-box" id="token-box">{token}</div>
+          <div className="copy-hint" id="copy-hint">Kopyalamak için dokun</div>
         </div>
       </body>
     </html>
