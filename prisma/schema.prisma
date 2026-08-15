@@ -54,6 +54,10 @@ model UserSettings {
   autoCategorize        Boolean  @default(true) @map("auto_categorize")
   shortcutTokenHash     String?  @map("shortcut_token_hash")
   shortcutTokenPrefix   String?  @map("shortcut_token_prefix")
+  // Kisayol tokeni kurulum icin tekrar gosterilebilmeli: kullanici telefonunda
+  // kurarken tarayici degistirdiginde token kaybolmamali. Dogrulama hala
+  // hash uzerinden yapilir; bu kopya yalnizca yeniden gostermek icindir.
+  shortcutTokenEncrypted String? @map("shortcut_token_encrypted")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 

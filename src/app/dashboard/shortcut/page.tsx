@@ -8,24 +8,23 @@ import { Copy, Check, RefreshCw, Trash2, Smartphone } from "lucide-react";
 export default function ShortcutPage() {
   const [token, setToken] = useState<string | null>(null);
   const [hasToken, setHasToken] = useState(false);
+  const [needsRegenerate, setNeedsRegenerate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
+  // Token sunucudan okunur; boylece kurulumu hangi cihazdan yaparsaniz yapin
+  // butonlar calisir
   useEffect(() => {
-    fetch("/api/settings")
+    fetch("/api/settings/shortcut-token")
       .then((r) => r.json())
       .then((data) => {
-        setHasToken(!!data.settings?.shortcutTokenHash);
-        // Load token from localStorage if exists
-        if (typeof window !== "undefined") {
-          const savedToken = localStorage.getItem("shortcutToken");
-          if (savedToken) {
-            setToken(savedToken);
-          }
-        }
+        setToken(data.token ?? null);
+        setHasToken(Boolean(data.hasToken));
+        setNeedsRegenerate(Boolean(data.needsRegenerate));
         setLoading(false);
-      });
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   async function generateToken() {
@@ -34,10 +33,7 @@ export default function ShortcutPage() {
     const data = await res.json();
     setToken(data.token);
     setHasToken(true);
-    // Save to localStorage for sharing link
-    if (typeof window !== "undefined") {
-      localStorage.setItem("shortcutToken", data.token);
-    }
+    setNeedsRegenerate(false);
     setGenerating(false);
   }
 
@@ -46,10 +42,7 @@ export default function ShortcutPage() {
     await fetch("/api/settings/shortcut-token", { method: "DELETE" });
     setToken(null);
     setHasToken(false);
-    // Clear from localStorage
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("shortcutToken");
-    }
+    setNeedsRegenerate(false);
   }
 
   function copyText(text: string, label: string) {
@@ -58,108 +51,73 @@ export default function ShortcutPage() {
     setTimeout(() => setCopied(null), 2000);
   }
 
-  // Kurulum sayfasina yonlendirir: oradaki buton token'i panoya kopyalayip
-  // imzali kisayolu acar. Dogrudan /api/shortcut/<token> imzasiz plist
-  // uretiyor ve iOS imzasiz kisayollari reddediyor.
-  function openShortcut() {
-    if (!token) {
-      alert("Lütfen önce token oluşturun");
-      return;
-    }
-    window.location.href = `${window.location.origin}/shortcut/setup/${token}`;
-  }
+  const setupUrl =
+    token && typeof window !== "undefined"
+      ? `${window.location.origin}/shortcut/setup/${token}`
+      : null;
 
   if (loading) return <div className="text-zinc-400">Yükleniyor...</div>;
-
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-  const ingestUrl = `${baseUrl}/api/ingest`;
-  const tokenDisplay = token || "TOKEN_BURAYA_YAPISTIRIN";
-
-  const curlExample = `curl -X POST ${ingestUrl} \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer ${tokenDisplay}" \\
-  -d '{"url": "https://ornek.com/makale", "source": "iphone-shortcut"}'`;
 
   return (
     <>
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">Kısayollar</h1>
 
-      {/* Token Management - FIRST */}
-      <Card className="mb-6">
-        <CardTitle>API Token</CardTitle>
-        <p className="text-sm text-zinc-500 mt-1 mb-4">
-          Kısayolunuzun sisteme erişebilmesi için bir token gereklidir. Token oluşturup kısayolunuza yapıştırın.
-        </p>
-
-        {token && (
-          <div className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
-            <p className="text-sm text-emerald-700 dark:text-emerald-400 font-medium mb-2">
-              Token oluşturuldu! Bu token&apos;ı kaydedin, tekrar gösterilmeyecektir.
-            </p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 text-sm bg-white dark:bg-zinc-800 px-3 py-2 rounded-lg text-zinc-800 dark:text-zinc-200 break-all">
-                {token}
-              </code>
-              <Button variant="outline" size="sm" onClick={() => copyText(token, "token")}>
-                {copied === "token" ? <Check size={16} /> : <Copy size={16} />}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-3">
-          {hasToken ? (
-            <>
-              <Button variant="outline" onClick={generateToken} loading={generating}>
-                <RefreshCw size={16} /> Yeniden Oluştur
-              </Button>
-              <Button variant="danger" onClick={deleteToken}>
-                <Trash2 size={16} /> Token Sil
-              </Button>
-            </>
-          ) : (
-            <Button onClick={generateToken} loading={generating}>
-              Token Oluştur
-            </Button>
-          )}
-        </div>
-      </Card>
-
-      {/* iPhone Shortcut - SECOND */}
+      {/* iPhone Kisayolu - once kurulum */}
       <Card className="mb-6">
         <div className="flex items-start gap-4">
           <Smartphone size={24} className="text-zinc-400 mt-1 shrink-0" />
           <div className="flex-1">
             <CardTitle>iPhone Kısayolu</CardTitle>
             <CardDescription className="mt-1 mb-3">
-              iPhone paylaşım menüsünden içeriklerinizi doğrudan Not Al&apos;a gönderebilirsiniz.
-              Herhangi bir uygulamadan paylaş butonuna basıp &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
+              iPhone paylaşım menüsünden içeriklerinizi doğrudan Not Al&apos;a
+              gönderebilirsiniz. Herhangi bir uygulamada paylaş butonuna basıp
+              &quot;Notlarıma Ekle&quot; kısayolunu seçmeniz yeterli.
             </CardDescription>
-            {(token || hasToken) && (
+
+            {!hasToken && (
               <>
-                <div className="flex gap-2 mb-3">
-                  <Button onClick={openShortcut} size="sm">
-                    <Smartphone size={16} /> iPhone&apos;a Kur
-                  </Button>
+                <p className="text-sm text-zinc-500 mb-3">
+                  Başlamak için bir token oluşturun.
+                </p>
+                <Button onClick={generateToken} loading={generating}>
+                  Token Oluştur ve Kuruluma Başla
+                </Button>
+              </>
+            )}
+
+            {hasToken && needsRegenerate && (
+              <div className="rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-3">
+                <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+                  Mevcut token&apos;ınız eski biçimde saklandığı için tekrar
+                  gösterilemiyor. Yeniden oluşturun; kurulum tek dokunuşa iner.
+                </p>
+                <Button onClick={generateToken} loading={generating} size="sm">
+                  <RefreshCw size={16} /> Token&apos;ı Yenile
+                </Button>
+              </div>
+            )}
+
+            {setupUrl && (
+              <>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <a href={setupUrl}>
+                    <Button size="sm">
+                      <Smartphone size={16} /> iPhone&apos;a Kur
+                    </Button>
+                  </a>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (!token) {
-                        alert("Lütfen önce token oluşturun");
-                        return;
-                      }
-                      const setupUrl = `${window.location.origin}/shortcut/setup/${token}`;
-                      navigator.clipboard.writeText(setupUrl);
-                      setCopied("link");
-                      setTimeout(() => setCopied(null), 2000);
-                    }}
+                    onClick={() => copyText(setupUrl, "link")}
                   >
-                    {copied === "link" ? <Check size={16} /> : <Copy size={16} />} Linki Kopyala
+                    {copied === "link" ? <Check size={16} /> : <Copy size={16} />} Kurulum
+                    Linkini Kopyala
                   </Button>
                 </div>
                 <p className="text-xs text-zinc-400">
-                  Butona iPhone&apos;dan Safari ile tıklayın veya linki kopyalayıp iPhone&apos;da açın.
+                  iPhone&apos;dan Safari ile açın. Butona bastığınızda token
+                  otomatik kopyalanır ve Kısayollar uygulaması açılır; tek
+                  yapmanız gereken token alanına yapıştırmak.
                 </p>
               </>
             )}
@@ -167,27 +125,36 @@ export default function ShortcutPage() {
         </div>
       </Card>
 
-      {/* API Test */}
-      <Card className="mb-6">
-        <CardTitle>API Testi (curl)</CardTitle>
-        <p className="text-sm text-zinc-500 mt-1 mb-3">
-          Terminal&apos;den test etmek için aşağıdaki komutu kullanabilirsiniz:
-        </p>
-        <div className="relative">
-          <pre className="text-xs bg-zinc-100 dark:bg-zinc-800 px-4 py-3 rounded-lg overflow-x-auto text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap break-all">
-            {curlExample}
-          </pre>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="absolute top-2 right-2"
-            onClick={() => copyText(curlExample, "curl")}
-          >
-            {copied === "curl" ? <Check size={14} /> : <Copy size={14} />}
-          </Button>
-        </div>
-      </Card>
+      {/* Token yonetimi */}
+      {hasToken && (
+        <Card className="mb-6">
+          <CardTitle>API Token</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1 mb-4">
+            Kısayolunuzun sisteme erişmesini bu token sağlar. Yenilerseniz eski
+            kısayolunuz çalışmayı durdurur ve yeniden kurmanız gerekir.
+          </p>
 
+          {token && (
+            <div className="flex items-center gap-2 mb-4">
+              <code className="flex-1 text-sm bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg text-zinc-700 dark:text-zinc-300 break-all">
+                {token}
+              </code>
+              <Button variant="outline" size="sm" onClick={() => copyText(token, "token")}>
+                {copied === "token" ? <Check size={16} /> : <Copy size={16} />}
+              </Button>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={generateToken} loading={generating}>
+              <RefreshCw size={16} /> Yeniden Oluştur
+            </Button>
+            <Button variant="danger" onClick={deleteToken}>
+              <Trash2 size={16} /> Token Sil
+            </Button>
+          </div>
+        </Card>
+      )}
     </>
   );
 }

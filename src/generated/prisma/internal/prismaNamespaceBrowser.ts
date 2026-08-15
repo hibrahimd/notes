@@ -118,6 +118,7 @@ export const UserSettingsScalarFieldEnum = {
   autoCategorize: 'autoCategorize',
   shortcutTokenHash: 'shortcutTokenHash',
   shortcutTokenPrefix: 'shortcutTokenPrefix',
+  shortcutTokenEncrypted: 'shortcutTokenEncrypted',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
