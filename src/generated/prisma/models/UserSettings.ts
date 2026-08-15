@@ -34,6 +34,7 @@ export type UserSettingsMinAggregateOutputType = {
   autoTranscribe: boolean | null
   autoCategorize: boolean | null
   shortcutTokenHash: string | null
+  shortcutTokenPrefix: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -48,6 +49,7 @@ export type UserSettingsMaxAggregateOutputType = {
   autoTranscribe: boolean | null
   autoCategorize: boolean | null
   shortcutTokenHash: string | null
+  shortcutTokenPrefix: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -62,6 +64,7 @@ export type UserSettingsCountAggregateOutputType = {
   autoTranscribe: number
   autoCategorize: number
   shortcutTokenHash: number
+  shortcutTokenPrefix: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -78,6 +81,7 @@ export type UserSettingsMinAggregateInputType = {
   autoTranscribe?: true
   autoCategorize?: true
   shortcutTokenHash?: true
+  shortcutTokenPrefix?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -92,6 +96,7 @@ export type UserSettingsMaxAggregateInputType = {
   autoTranscribe?: true
   autoCategorize?: true
   shortcutTokenHash?: true
+  shortcutTokenPrefix?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -106,6 +111,7 @@ export type UserSettingsCountAggregateInputType = {
   autoTranscribe?: true
   autoCategorize?: true
   shortcutTokenHash?: true
+  shortcutTokenPrefix?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -193,6 +199,7 @@ export type UserSettingsGroupByOutputType = {
   autoTranscribe: boolean
   autoCategorize: boolean
   shortcutTokenHash: string | null
+  shortcutTokenPrefix: string | null
   createdAt: Date
   updatedAt: Date
   _count: UserSettingsCountAggregateOutputType | null
@@ -228,6 +235,7 @@ export type UserSettingsWhereInput = {
   autoTranscribe?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoCategorize?: Prisma.BoolFilter<"UserSettings"> | boolean
   shortcutTokenHash?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  shortcutTokenPrefix?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -243,6 +251,7 @@ export type UserSettingsOrderByWithRelationInput = {
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  shortcutTokenPrefix?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
@@ -261,6 +270,7 @@ export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
   autoTranscribe?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoCategorize?: Prisma.BoolFilter<"UserSettings"> | boolean
   shortcutTokenHash?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  shortcutTokenPrefix?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   createdAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"UserSettings"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
@@ -276,6 +286,7 @@ export type UserSettingsOrderByWithAggregationInput = {
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  shortcutTokenPrefix?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserSettingsCountOrderByAggregateInput
@@ -296,6 +307,7 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
   autoTranscribe?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   autoCategorize?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   shortcutTokenHash?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
+  shortcutTokenPrefix?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"UserSettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"UserSettings"> | Date | string
 }
@@ -309,6 +321,7 @@ export type UserSettingsCreateInput = {
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: string | null
+  shortcutTokenPrefix?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutSettingsInput
@@ -324,6 +337,7 @@ export type UserSettingsUncheckedCreateInput = {
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: string | null
+  shortcutTokenPrefix?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -337,6 +351,7 @@ export type UserSettingsUpdateInput = {
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutSettingsNestedInput
@@ -352,6 +367,7 @@ export type UserSettingsUncheckedUpdateInput = {
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -366,6 +382,7 @@ export type UserSettingsCreateManyInput = {
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: string | null
+  shortcutTokenPrefix?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -379,6 +396,7 @@ export type UserSettingsUpdateManyMutationInput = {
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -393,6 +411,7 @@ export type UserSettingsUncheckedUpdateManyInput = {
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -412,6 +431,7 @@ export type UserSettingsCountOrderByAggregateInput = {
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrder
+  shortcutTokenPrefix?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -426,6 +446,7 @@ export type UserSettingsMaxOrderByAggregateInput = {
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrder
+  shortcutTokenPrefix?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -440,6 +461,7 @@ export type UserSettingsMinOrderByAggregateInput = {
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrder
+  shortcutTokenPrefix?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -489,6 +511,7 @@ export type UserSettingsCreateWithoutUserInput = {
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: string | null
+  shortcutTokenPrefix?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -502,6 +525,7 @@ export type UserSettingsUncheckedCreateWithoutUserInput = {
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: string | null
+  shortcutTokenPrefix?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -531,6 +555,7 @@ export type UserSettingsUpdateWithoutUserInput = {
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -544,6 +569,7 @@ export type UserSettingsUncheckedUpdateWithoutUserInput = {
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -560,6 +586,7 @@ export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: boolean
+  shortcutTokenPrefix?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -575,6 +602,7 @@ export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: boolean
+  shortcutTokenPrefix?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -590,6 +618,7 @@ export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: boolean
+  shortcutTokenPrefix?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
@@ -605,11 +634,12 @@ export type UserSettingsSelectScalar = {
   autoTranscribe?: boolean
   autoCategorize?: boolean
   shortcutTokenHash?: boolean
+  shortcutTokenPrefix?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "deeplApiKeyEncrypted" | "openaiApiKeyEncrypted" | "autoSummarize" | "autoTranslate" | "autoTranscribe" | "autoCategorize" | "shortcutTokenHash" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
+export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "deeplApiKeyEncrypted" | "openaiApiKeyEncrypted" | "autoSummarize" | "autoTranslate" | "autoTranscribe" | "autoCategorize" | "shortcutTokenHash" | "shortcutTokenPrefix" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
 export type UserSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -635,6 +665,7 @@ export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     autoTranscribe: boolean
     autoCategorize: boolean
     shortcutTokenHash: string | null
+    shortcutTokenPrefix: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["userSettings"]>
@@ -1070,6 +1101,7 @@ export interface UserSettingsFieldRefs {
   readonly autoTranscribe: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly autoCategorize: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly shortcutTokenHash: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly shortcutTokenPrefix: Prisma.FieldRef<"UserSettings", 'String'>
   readonly createdAt: Prisma.FieldRef<"UserSettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"UserSettings", 'DateTime'>
 }

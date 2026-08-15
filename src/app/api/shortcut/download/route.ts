@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/session";
-import { prisma } from "@/lib/prisma";
+import { authenticateToken } from "@/lib/api-auth";
 
 function generateShortcutPlist(ingestUrl: string, token: string) {
 
@@ -306,49 +306,45 @@ function generateShortcutPlist(ingestUrl: string, token: string) {
 </plist>`;
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const tokenParam = searchParams.get("token");
+function ingestUrlFor(req: NextRequest): string {
+  // Kisayollar uygulamasi Origin basligi gondermez; host uzerinden kur
+  const host = req.headers.get("host") || "notes.kronomondo.org";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  return `${protocol}://${host}/api/ingest`;
+}
 
-  // If token provided in URL (for WhatsApp sharing), use it directly
-  if (tokenParam) {
-    const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
-    const ingestUrl = `${baseUrl}/api/ingest`;
-    const shortcutPlist = generateShortcutPlist(ingestUrl, tokenParam);
-
-    return new NextResponse(shortcutPlist, {
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": 'attachment; filename="Notlarima-Ekle.shortcut"',
-      },
-    });
-  }
-
-  // Otherwise require session
-  const session = await getSession();
-  if (!session.userId) {
-    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
-  }
-
-  // Get user's shortcut token
-  const userSettings = await prisma.userSettings.findUnique({
-    where: { userId: session.userId },
-  });
-
-  if (!userSettings?.shortcutTokenHash) {
-    return NextResponse.json({ error: "Önce bir token oluşturun" }, { status: 400 });
-  }
-
-  const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
-  const ingestUrl = `${baseUrl}/api/ingest`;
-  const shortcutPlist = generateShortcutPlist(ingestUrl, "TOKEN_PLACEHOLDER");
-
-  return new NextResponse(shortcutPlist, {
+function shortcutResponse(req: NextRequest, token: string) {
+  return new NextResponse(generateShortcutPlist(ingestUrlFor(req), token), {
     headers: {
       "Content-Type": "application/octet-stream",
       "Content-Disposition": 'attachment; filename="Notlarima-Ekle.shortcut"',
+      "Cache-Control": "no-store",
     },
   });
+}
+
+export async function GET(req: NextRequest) {
+  const token = new URL(req.url).searchParams.get("token");
+
+  if (!token) {
+    return NextResponse.json({ error: "Token gerekli" }, { status: 400 });
+  }
+
+  // Oturum yerine token'in kendisi dogrulanir: Kisayollar uygulamasi cerez tasimaz
+  try {
+    const user = await authenticateToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Geçersiz token" }, { status: 404 });
+    }
+  } catch (error) {
+    console.error("Shortcut token doğrulama hatası:", error);
+    return NextResponse.json(
+      { error: "Kısayol oluşturulamadı" },
+      { status: 500 }
+    );
+  }
+
+  return shortcutResponse(req, token);
 }
 
 export async function POST(req: NextRequest) {
@@ -358,14 +354,14 @@ export async function POST(req: NextRequest) {
   }
 
   const { token } = await req.json();
-  const baseUrl = req.headers.get("origin") || "https://notes.kronomondo.org";
-  const ingestUrl = `${baseUrl}/api/ingest`;
-  const shortcutPlist = generateShortcutPlist(ingestUrl, token);
+  if (!token || typeof token !== "string") {
+    return NextResponse.json({ error: "Token gerekli" }, { status: 400 });
+  }
 
-  return new NextResponse(shortcutPlist, {
-    headers: {
-      "Content-Type": "application/octet-stream",
-      "Content-Disposition": 'attachment; filename="Notlarima-Ekle.shortcut"',
-    },
-  });
+  const user = await authenticateToken(token);
+  if (!user || user.id !== session.userId) {
+    return NextResponse.json({ error: "Geçersiz token" }, { status: 400 });
+  }
+
+  return shortcutResponse(req, token);
 }

@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { encrypt } from "@/lib/crypto";
+
+/** Kullanicinin girdigi sirlar DB'ye sifreli yazilir; bos deger anahtari siler. */
+function encryptSecretField(value: unknown): string | null | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return encrypt(trimmed);
+}
 
 export async function GET() {
   const session = await getSession();
@@ -55,19 +64,26 @@ export async function PUT(req: NextRequest) {
   }
 
   // Update user settings
-  const settingsFields = [
-    "deeplApiKeyEncrypted",
-    "openaiApiKeyEncrypted",
+  const booleanFields = [
     "autoSummarize",
     "autoTranslate",
     "autoTranscribe",
     "autoCategorize",
   ];
+  const secretFields = ["deeplApiKeyEncrypted", "openaiApiKeyEncrypted"];
 
   const updateData: Record<string, unknown> = {};
-  for (const field of settingsFields) {
+  for (const field of booleanFields) {
     if (body[field] !== undefined) {
       updateData[field] = body[field];
+    }
+  }
+  for (const field of secretFields) {
+    // Maskeli deger geri gonderildiyse mevcut siri ezme
+    if (body[field] === "••••••••") continue;
+    const encrypted = encryptSecretField(body[field]);
+    if (encrypted !== undefined) {
+      updateData[field] = encrypted;
     }
   }
 

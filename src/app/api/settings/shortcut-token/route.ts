@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { v4 as uuidv4 } from "uuid";
-import bcryptjs from "bcryptjs";
+import { generateToken } from "@/lib/tokens";
 
 export async function POST() {
   const session = await getSession();
@@ -10,13 +9,16 @@ export async function POST() {
     return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
   }
 
-  const token = `notal_${uuidv4().replace(/-/g, "")}`;
-  const tokenHash = await bcryptjs.hash(token, 10);
+  const { token, prefix, hash } = await generateToken();
 
   await prisma.userSettings.upsert({
     where: { userId: session.userId },
-    update: { shortcutTokenHash: tokenHash },
-    create: { userId: session.userId, shortcutTokenHash: tokenHash },
+    update: { shortcutTokenHash: hash, shortcutTokenPrefix: prefix },
+    create: {
+      userId: session.userId,
+      shortcutTokenHash: hash,
+      shortcutTokenPrefix: prefix,
+    },
   });
 
   return NextResponse.json({
@@ -33,7 +35,7 @@ export async function DELETE() {
 
   await prisma.userSettings.update({
     where: { userId: session.userId },
-    data: { shortcutTokenHash: null },
+    data: { shortcutTokenHash: null, shortcutTokenPrefix: null },
   });
 
   return NextResponse.json({ message: "Shortcut token'ı silindi" });

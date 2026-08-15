@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { v4 as uuidv4 } from "uuid";
-import bcryptjs from "bcryptjs";
+import { generateToken } from "@/lib/tokens";
 
 export async function GET() {
   const session = await getSession();
@@ -32,22 +31,20 @@ export async function POST(req: NextRequest) {
   }
 
   const { name } = await req.json();
-  if (!name) {
+  if (!name || typeof name !== "string" || !name.trim()) {
     return NextResponse.json({ error: "Anahtar adı gerekli" }, { status: 400 });
   }
 
-  const rawKey = `notal_${uuidv4().replace(/-/g, "")}`;
-  const keyHash = await bcryptjs.hash(rawKey, 10);
-  const keyPrefix = rawKey.slice(0, 12);
+  const { token, prefix, hash } = await generateToken();
 
   await prisma.apiKey.create({
     data: {
       userId: session.userId,
-      name,
-      keyHash,
-      keyPrefix,
+      name: name.trim().slice(0, 100),
+      keyHash: hash,
+      keyPrefix: prefix,
     },
   });
 
-  return NextResponse.json({ key: rawKey }, { status: 201 });
+  return NextResponse.json({ key: token }, { status: 201 });
 }

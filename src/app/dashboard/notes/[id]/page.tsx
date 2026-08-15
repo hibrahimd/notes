@@ -17,11 +17,31 @@ export default async function NoteDetailPage({ params }: PageProps) {
       media: true,
       transcripts: true,
       jobs: { orderBy: { startedAt: "desc" } },
-      shares: true,
+      shares: {
+        select: {
+          id: true,
+          token: true,
+          createdAt: true,
+          expiresAt: true,
+          maxViews: true,
+          currentViews: true,
+          passwordHash: true,
+        },
+        orderBy: { createdAt: "desc" },
+      },
     },
   });
 
   if (!note) notFound();
 
-  return <NoteDetail note={JSON.parse(JSON.stringify(note))} />;
+  // Paylasim sifresinin hash'i istemciye gonderilmez, yalnizca var/yok bilgisi
+  const safeNote = {
+    ...note,
+    shares: note.shares.map(({ passwordHash, ...share }) => ({
+      ...share,
+      hasPassword: Boolean(passwordHash),
+    })),
+  };
+
+  return <NoteDetail note={JSON.parse(JSON.stringify(safeNote))} />;
 }

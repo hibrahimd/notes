@@ -1,6 +1,16 @@
+import "dotenv/config";
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { processNote } from "./processors/note-processor";
+
+// Worker, kullanicilarin sifreli API anahtarlarini cozmek zorunda; anahtar
+// yoksa AI adimlari sessizce atlanir, o yuzden baslangicta uyar.
+if (!process.env.ENCRYPTION_KEY && !process.env.SESSION_SECRET) {
+  console.error(
+    "[Worker] ENCRYPTION_KEY veya SESSION_SECRET tanimli degil. " +
+      "Kayitli OpenAI anahtarlari cozulemeyecek ve AI adimlari atlanacak."
+  );
+}
 
 const connection = new IORedis(process.env.REDIS_URL || "redis://localhost:6379", {
   maxRetriesPerRequest: null,

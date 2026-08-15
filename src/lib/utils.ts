@@ -5,8 +5,22 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * 6 haneli giris kodu. Math.random() tahmin edilebilir oldugu icin kripto
+ * guvenli kaynak kullanilir; modulo sapmasini onlemek uzere ust aralik elenir.
+ */
 export function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const range = 900000;
+  const limit = Math.floor(0xffffffff / range) * range;
+  const buffer = new Uint32Array(1);
+
+  let value: number;
+  do {
+    crypto.getRandomValues(buffer);
+    value = buffer[0];
+  } while (value >= limit);
+
+  return (100000 + (value % range)).toString();
 }
 
 export function estimateReadingTime(text: string): number {

@@ -20,15 +20,21 @@ git clone <repo-url> not-al && cd not-al
 
 # 2. .env dosyasini olustur
 cp .env.example .env
-# .env icindeki degerleri guncelle (DB_PASSWORD, SESSION_SECRET, ADMIN_PASSWORD)
+# .env icindeki degerleri guncelle:
+#   DB_PASSWORD, SESSION_SECRET, ENCRYPTION_KEY, ADMIN_EMAIL, ADMIN_PASSWORD
+# Rastgele sir uretmek icin: openssl rand -base64 48
 
 # 3. Docker Compose ile calistir
 docker compose up -d
 
 # 4. Veritabanini olustur ve seed et
-docker compose exec app npx prisma db push
+docker compose exec app npm run db:migrate
 docker compose exec app npm run db:seed
 ```
+
+`SESSION_SECRET` zorunludur ve tanimli degilse uygulama acik hata verir.
+`ENCRYPTION_KEY` tanimlanmazsa `SESSION_SECRET`'ten turetilir; bu durumda
+`SESSION_SECRET` degistirildiginde kayitli OpenAI/DeepL/SMTP sirlari cozulemez.
 
 Uygulama `http://localhost:3000` adresinde calisir.
 
@@ -42,9 +48,9 @@ npm install
 cp .env.example .env
 
 # PostgreSQL ve Redis'in calistigından emin ol
-# Prisma client olustur ve DB'yi push et
+# Prisma client olustur ve migration'lari uygula
 npx prisma generate
-npx prisma db push
+npm run db:migrate
 
 # Seed calistir
 npm run db:seed
@@ -74,17 +80,39 @@ npm run worker
 1. GitHub repo'sunu Coolify'a bagla
 2. **Build Pack:** Docker Compose
 3. **Environment Variables** ekle:
-   - `DB_PASSWORD` - PostgreSQL sifresi
-   - `SESSION_SECRET` - En az 32 karakter rastgele string
+   - `DB_PASSWORD` - PostgreSQL sifresi (compose bunu hem postgres'e hem
+     `DATABASE_URL`'e verir; repoda hicbir sifre yazili degildir)
+   - `SESSION_SECRET` - En az 32 karakter rastgele string (zorunlu)
+   - `ENCRYPTION_KEY` - Kayitli API anahtarlarini sifreler (onerilir)
    - `ADMIN_EMAIL` - Admin email
    - `ADMIN_PASSWORD` - Admin sifresi
 4. Domain: `notes.kronomondo.org`
 5. Deploy sonrasi:
    ```bash
-   # Container'a girip DB push ve seed yap
-   docker compose exec app npx prisma db push
+   docker compose exec app npm run db:migrate
    docker compose exec app npm run db:seed
    ```
+
+## Veritabani Migration'lari
+
+Proje artik `prisma db push` yerine versiyonlanmis migration kullanir.
+
+**Zaten `db push` ile olusturulmus bir veritabaniniz varsa** (mevcut production),
+ilk migration'i calistirilmis olarak isaretleyin, yoksa Prisma bastan tablo
+yaratmaya calisir:
+
+```bash
+docker compose exec app npx prisma migrate resolve --applied 20260326000000_init
+docker compose exec app npm run db:migrate
+```
+
+Bos bir veritabaninda dogrudan `npm run db:migrate` yeterlidir.
+
+Sema degistirdiginizde yeni migration uretmek icin:
+
+```bash
+npx prisma migrate dev --name aciklayici_isim
+```
 
 ## Proje Yapisi
 
@@ -92,6 +120,7 @@ npm run worker
 not-al/
   prisma/
     schema.prisma          # Veritabani modelleri
+    migrations/            # Versiyonlanmis SQL migration'lari
     seed.ts                # Admin ve system settings seed
   src/
     app/
@@ -105,9 +134,9 @@ not-al/
       layout/              # Sidebar
       notes/               # NoteCard, NoteDetail, AddNoteModal, NotesHeader
     generated/prisma/      # Prisma generated client
-    lib/                   # prisma, session, redis, queue, auth, email, storage, utils
+    lib/                   # prisma, session, crypto, tokens, safe-fetch, openai, queue, ...
     worker/                # BullMQ worker + note processor
-    middleware.ts          # Auth middleware
+    proxy.ts               # Oturum kontrolu (Next.js 16'da middleware'in yeni adi)
   docker-compose.yml
   Dockerfile               # Next.js app
   Dockerfile.worker         # BullMQ worker

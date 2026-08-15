@@ -10,6 +10,8 @@ export default function SystemSettingsPage() {
   const [settings, setSettings] = useState({
     defaultLanguage: "tr",
     supportedLanguages: ["tr", "en", "de", "fr", "es"],
+    openaiApiKey: "",
+    openaiModel: "gpt-4o-mini",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -31,10 +33,14 @@ export default function SystemSettingsPage() {
     setSaving(true);
     setMessage("");
 
+    const body: Record<string, unknown> = { ...settings };
+    // Maskeli deger geri gonderilirse kayitli anahtar ezilmesin
+    if (settings.openaiApiKey === "••••••••") delete body.openaiApiKey;
+
     const res = await fetch("/api/admin/system-settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
+      body: JSON.stringify(body),
     });
 
     if (res.ok) {
@@ -73,6 +79,31 @@ export default function SystemSettingsPage() {
                   supportedLanguages: e.target.value.split(",").map((s) => s.trim()),
                 })
               }
+            />
+          </div>
+        </Card>
+
+        <Card>
+          <CardTitle>OpenAI (Sistem Geneli)</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1 mb-4">
+            Kullanıcının kendi anahtarı yoksa bu anahtar kullanılır. Hiçbiri yoksa
+            özet, çeviri ve kategori adımları atlanır ve not detayında belirtilir.
+          </p>
+          <div className="space-y-4">
+            <Input
+              id="openaiApiKey"
+              label="OpenAI API Key"
+              type="password"
+              placeholder="sk-..."
+              value={settings.openaiApiKey || ""}
+              onChange={(e) => setSettings({ ...settings, openaiApiKey: e.target.value })}
+            />
+            <Input
+              id="openaiModel"
+              label="Model"
+              placeholder="gpt-4o-mini"
+              value={settings.openaiModel || ""}
+              onChange={(e) => setSettings({ ...settings, openaiModel: e.target.value })}
             />
           </div>
         </Card>

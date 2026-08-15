@@ -2,9 +2,60 @@ import { PrismaClient } from "../../generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
+import { tryDecrypt } from "../../lib/crypto";
+import { safeFetchText, BlockedUrlError } from "../../lib/safe-fetch";
+import {
+  chat,
+  chatJson,
+  translateLongText,
+  type OpenAIConfig,
+} from "../../lib/openai";
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
+
+const USER_AGENT =
+  "Mozilla/5.0 (compatible; NotAl/1.0; +https://notes.kronomondo.org)";
+
+const CATEGORIES =
+  "İş, Kişisel, Haber, Teknoloji, Yazılım, Pazarlama, Eğitim, Video, Sosyal Medya, İlham, Araştırma, Satın Alma, Diğer";
+
+interface CategoryResult {
+  category?: string;
+  tags?: string[];
+  importance?: number;
+}
+
+interface AiContext {
+  config: OpenAIConfig;
+  /** Anahtarin nereden geldigi; kullaniciya gosterilir */
+  source: "user" | "system";
+}
+
+/**
+ * OpenAI anahtarini once kullanici ayarlarindan, yoksa sistem ayarlarindan alir.
+ * Hicbiri yoksa null doner ve cagiran taraf durumu nota gorunur sekilde yazar.
+ */
+async function resolveAi(userId: string): Promise<AiContext | null> {
+  const [systemSettings, userSettings] = await Promise.all([
+    prisma.systemSettings.findUnique({ where: { id: "default" } }),
+    prisma.userSettings.findUnique({ where: { userId } }),
+  ]);
+
+  const model = systemSettings?.openaiModel || "gpt-4o-mini";
+
+  const userKey = tryDecrypt(userSettings?.openaiApiKeyEncrypted);
+  if (userKey) {
+    return { config: { apiKey: userKey, model }, source: "user" };
+  }
+
+  const systemKey = tryDecrypt(systemSettings?.openaiApiKey);
+  if (systemKey) {
+    return { config: { apiKey: systemKey, model }, source: "system" };
+  }
+
+  return null;
+}
 
 export async function processNote(noteId: string, userId: string) {
   const note = await prisma.note.findFirst({
@@ -64,152 +115,16 @@ async function processLink(noteId: string, url: string, userId: string) {
   await createJob(noteId, "extract", "running", "İçerik çıkarılıyor...");
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; NotAl/1.0; +https://notes.kronomondo.org)",
-      },
-      signal: AbortSignal.timeout(15000),
+    const response = await safeFetchText(url, {
+      headers: { "User-Agent": USER_AGENT },
+      timeoutMs: 15000,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const html = await response.text();
-    const dom = new JSDOM(html, { url });
+    const dom = new JSDOM(response.body, { url: response.finalUrl });
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
 
-    if (article) {
-      const readingTime = Math.ceil(
-        (article.textContent?.split(/\s+/).length || 0) / 200
-      );
-
-      await prisma.note.update({
-        where: { id: noteId },
-        data: {
-          type: isVideo ? "video" : "article",
-          title: article.title || null,
-          originalText: article.textContent || null,
-          siteName: article.siteName || new URL(url).hostname,
-          readingTime,
-          metadataJson: {
-            excerpt: article.excerpt,
-            byline: article.byline,
-            length: article.length,
-            dir: article.dir,
-          },
-        },
-      });
-
-      await completeJob(noteId, "extract", "İçerik çıkarıldı");
-
-      // AI processing
-      const settings = await prisma.systemSettings.findUnique({
-        where: { id: "default" },
-      });
-
-      const userSettings = await prisma.userSettings.findUnique({
-        where: { userId },
-      });
-
-      const user = await prisma.user.findUnique({ where: { id: userId } });
-
-      const apiKey = userSettings?.openaiApiKeyEncrypted;
-
-      if (apiKey && article.textContent) {
-        // Summarize
-        if (userSettings?.autoSummarize !== false) {
-          await updateStatus(noteId, "summarizing");
-          await createJob(noteId, "summarize", "running", "Özet oluşturuluyor...");
-          try {
-            const summary = await callOpenAI(
-              apiKey,
-              settings?.openaiModel || "gpt-4o-mini",
-              `Aşağıdaki makaleyi ${user?.preferredLanguage || "tr"} dilinde kısa ve öz bir şekilde özetle. Maksimum 3-4 cümle:\n\n${article.textContent.slice(0, 8000)}`
-            );
-            await prisma.note.update({
-              where: { id: noteId },
-              data: { summary },
-            });
-            await completeJob(noteId, "summarize", "Özet oluşturuldu");
-          } catch (e) {
-            await failJob(noteId, "summarize", `Özetleme hatası: ${e}`);
-          }
-        }
-
-        // Translate
-        if (userSettings?.autoTranslate !== false) {
-          await updateStatus(noteId, "translating");
-          await createJob(noteId, "translate", "running", "Çeviri yapılıyor...");
-          try {
-            const targetLang = user?.translationLanguage || "tr";
-            const textToTranslate = article.textContent.slice(0, 12000);
-            const translated = await callOpenAI(
-              apiKey,
-              settings?.openaiModel || "gpt-4o-mini",
-              `Aşağıdaki metni ${targetLang} diline çevir. Sadece çeviriyi döndür, başka bir şey ekleme:\n\n${textToTranslate}`
-            );
-            const translatedTitle = article.title
-              ? await callOpenAI(
-                  apiKey,
-                  settings?.openaiModel || "gpt-4o-mini",
-                  `Aşağıdaki başlığı ${targetLang} diline çevir. Sadece çeviriyi döndür:\n\n${article.title}`
-                )
-              : null;
-            await prisma.note.update({
-              where: { id: noteId },
-              data: { translatedText: translated, translatedTitle },
-            });
-            await completeJob(noteId, "translate", "Çeviri tamamlandı");
-          } catch (e) {
-            await failJob(noteId, "translate", `Çeviri hatası: ${e}`);
-          }
-        }
-
-        // Categorize
-        if (userSettings?.autoCategorize !== false) {
-          await updateStatus(noteId, "categorizing");
-          await createJob(noteId, "categorize", "running", "Kategori belirleniyor...");
-          try {
-            const catResult = await callOpenAI(
-              apiKey,
-              settings?.openaiModel || "gpt-4o-mini",
-              `Aşağıdaki makale içeriğini analiz et ve şu JSON formatında döndür:
-{"category": "...", "tags": ["...", "..."], "importance": 1-5}
-
-Mümkün kategoriler: İş, Kişisel, Haber, Teknoloji, Yazılım, Pazarlama, Eğitim, Video, Sosyal Medya, İlham, Araştırma, Satın Alma, Diğer
-
-Sadece JSON döndür, başka bir şey ekleme.
-
-İçerik:
-${article.textContent.slice(0, 4000)}`
-            );
-
-            try {
-              const parsed = JSON.parse(catResult);
-              await prisma.note.update({
-                where: { id: noteId },
-                data: {
-                  category: parsed.category || "Diğer",
-                  tags: parsed.tags || [],
-                  importance: parsed.importance || 0,
-                },
-              });
-            } catch {
-              await prisma.note.update({
-                where: { id: noteId },
-                data: { category: "Diğer" },
-              });
-            }
-            await completeJob(noteId, "categorize", "Kategori belirlendi");
-          } catch (e) {
-            await failJob(noteId, "categorize", `Kategorileme hatası: ${e}`);
-          }
-        }
-      }
-    } else {
+    if (!article) {
       // No readable content
       await prisma.note.update({
         where: { id: noteId },
@@ -219,19 +134,49 @@ ${article.textContent.slice(0, 4000)}`
         },
       });
       await completeJob(noteId, "extract", "İçerik çıkarılamadı, link kaydedildi");
+      return;
+    }
+
+    const readingTime = Math.ceil(
+      (article.textContent?.split(/\s+/).length || 0) / 200
+    );
+
+    await prisma.note.update({
+      where: { id: noteId },
+      data: {
+        type: isVideo ? "video" : "article",
+        title: article.title || null,
+        originalText: article.textContent || null,
+        siteName: article.siteName || new URL(url).hostname,
+        readingTime,
+        metadataJson: {
+          excerpt: article.excerpt,
+          byline: article.byline,
+          length: article.length,
+          dir: article.dir,
+        },
+      },
+    });
+
+    await completeJob(noteId, "extract", "İçerik çıkarıldı");
+
+    if (article.textContent) {
+      await runAiPipeline(noteId, userId, article.textContent, article.title ?? null);
     }
   } catch (error) {
-    await failJob(
-      noteId,
-      "extract",
-      `İçerik çıkarma hatası: ${error instanceof Error ? error.message : error}`
-    );
+    const message =
+      error instanceof BlockedUrlError
+        ? error.message
+        : `İçerik çıkarma hatası: ${error instanceof Error ? error.message : error}`;
+
+    await failJob(noteId, "extract", message);
+
     // Still save the link
     await prisma.note.update({
       where: { id: noteId },
       data: {
         title: url,
-        siteName: new URL(url).hostname,
+        siteName: safeHostname(url),
       },
     });
   }
@@ -253,108 +198,166 @@ async function processText(noteId: string, text: string, userId: string) {
 
   await completeJob(noteId, "analyze", "Metin analiz edildi");
 
-  // AI processing
-  const settings = await prisma.systemSettings.findUnique({
-    where: { id: "default" },
-  });
+  if (text.length > 50) {
+    await runAiPipeline(noteId, userId, text, null);
+  }
+}
+
+/**
+ * Ozet / ceviri / kategori adimlari. Anahtar yoksa adimlar sessizce atlanmak
+ * yerine nota gorunur bir kayit dusulur.
+ */
+async function runAiPipeline(
+  noteId: string,
+  userId: string,
+  text: string,
+  title: string | null
+) {
+  const ai = await resolveAi(userId);
+
+  if (!ai) {
+    await skipJob(
+      noteId,
+      "ai",
+      "OpenAI API anahtarı tanımlı olmadığı için özet, çeviri ve kategori adımları atlandı. " +
+        "Ayarlar sayfasından kendi anahtarınızı ekleyebilirsiniz."
+    );
+    return;
+  }
+
   const userSettings = await prisma.userSettings.findUnique({
     where: { userId },
   });
   const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  const apiKey = userSettings?.openaiApiKeyEncrypted;
+  if (userSettings?.autoSummarize !== false) {
+    await summarize(noteId, ai.config, text, user?.preferredLanguage || "tr");
+  }
 
-  if (apiKey && text.length > 50) {
-    if (userSettings?.autoSummarize !== false) {
-      await updateStatus(noteId, "summarizing");
-      try {
-        const summary = await callOpenAI(
-          apiKey,
-          settings?.openaiModel || "gpt-4o-mini",
-          `Aşağıdaki metni ${user?.preferredLanguage || "tr"} dilinde kısa özetle:\n\n${text.slice(0, 8000)}`
-        );
-        await prisma.note.update({ where: { id: noteId }, data: { summary } });
-      } catch (e) {
-        console.error("Summarize error:", e);
-      }
-    }
+  if (userSettings?.autoTranslate !== false) {
+    await translate(
+      noteId,
+      ai.config,
+      text,
+      title,
+      user?.translationLanguage || "tr"
+    );
+  }
 
-    if (userSettings?.autoTranslate !== false) {
-      await updateStatus(noteId, "translating");
-      try {
-        const translated = await callOpenAI(
-          apiKey,
-          settings?.openaiModel || "gpt-4o-mini",
-          `Aşağıdaki metni ${user?.translationLanguage || "tr"} diline çevir:\n\n${text.slice(0, 12000)}`
-        );
-        await prisma.note.update({
-          where: { id: noteId },
-          data: { translatedText: translated },
-        });
-      } catch (e) {
-        console.error("Translate error:", e);
-      }
-    }
-
-    if (userSettings?.autoCategorize !== false) {
-      await updateStatus(noteId, "categorizing");
-      try {
-        const catResult = await callOpenAI(
-          apiKey,
-          settings?.openaiModel || "gpt-4o-mini",
-          `Analiz et ve JSON döndür: {"category": "...", "tags": ["..."], "importance": 1-5}
-Kategoriler: İş, Kişisel, Haber, Teknoloji, Yazılım, Pazarlama, Eğitim, Video, Sosyal Medya, İlham, Araştırma, Satın Alma, Diğer
-Sadece JSON:\n\n${text.slice(0, 4000)}`
-        );
-        try {
-          const parsed = JSON.parse(catResult);
-          await prisma.note.update({
-            where: { id: noteId },
-            data: {
-              category: parsed.category || "Diğer",
-              tags: parsed.tags || [],
-              importance: parsed.importance || 0,
-            },
-          });
-        } catch {
-          await prisma.note.update({
-            where: { id: noteId },
-            data: { category: "Diğer" },
-          });
-        }
-      } catch (e) {
-        console.error("Categorize error:", e);
-      }
-    }
+  if (userSettings?.autoCategorize !== false) {
+    await categorize(noteId, ai.config, text);
   }
 }
 
-async function callOpenAI(
-  apiKey: string,
-  model: string,
-  prompt: string
-): Promise<string> {
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 2000,
-      temperature: 0.3,
-    }),
-  });
+async function summarize(
+  noteId: string,
+  config: OpenAIConfig,
+  text: string,
+  language: string
+) {
+  await updateStatus(noteId, "summarizing");
+  await createJob(noteId, "summarize", "running", "Özet oluşturuluyor...");
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenAI API error: ${response.status} ${err}`);
+  try {
+    const summary = await chat(
+      config,
+      `Aşağıdaki içeriği ${language} dilinde kısa ve öz bir şekilde özetle. ` +
+        `Maksimum 3-4 cümle:\n\n${text.slice(0, 8000)}`
+    );
+    await prisma.note.update({ where: { id: noteId }, data: { summary } });
+    await completeJob(noteId, "summarize", "Özet oluşturuldu");
+  } catch (error) {
+    await failJob(noteId, "summarize", `Özetleme hatası: ${errorText(error)}`);
   }
+}
 
-  const data = await response.json();
-  return data.choices[0]?.message?.content?.trim() || "";
+async function translate(
+  noteId: string,
+  config: OpenAIConfig,
+  text: string,
+  title: string | null,
+  targetLanguage: string
+) {
+  await updateStatus(noteId, "translating");
+  await createJob(noteId, "translate", "running", "Çeviri yapılıyor...");
+
+  try {
+    const result = await translateLongText(config, text, targetLanguage);
+
+    const translatedTitle = title
+      ? await chat(
+          config,
+          `Aşağıdaki başlığı ${targetLanguage} diline çevir. Sadece çeviriyi döndür:\n\n${title}`,
+          { maxTokens: 200 }
+        )
+      : null;
+
+    await prisma.note.update({
+      where: { id: noteId },
+      data: { translatedText: result.text, translatedTitle },
+    });
+
+    await completeJob(
+      noteId,
+      "translate",
+      result.truncated
+        ? `Çeviri tamamlandı (metin çok uzun olduğu için ilk ${result.chunkCount} bölüm çevrildi)`
+        : `Çeviri tamamlandı (${result.chunkCount} bölüm)`
+    );
+  } catch (error) {
+    await failJob(noteId, "translate", `Çeviri hatası: ${errorText(error)}`);
+  }
+}
+
+async function categorize(
+  noteId: string,
+  config: OpenAIConfig,
+  text: string
+) {
+  await updateStatus(noteId, "categorizing");
+  await createJob(noteId, "categorize", "running", "Kategori belirleniyor...");
+
+  try {
+    const parsed = await chatJson<CategoryResult>(
+      config,
+      `Aşağıdaki içeriği analiz et ve şu JSON formatında döndür:
+{"category": "...", "tags": ["...", "..."], "importance": 1-5}
+
+Mümkün kategoriler: ${CATEGORIES}
+
+İçerik:
+${text.slice(0, 4000)}`
+    );
+
+    await prisma.note.update({
+      where: { id: noteId },
+      data: {
+        category: parsed?.category || "Diğer",
+        tags: Array.isArray(parsed?.tags) ? parsed.tags.slice(0, 10) : [],
+        importance: Number(parsed?.importance) || 0,
+      },
+    });
+
+    await completeJob(
+      noteId,
+      "categorize",
+      parsed ? "Kategori belirlendi" : "Kategori çözümlenemedi, 'Diğer' atandı"
+    );
+  } catch (error) {
+    await failJob(noteId, "categorize", `Kategorileme hatası: ${errorText(error)}`);
+  }
+}
+
+function errorText(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function safeHostname(url: string): string | null {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
 }
 
 async function updateStatus(noteId: string, status: string) {
@@ -378,6 +381,20 @@ async function createJob(
   });
 }
 
+/** Yapilmayan bir adimi kullaniciya gorunur sekilde kaydeder. */
+async function skipJob(noteId: string, jobType: string, message: string) {
+  await prisma.noteJob.create({
+    data: {
+      noteId,
+      jobType,
+      status: "skipped",
+      message,
+      startedAt: new Date(),
+      finishedAt: new Date(),
+    },
+  });
+}
+
 async function completeJob(noteId: string, jobType: string, message: string) {
   const job = await prisma.noteJob.findFirst({
     where: { noteId, jobType, status: "running" },
@@ -391,7 +408,7 @@ async function completeJob(noteId: string, jobType: string, message: string) {
   }
 }
 
-async function failJob(noteId: string, jobType: string, errorText: string) {
+async function failJob(noteId: string, jobType: string, errorMessage: string) {
   const job = await prisma.noteJob.findFirst({
     where: { noteId, jobType, status: "running" },
     orderBy: { startedAt: "desc" },
@@ -399,7 +416,7 @@ async function failJob(noteId: string, jobType: string, errorText: string) {
   if (job) {
     await prisma.noteJob.update({
       where: { id: job.id },
-      data: { status: "failed", errorText, finishedAt: new Date() },
+      data: { status: "failed", errorText: errorMessage, finishedAt: new Date() },
     });
   }
 }

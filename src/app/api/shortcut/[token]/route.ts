@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authenticateToken } from "@/lib/api-auth";
 
 function generateShortcutPlist(ingestUrl: string, token: string) {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -141,6 +142,21 @@ export async function GET(
 
   if (!token) {
     return NextResponse.json({ error: "Token gerekli" }, { status: 400 });
+  }
+
+  // Bu uc nokta oturum gerektirmez (Kisayollar uygulamasi cerez tasimaz), o
+  // yuzden token'in gercekten bir kullaniciya ait oldugu burada dogrulanir.
+  try {
+    const user = await authenticateToken(token);
+    if (!user) {
+      return NextResponse.json({ error: "Geçersiz token" }, { status: 404 });
+    }
+  } catch (error) {
+    console.error("Shortcut token doğrulama hatası:", error);
+    return NextResponse.json(
+      { error: "Kısayol oluşturulamadı" },
+      { status: 500 }
+    );
   }
 
   const host = req.headers.get("host") || "notes.kronomondo.org";

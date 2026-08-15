@@ -32,11 +32,14 @@ model LoginCode {
   codeHash   String    @map("code_hash")
   expiresAt  DateTime  @map("expires_at")
   consumedAt DateTime? @map("consumed_at")
+  attempts   Int       @default(0)
   ipAddress  String?   @map("ip_address")
   createdAt  DateTime  @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([ipAddress, createdAt(sort: Desc)])
   @@map("login_codes")
 }
 
@@ -50,11 +53,13 @@ model UserSettings {
   autoTranscribe        Boolean  @default(true) @map("auto_transcribe")
   autoCategorize        Boolean  @default(true) @map("auto_categorize")
   shortcutTokenHash     String?  @map("shortcut_token_hash")
+  shortcutTokenPrefix   String?  @map("shortcut_token_prefix")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([shortcutTokenPrefix])
   @@map("user_settings")
 }
 
@@ -70,6 +75,7 @@ model ApiKey {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([keyPrefix])
   @@map("api_keys")
 }
 

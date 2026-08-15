@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { encrypt } from "@/lib/crypto";
+
+/** Sirlar DB'ye sifreli yazilir; bos deger degeri siler. */
+function encryptSecretField(value: unknown): string | null | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  return encrypt(trimmed);
+}
 
 async function requireAdminSession() {
   const session = await getSession();
@@ -31,6 +40,7 @@ export async function GET() {
     settings: {
       ...settings,
       smtpPasswordEncrypted: settings.smtpPasswordEncrypted ? "••••••••" : null,
+      openaiApiKey: settings.openaiApiKey ? "••••••••" : null,
     },
   });
 }
@@ -47,18 +57,27 @@ export async function PUT(req: NextRequest) {
     "smtpHost",
     "smtpPort",
     "smtpUsername",
-    "smtpPasswordEncrypted",
     "smtpFromName",
     "smtpFromEmail",
     "smtpSecure",
     "defaultLanguage",
     "supportedLanguages",
+    "openaiModel",
   ];
+  const secretFields = ["smtpPasswordEncrypted", "openaiApiKey"];
 
   const updateData: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (body[field] !== undefined) {
       updateData[field] = body[field];
+    }
+  }
+  for (const field of secretFields) {
+    // Maskeli deger geri gonderildiyse mevcut siri ezme
+    if (body[field] === "••••••••") continue;
+    const encrypted = encryptSecretField(body[field]);
+    if (encrypted !== undefined) {
+      updateData[field] = encrypted;
     }
   }
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
   ArrowLeft,
   ExternalLink,
@@ -57,7 +58,15 @@ interface NoteProps {
     createdAt: string;
     updatedAt: string;
     jobs: NoteJob[];
-    shares: { id: string; token: string; createdAt: string }[];
+    shares: {
+      id: string;
+      token: string;
+      createdAt: string;
+      expiresAt: string | null;
+      maxViews: number | null;
+      currentViews: number;
+      hasPassword: boolean;
+    }[];
   };
 }
 
@@ -72,15 +81,58 @@ const statusMap: Record<string, { label: string; variant: "default" | "success" 
   failed: { label: "Hata", variant: "error" },
 };
 
+/** Bitis tarihini forma yazilabilir "kac gun kaldi" degerine cevirir. */
+function daysUntil(date: string | null): string {
+  if (!date) return "";
+  const days = Math.ceil((new Date(date).getTime() - Date.now()) / 86400000);
+  return days > 0 ? String(days) : "";
+}
+
 export function NoteDetail({ note }: NoteProps) {
   const router = useRouter();
+  const share = note.shares[0];
   const [showOriginal, setShowOriginal] = useState(false);
   const [showJobs, setShowJobs] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  // Form mevcut paylasimin ayarlariyla dolar; dokunulmadan kaydedilirse
+  // hicbir sey degismez
+  const [expiresInDays, setExpiresInDays] = useState(daysUntil(share?.expiresAt ?? null));
+  const [sharePassword, setSharePassword] = useState("");
+  const [maxViews, setMaxViews] = useState(share?.maxViews ? String(share.maxViews) : "");
 
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
+  const skippedJobs = note.jobs.filter((job) => job.status === "skipped");
+
+  async function postShare(extra: Record<string, unknown> = {}) {
+    setSharing(true);
+    await fetch(`/api/notes/${note.id}/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        expiresInDays: expiresInDays ? Number(expiresInDays) : null,
+        password: sharePassword || null,
+        maxViews: maxViews ? Number(maxViews) : null,
+        ...extra,
+      }),
+    });
+    setSharePassword("");
+    router.refresh();
+    setSharing(false);
+  }
+
+  const saveShare = () => postShare();
+  const removeSharePassword = () => postShare({ removePassword: true });
+
+  async function removeShare() {
+    if (!confirm("Paylaşım linkini kaldırmak istediğinize emin misiniz?")) return;
+    setSharing(true);
+    await fetch(`/api/notes/${note.id}/share`, { method: "DELETE" });
+    router.refresh();
+    setSharing(false);
+  }
 
   async function handleReprocess() {
     setReprocessing(true);
@@ -115,7 +167,7 @@ export function NoteDetail({ note }: NoteProps) {
   }
 
   async function copyShareLink() {
-    const shareUrl = `${window.location.origin}/share/${note.shares[0]?.token}`;
+    const shareUrl = `${window.location.origin}/share/${share?.token}`;
     await navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -206,6 +258,17 @@ export function NoteDetail({ note }: NoteProps) {
         </div>
       )}
 
+      {/* Atlanan adimlar */}
+      {skippedJobs.length > 0 && (
+        <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
+          {skippedJobs.map((job) => (
+            <p key={job.id} className="text-sm text-amber-700 dark:text-amber-400">
+              {job.message}
+            </p>
+          ))}
+        </Card>
+      )}
+
       {/* Error */}
       {note.errorText && (
         <Card className="mb-6 border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20">
@@ -258,25 +321,91 @@ export function NoteDetail({ note }: NoteProps) {
         <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
           Paylaşım
         </h2>
-        {note.shares.length > 0 ? (
-          <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg text-zinc-600 dark:text-zinc-400 truncate">
-              {typeof window !== "undefined" ? `${window.location.origin}/share/${note.shares[0].token}` : `/share/${note.shares[0].token}`}
-            </code>
-            <Button variant="outline" size="sm" onClick={copyShareLink}>
-              {copied ? <Check size={16} /> : <Copy size={16} />}
-            </Button>
-          </div>
-        ) : (
-          <Button variant="outline" size="sm" onClick={async () => {
-            await fetch(`/api/notes/${note.id}/share`, {
-              method: "POST",
-            });
-            router.refresh();
-          }}>
-            <Share2 size={16} /> Paylaşım Linki Oluştur
-          </Button>
+
+        {share && (
+          <>
+            <div className="flex items-center gap-2 mb-3">
+              <code className="flex-1 text-sm bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg text-zinc-600 dark:text-zinc-400 truncate">
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/share/${share.token}`
+                  : `/share/${share.token}`}
+              </code>
+              <Button variant="outline" size="sm" onClick={copyShareLink}>
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+              </Button>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mb-4 text-xs text-zinc-500">
+              <Badge variant={share.hasPassword ? "success" : "default"}>
+                {share.hasPassword ? "Şifre korumalı" : "Şifresiz"}
+              </Badge>
+              <Badge variant={share.expiresAt ? "info" : "default"}>
+                {share.expiresAt
+                  ? `Bitiş: ${new Date(share.expiresAt).toLocaleDateString("tr-TR")}`
+                  : "Süresiz"}
+              </Badge>
+              <Badge variant={share.maxViews ? "info" : "default"}>
+                {share.maxViews
+                  ? `${share.currentViews}/${share.maxViews} görüntülenme`
+                  : `${share.currentViews} görüntülenme`}
+              </Badge>
+            </div>
+          </>
         )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+          <Input
+            id="shareExpiry"
+            label="Süre (gün)"
+            type="number"
+            min={1}
+            placeholder="Süresiz"
+            value={expiresInDays}
+            onChange={(e) => setExpiresInDays(e.target.value)}
+          />
+          <Input
+            id="sharePassword"
+            label="Şifre"
+            type="password"
+            placeholder={share?.hasPassword ? "Değiştirmek için girin" : "Yok"}
+            value={sharePassword}
+            onChange={(e) => setSharePassword(e.target.value)}
+          />
+          <Input
+            id="shareMaxViews"
+            label="Maks. görüntülenme"
+            type="number"
+            min={1}
+            placeholder="Sınırsız"
+            value={maxViews}
+            onChange={(e) => setMaxViews(e.target.value)}
+          />
+        </div>
+        <p className="text-xs text-zinc-400 mb-3">
+          Süre ve görüntülenme alanları boş bırakılırsa sınır uygulanmaz. Şifre
+          alanı boş bırakılırsa mevcut şifre korunur. Kaydettiğinizde link
+          değişmez, yalnızca ayarları güncellenir.
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={saveShare} loading={sharing}>
+            <Share2 size={16} /> {share ? "Ayarları Güncelle" : "Paylaşım Linki Oluştur"}
+          </Button>
+          {share?.hasPassword && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={removeSharePassword}
+              loading={sharing}
+            >
+              Şifreyi Kaldır
+            </Button>
+          )}
+          {share && (
+            <Button variant="danger" size="sm" onClick={removeShare} loading={sharing}>
+              <Trash2 size={16} /> Paylaşımı Kaldır
+            </Button>
+          )}
+        </div>
       </Card>
 
       {/* Jobs / Processing Status */}
@@ -299,7 +428,13 @@ export function NoteDetail({ note }: NoteProps) {
                   <div className="flex items-center gap-2">
                     <Badge
                       variant={
-                        job.status === "completed" ? "success" : job.status === "failed" ? "error" : "info"
+                        job.status === "completed"
+                          ? "success"
+                          : job.status === "failed"
+                            ? "error"
+                            : job.status === "skipped"
+                              ? "warning"
+                              : "info"
                       }
                     >
                       {job.status}

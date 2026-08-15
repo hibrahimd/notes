@@ -99,6 +99,7 @@ export const LoginCodeScalarFieldEnum = {
   codeHash: 'codeHash',
   expiresAt: 'expiresAt',
   consumedAt: 'consumedAt',
+  attempts: 'attempts',
   ipAddress: 'ipAddress',
   createdAt: 'createdAt'
 } as const
@@ -116,6 +117,7 @@ export const UserSettingsScalarFieldEnum = {
   autoTranscribe: 'autoTranscribe',
   autoCategorize: 'autoCategorize',
   shortcutTokenHash: 'shortcutTokenHash',
+  shortcutTokenPrefix: 'shortcutTokenPrefix',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

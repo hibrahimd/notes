@@ -13,6 +13,10 @@ export async function POST(req: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
+    const ipAddress =
+      req.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
 
     // Rate limit: max 3 codes in 10 minutes
     const recentCodes = await prisma.loginCode.count({
@@ -27,6 +31,23 @@ export async function POST(req: NextRequest) {
         { error: "Çok fazla kod talebi. Lütfen biraz bekleyin." },
         { status: 429 }
       );
+    }
+
+    // Email bazli limitin farkli adreslerle asilmasini engelle
+    if (ipAddress !== "unknown") {
+      const recentFromIp = await prisma.loginCode.count({
+        where: {
+          ipAddress,
+          createdAt: { gte: new Date(Date.now() - 60 * 60 * 1000) },
+        },
+      });
+
+      if (recentFromIp >= 10) {
+        return NextResponse.json(
+          { error: "Çok fazla kod talebi. Lütfen biraz bekleyin." },
+          { status: 429 }
+        );
+      }
     }
 
     let user = await prisma.user.findUnique({
@@ -58,10 +79,7 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         codeHash,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-        ipAddress:
-          req.headers.get("x-forwarded-for") ||
-          req.headers.get("x-real-ip") ||
-          "unknown",
+        ipAddress,
       },
     });
 

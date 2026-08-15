@@ -1212,6 +1212,7 @@ export const LoginCodeScalarFieldEnum = {
   codeHash: 'codeHash',
   expiresAt: 'expiresAt',
   consumedAt: 'consumedAt',
+  attempts: 'attempts',
   ipAddress: 'ipAddress',
   createdAt: 'createdAt'
 } as const
@@ -1229,6 +1230,7 @@ export const UserSettingsScalarFieldEnum = {
   autoTranscribe: 'autoTranscribe',
   autoCategorize: 'autoCategorize',
   shortcutTokenHash: 'shortcutTokenHash',
+  shortcutTokenPrefix: 'shortcutTokenPrefix',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -1438,6 +1440,20 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'Boolean'
  */
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
@@ -1455,20 +1471,6 @@ export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'J
  * Reference to a field of type 'QueryMode'
  */
 export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
-    
-
-
-/**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
-    
-
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
     
 
 

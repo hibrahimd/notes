@@ -1,50 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getNoteQueue } from "@/lib/queue";
-import bcryptjs from "bcryptjs";
-
-async function authenticateByToken(req: NextRequest) {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) return null;
-
-  const token = authHeader.slice(7);
-
-  // Check API keys
-  const apiKeys = await prisma.apiKey.findMany({
-    where: { revokedAt: null },
-    include: { user: true },
-  });
-
-  for (const ak of apiKeys) {
-    const match = await bcryptjs.compare(token, ak.keyHash);
-    if (match) {
-      await prisma.apiKey.update({
-        where: { id: ak.id },
-        data: { lastUsedAt: new Date() },
-      });
-      return ak.user;
-    }
-  }
-
-  // Check shortcut tokens
-  const settings = await prisma.userSettings.findMany({
-    where: { shortcutTokenHash: { not: null } },
-    include: { user: true },
-  });
-
-  for (const s of settings) {
-    if (s.shortcutTokenHash) {
-      const match = await bcryptjs.compare(token, s.shortcutTokenHash);
-      if (match) return s.user;
-    }
-  }
-
-  return null;
-}
+import { authenticateRequest } from "@/lib/api-auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await authenticateByToken(req);
+    const user = await authenticateRequest(req);
     if (!user) {
       return NextResponse.json({ success: false, error: "Yetkisiz" }, { status: 401 });
     }

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { prisma } from "./prisma";
+import { tryDecrypt } from "./crypto";
 
 export async function getMailTransporter() {
   const settings = await prisma.systemSettings.findUnique({
@@ -7,11 +8,11 @@ export async function getMailTransporter() {
   });
 
   if (!settings?.smtpHost || !settings?.smtpUsername) {
-    throw new Error("SMTP ayarları yapılandırılmamış");
+    throw new Error("SMTP ayarlari yapilandirilmamis");
   }
 
   const port = settings.smtpPort || 587;
-  // Port 465 = implicit SSL, Port 587 = STARTTLS (secure must be false)
+  // Port 465 = implicit SSL, Port 587 = STARTTLS (secure false olmali)
   const secure = port === 465;
 
   return nodemailer.createTransport({
@@ -20,9 +21,10 @@ export async function getMailTransporter() {
     secure,
     auth: {
       user: settings.smtpUsername,
-      pass: settings.smtpPasswordEncrypted || "",
+      pass: tryDecrypt(settings.smtpPasswordEncrypted) || "",
     },
-    ...(!secure ? { tls: { rejectUnauthorized: false } } : {}),
+    // Duz baglantiya sessizce dusmeyi engelle
+    ...(!secure ? { requireTLS: true } : {}),
   });
 }
 
