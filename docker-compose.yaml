@@ -24,6 +24,10 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
+      # App birden fazla agda oldugu icin traefik'in hangi agdaki IP'ye
+      # gidecegini acikca belirtmek gerekiyor; yoksa ulasamadigi bir agi secip
+      # istegi askida birakiyor (Cloudflare tarafinda 504 olarak gorunur).
+      - "traefik.docker.network=coolify"
       - "traefik.http.routers.notal.rule=Host(`notes.kronomondo.org`)"
       - "traefik.http.routers.notal.entrypoints=http"
       - "traefik.http.services.notal.loadbalancer.server.port=3000"
