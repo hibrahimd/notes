@@ -12,7 +12,7 @@ import { authenticateToken } from "@/lib/api-auth";
  * DIKKAT: Uretilen dosya imzasizdir. iOS 15'ten beri ice aktarilan
  * kisayollarin imzali olmasi zorunlu ve "Guvenilmeyen Kisayollara Izin Ver"
  * ayari kaldirildi; bu dosya iPhone'a kurulamaz. Kurulum akisi imzali
- * /shortcut.shortcut uzerinden yurur ve token import sorusuyla girilir.
+ * /Notlarima-Ekle.shortcut uzerinden yurur ve token import sorusuyla girilir.
  *
  * Bu uc nokta, ileride sunucu tarafinda imzalama mumkun olursa (macOS'taki
  * `shortcuts sign`) hazir dursun diye ve plist yapisini belgelemek icin

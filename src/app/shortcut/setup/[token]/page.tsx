@@ -2,21 +2,21 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
-// Imzali kisayol /public/shortcut.shortcut altinda durur.
+// Imzali kisayol /public/Notlarima-Ekle.shortcut altinda durur.
 // Yeniden uretmek icin:
-//   shortcuts sign -i public/shortcut-template.shortcut -o public/shortcut.shortcut -m anyone
+//   shortcuts sign -i public/shortcut-template.shortcut -o public/Notlarima-Ekle.shortcut -m anyone
 //
 // iOS 15'ten beri "Guvenilmeyen Kisayollara Izin Ver" ayari yok ve ice
 // aktarilan kisayolun imzali olmasi zorunlu; imzasiz dosya kurulamaz.
-const SHORTCUT_FILE_URL = "https://notes.kronomondo.org/shortcut.shortcut";
-
-// url parametresi yuzde kodlanmali; kodlanmadan yazildiginda icindeki "://"
-// yuzunden iOS "Girilen kestirme URL'si gecersiz" diyor.
-const SHORTCUT_INSTALL_URL =
-  "shortcuts://import-shortcut?url=" +
-  encodeURIComponent(SHORTCUT_FILE_URL) +
-  "&name=" +
-  encodeURIComponent("Notlarima-Ekle");
+// Not: shortcuts://import-shortcut?url=... kullanilmiyor. Kisayollar
+// uygulamasi kendi barindirdigimiz dosyayi (URL dogru kodlanmis olsa bile)
+// "Girilen kestirme URL'si gecersiz" diyerek reddediyor; bu sema pratikte
+// yalnizca iCloud baglantilarini kabul ediyor. Kurulum dogrudan indirme ile
+// yapiliyor.
+// Dosya adi onemli: iOS ice aktarirken kisayolun adini dosya adindan aliyor,
+// plist icindeki WFWorkflowName'den degil. "shortcut.shortcut" oldugunda
+// kisayol "shortcut 2" olarak goruruyordu.
+const SHORTCUT_FILE_URL = "https://notes.kronomondo.org/Notlarima-Ekle.shortcut";
 
 export default async function ShortcutSetupPage({ params }: Props) {
   const { token } = await params;
@@ -116,7 +116,6 @@ export default async function ShortcutSetupPage({ params }: Props) {
         `}</style>
         <script dangerouslySetInnerHTML={{ __html: `
           var TOKEN = ${JSON.stringify(token)};
-          var INSTALL_URL = ${JSON.stringify(SHORTCUT_INSTALL_URL)};
 
           function copyToken() {
             return navigator.clipboard.writeText(TOKEN).then(function() {
@@ -139,20 +138,9 @@ export default async function ShortcutSetupPage({ params }: Props) {
             }
           }
 
-          function openInShortcuts(e) {
-            e.preventDefault();
-            var go = function() { window.location.href = INSTALL_URL; };
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(TOKEN).then(function() { markCopied(); go(); }, go);
-            } else {
-              go();
-            }
-          }
-
           document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('token-box').addEventListener('click', copyToken);
             document.getElementById('download-btn').addEventListener('click', onDownload);
-            document.getElementById('install-btn').addEventListener('click', openInShortcuts);
           });
         `}} />
       </head>
@@ -196,21 +184,16 @@ export default async function ShortcutSetupPage({ params }: Props) {
             </div>
           </div>
 
-          <a href={SHORTCUT_FILE_URL} className="btn" id="download-btn" download>
+          {/* download niteligi yok: Safari'nin dosyayi indirmek yerine
+              Kisayollar'a devredebilmesi icin dogrudan gezinmesi gerekiyor */}
+          <a href={SHORTCUT_FILE_URL} className="btn" id="download-btn">
             Kısayolu İndir
           </a>
           <p className="note">iPhone&apos;dan Safari ile açın.</p>
 
           <hr className="divider" />
 
-          <div className="step-desc" style={{ marginBottom: 10 }}>
-            Alternatif: Kısayollar uygulamasını doğrudan açmayı deneyin.
-          </div>
-          <a href={SHORTCUT_INSTALL_URL} className="btn" id="install-btn" style={{ background: "#6e6e73" }}>
-            Kısayollar&apos;da Aç
-          </a>
-
-          <div className="copy-hint" id="copy-hint" style={{ marginTop: 14 }}>Kopyalamak için dokun</div>
+          <div className="copy-hint" id="copy-hint">Kopyalamak için dokun</div>
           <div className="token-box" id="token-box">{token}</div>
         </div>
       </body>

@@ -3,21 +3,49 @@ import { prisma } from "@/lib/prisma";
 import { getNoteQueue } from "@/lib/queue";
 import { authenticateRequest } from "@/lib/api-auth";
 
+/**
+ * Her cevapta tek bir okunabilir `message` alani doner; iPhone kisayolu bunu
+ * tek bir "Bildirim Goster" islemiyle gosterebilsin diye basari/hata ayrimi
+ * icin dallanma gerekmiyor.
+ *
+ * `?notify=1` verildiginde hata durumlarinda da HTTP 200 doner. Kisayollar
+ * uygulamasi 4xx/5xx aldiginda kendi hata kutusunu acip duruyor ve cevabin
+ * icindeki mesaj kullaniciya hic ulasmiyor. Varsayilan davranis degismez;
+ * curl ve diger API istemcileri dogru durum kodlarini almaya devam eder.
+ */
+function makeReply(softErrors: boolean) {
+  return function reply(
+    status: number,
+    message: string,
+    extra: Record<string, unknown> = {}
+  ) {
+    const ok = status < 400;
+    return NextResponse.json(
+      { success: ok, message, ...extra },
+      { status: !ok && softErrors ? 200 : status }
+    );
+  };
+}
+
 export async function POST(req: NextRequest) {
+  const softErrors = new URL(req.url).searchParams.get("notify") === "1";
+  const reply = makeReply(softErrors);
+
   try {
     const user = await authenticateRequest(req);
     if (!user) {
-      return NextResponse.json({ success: false, error: "Yetkisiz" }, { status: 401 });
+      return reply(401, "❌ Geçersiz token, kısayolu yeniden kurun", {
+        error: "Yetkisiz",
+      });
     }
 
     const body = await req.json();
     const { url, text, title, source } = body;
 
     if (!url && !text) {
-      return NextResponse.json(
-        { success: false, error: "URL veya metin gerekli" },
-        { status: 400 }
-      );
+      return reply(400, "❌ Gönderilecek link veya metin yok", {
+        error: "URL veya metin gerekli",
+      });
     }
 
     const noteType = url ? "link" : "text";
@@ -44,15 +72,11 @@ export async function POST(req: NextRequest) {
       console.error("Queue error (note still created):", queueError);
     }
 
-    return NextResponse.json(
-      { success: true, message: "Not kaydedildi", noteId: note.id },
-      { status: 201 }
-    );
+    return reply(201, "✅ Not kaydedildi", { noteId: note.id });
   } catch (error) {
     console.error("Ingest error:", error);
-    return NextResponse.json(
-      { success: false, error: "Not kaydedilirken hata oluştu" },
-      { status: 500 }
-    );
+    return reply(500, "❌ Not kaydedilemedi, sunucu hatası", {
+      error: "Not kaydedilirken hata oluştu",
+    });
   }
 }
