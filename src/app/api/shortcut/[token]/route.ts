@@ -9,9 +9,14 @@ import { authenticateToken } from "@/lib/api-auth";
  * `shortcuts sign` araci tarafindan kabul edildigi icin bicimin gecerliligi
  * bilinmektedir. Tek fark: token dogrudan yazilir ve import sorusu kaldirilir.
  *
- * Uretilen dosya imzasiz oldugundan iOS'ta bir kez
- * "Ayarlar > Kisayollar > Guvenilmeyen Kisayollara Izin Ver" acilmalidir.
- * Imzali ve herkeste calisan surum icin /shortcut.shortcut kullanilir.
+ * DIKKAT: Uretilen dosya imzasizdir. iOS 15'ten beri ice aktarilan
+ * kisayollarin imzali olmasi zorunlu ve "Guvenilmeyen Kisayollara Izin Ver"
+ * ayari kaldirildi; bu dosya iPhone'a kurulamaz. Kurulum akisi imzali
+ * /shortcut.shortcut uzerinden yurur ve token import sorusuyla girilir.
+ *
+ * Bu uc nokta, ileride sunucu tarafinda imzalama mumkun olursa (macOS'taki
+ * `shortcuts sign`) hazir dursun diye ve plist yapisini belgelemek icin
+ * korunuyor. Kurulum arayuzunden link verilmez.
  */
 
 const TOKEN_OUTPUT_UUID = "A1B2C3D4-E5F6-7A8B-9C0D-E1F2A3B4C5D6";

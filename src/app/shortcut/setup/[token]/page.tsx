@@ -2,10 +2,21 @@ interface Props {
   params: Promise<{ token: string }>;
 }
 
-// Signed shortcut served from /public/shortcut.shortcut
-// To regenerate: shortcuts sign -i public/shortcut-template.shortcut -o public/shortcut.shortcut -m anyone
+// Imzali kisayol /public/shortcut.shortcut altinda durur.
+// Yeniden uretmek icin:
+//   shortcuts sign -i public/shortcut-template.shortcut -o public/shortcut.shortcut -m anyone
+//
+// iOS 15'ten beri "Guvenilmeyen Kisayollara Izin Ver" ayari yok ve ice
+// aktarilan kisayolun imzali olmasi zorunlu; imzasiz dosya kurulamaz.
+const SHORTCUT_FILE_URL = "https://notes.kronomondo.org/shortcut.shortcut";
+
+// url parametresi yuzde kodlanmali; kodlanmadan yazildiginda icindeki "://"
+// yuzunden iOS "Girilen kestirme URL'si gecersiz" diyor.
 const SHORTCUT_INSTALL_URL =
-  "shortcuts://import-shortcut?url=https://notes.kronomondo.org/shortcut.shortcut&name=Notlarima-Ekle";
+  "shortcuts://import-shortcut?url=" +
+  encodeURIComponent(SHORTCUT_FILE_URL) +
+  "&name=" +
+  encodeURIComponent("Notlarima-Ekle");
 
 export default async function ShortcutSetupPage({ params }: Props) {
   const { token } = await params;
@@ -115,32 +126,33 @@ export default async function ShortcutSetupPage({ params }: Props) {
             });
           }
 
-          // Kurulum tek dokunus: once token panoya yazilir, sonra Kisayollar
-          // acilir. Import ekraninda tek yapmasi gereken yapistirmak.
-          function installShortcut(e) {
+          // Indirme baslamadan once token panoya yazilir; import ekrani
+          // sordugunda hazir olsun. Indirmeyi engellemeyiz, sadece isaretleriz.
+          function markCopied() {
+            var el = document.getElementById('copy-hint');
+            el.textContent = '✅ Token panoya kopyalandı';
+          }
+
+          function onDownload() {
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(TOKEN).then(markCopied, function(){});
+            }
+          }
+
+          function openInShortcuts(e) {
             e.preventDefault();
-            var btn = document.getElementById('install-btn');
-            btn.textContent = 'Token kopyalandi, aciliyor...';
             var go = function() { window.location.href = INSTALL_URL; };
             if (navigator.clipboard) {
-              navigator.clipboard.writeText(TOKEN).then(go, go);
+              navigator.clipboard.writeText(TOKEN).then(function() { markCopied(); go(); }, go);
             } else {
               go();
             }
           }
 
-          // Token gomulu (imzasiz) surum: yapistirma adimi yok
-          function directInstall(e) {
-            e.preventDefault();
-            var url = window.location.origin + '/api/shortcut/' + encodeURIComponent(TOKEN);
-            window.location.href = 'shortcuts://import-shortcut?url=' +
-              encodeURIComponent(url) + '&name=Notlarima-Ekle';
-          }
-
           document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('token-box').addEventListener('click', copyToken);
-            document.getElementById('install-btn').addEventListener('click', installShortcut);
-            document.getElementById('direct-install-btn').addEventListener('click', directInstall);
+            document.getElementById('download-btn').addEventListener('click', onDownload);
+            document.getElementById('install-btn').addEventListener('click', openInShortcuts);
           });
         `}} />
       </head>
@@ -153,10 +165,10 @@ export default async function ShortcutSetupPage({ params }: Props) {
           <div className="step">
             <div className="step-num">1</div>
             <div className="step-body">
-              <div className="step-title">Bir kez ayarı açın</div>
+              <div className="step-title">Kısayolu indirin</div>
               <div className="step-desc">
-                <b>Ayarlar → Kısayollar → Güvenilmeyen Kısayollara İzin Ver</b>.
-                Bu açık değilse iPhone token&apos;ı gömülü kısayolu reddeder.
+                Aşağıdaki butona basın. Safari dosyayı indirir ve token&apos;ınız
+                aynı anda panoya kopyalanır.
               </div>
             </div>
           </div>
@@ -164,29 +176,38 @@ export default async function ShortcutSetupPage({ params }: Props) {
           <div className="step">
             <div className="step-num">2</div>
             <div className="step-body">
-              <div className="step-title">Butona basın, bitti</div>
+              <div className="step-title">İndirilen dosyaya dokunun</div>
               <div className="step-desc">
-                Token kısayolun içine gömülüdür; hiçbir şey yapıştırmanız
-                gerekmez. Kısayollar açılır, <b>Kısayolu Ekle</b> deyip çıkarsınız.
+                Safari&apos;de sağ üstteki <b>indirmeler</b> simgesine basıp
+                <b> Notlarima-Ekle.shortcut</b> dosyasına dokunun. Kısayollar
+                uygulaması açılacak.
               </div>
             </div>
           </div>
 
-          <a href="#" className="btn" id="direct-install-btn">
-            Tek Dokunuşla Kur
+          <div className="step">
+            <div className="step-num">3</div>
+            <div className="step-body">
+              <div className="step-title">Token&apos;ı yapıştırın</div>
+              <div className="step-desc">
+                &quot;API Token&apos;ınızı girin&quot; alanına uzun basıp
+                <b> Yapıştır</b> deyin, sonra <b>Kısayolu Ekle</b>.
+              </div>
+            </div>
+          </div>
+
+          <a href={SHORTCUT_FILE_URL} className="btn" id="download-btn" download>
+            Kısayolu İndir
           </a>
           <p className="note">iPhone&apos;dan Safari ile açın.</p>
 
           <hr className="divider" />
 
-          <div className="step-title" style={{ fontSize: 14 }}>Çalışmazsa: imzalı sürüm</div>
           <div className="step-desc" style={{ marginBottom: 10 }}>
-            Yukarıdaki ayarı açmak istemiyorsanız bu sürümü kullanın. Butona
-            bastığınızda token panoya kopyalanır; Kısayollar sorduğunda alana
-            uzun basıp <b>Yapıştır</b> deyin.
+            Alternatif: Kısayollar uygulamasını doğrudan açmayı deneyin.
           </div>
           <a href={SHORTCUT_INSTALL_URL} className="btn" id="install-btn" style={{ background: "#6e6e73" }}>
-            İmzalı Sürümü Kur
+            Kısayollar&apos;da Aç
           </a>
 
           <div className="copy-hint" id="copy-hint" style={{ marginTop: 14 }}>Kopyalamak için dokun</div>
