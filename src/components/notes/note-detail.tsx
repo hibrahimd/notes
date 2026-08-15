@@ -203,7 +203,7 @@ export function NoteDetail({ note }: NoteProps) {
           >
             <Archive size={20} fill={note.archived ? "currentColor" : "none"} />
           </button>
-          {note.status === "failed" && (
+          {note.status !== "ready" && (
             <Button variant="outline" size="sm" onClick={handleReprocess} loading={reprocessing}>
               <RefreshCw size={16} /> Yeniden İşle
             </Button>
