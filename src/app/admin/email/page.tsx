@@ -14,6 +14,7 @@ export default function EmailSettingsPage() {
     smtpPasswordEncrypted: "",
     smtpFromName: "Not Al",
     smtpFromEmail: "",
+    smtpAllowInvalidCert: false,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -34,6 +35,7 @@ export default function EmailSettingsPage() {
             smtpPasswordEncrypted: "",
             smtpFromName: data.settings.smtpFromName || "Not Al",
             smtpFromEmail: data.settings.smtpFromEmail || "",
+            smtpAllowInvalidCert: Boolean(data.settings.smtpAllowInvalidCert),
           }));
         }
         setLoading(false);
@@ -142,6 +144,29 @@ export default function EmailSettingsPage() {
           <p className="mt-4 text-xs text-zinc-400">
             Port 465 → SSL/TLS, Port 587 → STARTTLS otomatik kullanılır.
           </p>
+
+          <div className="mt-4 rounded-lg border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 p-3">
+            <label className="flex items-start gap-3 text-sm text-amber-800 dark:text-amber-300">
+              <input
+                type="checkbox"
+                checked={settings.smtpAllowInvalidCert}
+                onChange={(e) =>
+                  setSettings({ ...settings, smtpAllowInvalidCert: e.target.checked })
+                }
+                className="mt-0.5 rounded border-amber-300"
+              />
+              <span>
+                <span className="font-medium">
+                  Geçersiz SMTP sertifikasını kabul et
+                </span>
+                <br />
+                Sunucunun sertifikası süresi dolmuş veya kendinden imzalıysa
+                gerekir. Bağlantı yine şifrelenir ama karşı tarafın kimliği
+                doğrulanmaz — sertifikayı yenileyene kadar geçici bir çözüm
+                olarak düşünün.
+              </span>
+            </label>
+          </div>
         </Card>
 
         {message && (

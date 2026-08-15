@@ -60,6 +60,7 @@ export async function PUT(req: NextRequest) {
     "smtpFromName",
     "smtpFromEmail",
     "smtpSecure",
+    "smtpAllowInvalidCert",
     "defaultLanguage",
     "supportedLanguages",
     "openaiModel",

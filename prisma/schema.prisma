@@ -191,6 +191,9 @@ model SystemSettings {
   smtpFromName          String?  @default("Not Al") @map("smtp_from_name")
   smtpFromEmail         String?  @map("smtp_from_email")
   smtpSecure            Boolean  @default(false) @map("smtp_secure")
+  // Sunucunun sertifikasi gecersiz/suresi dolmus oldugunda bilincli olarak
+  // acilir. Varsayilan kapali: dogrulama sessizce atlanmaz.
+  smtpAllowInvalidCert  Boolean  @default(false) @map("smtp_allow_invalid_cert")
   openaiApiKey          String?  @map("openai_api_key")
   openaiModel           String?  @default("gpt-4o-mini") @map("openai_model")
   defaultLanguage       String   @default("tr") @map("default_language")

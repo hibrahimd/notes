@@ -25,6 +25,11 @@ export async function getMailTransporter() {
     },
     // Duz baglantiya sessizce dusmeyi engelle
     ...(!secure ? { requireTLS: true } : {}),
+    // Sertifika dogrulamasi varsayilan olarak aciktir; yalnizca admin
+    // panelinden acikca kapatildiginda atlanir
+    ...(settings.smtpAllowInvalidCert
+      ? { tls: { rejectUnauthorized: false } }
+      : {}),
   });
 }
 

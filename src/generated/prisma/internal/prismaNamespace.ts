@@ -1351,6 +1351,7 @@ export const SystemSettingsScalarFieldEnum = {
   smtpFromName: 'smtpFromName',
   smtpFromEmail: 'smtpFromEmail',
   smtpSecure: 'smtpSecure',
+  smtpAllowInvalidCert: 'smtpAllowInvalidCert',
   openaiApiKey: 'openaiApiKey',
   openaiModel: 'openaiModel',
   defaultLanguage: 'defaultLanguage',

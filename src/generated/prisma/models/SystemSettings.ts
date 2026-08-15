@@ -47,6 +47,7 @@ export type SystemSettingsMinAggregateOutputType = {
   smtpFromName: string | null
   smtpFromEmail: string | null
   smtpSecure: boolean | null
+  smtpAllowInvalidCert: boolean | null
   openaiApiKey: string | null
   openaiModel: string | null
   defaultLanguage: string | null
@@ -65,6 +66,7 @@ export type SystemSettingsMaxAggregateOutputType = {
   smtpFromName: string | null
   smtpFromEmail: string | null
   smtpSecure: boolean | null
+  smtpAllowInvalidCert: boolean | null
   openaiApiKey: string | null
   openaiModel: string | null
   defaultLanguage: string | null
@@ -83,6 +85,7 @@ export type SystemSettingsCountAggregateOutputType = {
   smtpFromName: number
   smtpFromEmail: number
   smtpSecure: number
+  smtpAllowInvalidCert: number
   openaiApiKey: number
   openaiModel: number
   defaultLanguage: number
@@ -116,6 +119,7 @@ export type SystemSettingsMinAggregateInputType = {
   smtpFromName?: true
   smtpFromEmail?: true
   smtpSecure?: true
+  smtpAllowInvalidCert?: true
   openaiApiKey?: true
   openaiModel?: true
   defaultLanguage?: true
@@ -134,6 +138,7 @@ export type SystemSettingsMaxAggregateInputType = {
   smtpFromName?: true
   smtpFromEmail?: true
   smtpSecure?: true
+  smtpAllowInvalidCert?: true
   openaiApiKey?: true
   openaiModel?: true
   defaultLanguage?: true
@@ -152,6 +157,7 @@ export type SystemSettingsCountAggregateInputType = {
   smtpFromName?: true
   smtpFromEmail?: true
   smtpSecure?: true
+  smtpAllowInvalidCert?: true
   openaiApiKey?: true
   openaiModel?: true
   defaultLanguage?: true
@@ -258,6 +264,7 @@ export type SystemSettingsGroupByOutputType = {
   smtpFromName: string | null
   smtpFromEmail: string | null
   smtpSecure: boolean
+  smtpAllowInvalidCert: boolean
   openaiApiKey: string | null
   openaiModel: string | null
   defaultLanguage: string
@@ -300,6 +307,7 @@ export type SystemSettingsWhereInput = {
   smtpFromName?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   smtpFromEmail?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   smtpSecure?: Prisma.BoolFilter<"SystemSettings"> | boolean
+  smtpAllowInvalidCert?: Prisma.BoolFilter<"SystemSettings"> | boolean
   openaiApiKey?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   openaiModel?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   defaultLanguage?: Prisma.StringFilter<"SystemSettings"> | string
@@ -319,6 +327,7 @@ export type SystemSettingsOrderByWithRelationInput = {
   smtpFromName?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpFromEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   openaiModel?: Prisma.SortOrderInput | Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
@@ -341,6 +350,7 @@ export type SystemSettingsWhereUniqueInput = Prisma.AtLeast<{
   smtpFromName?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   smtpFromEmail?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   smtpSecure?: Prisma.BoolFilter<"SystemSettings"> | boolean
+  smtpAllowInvalidCert?: Prisma.BoolFilter<"SystemSettings"> | boolean
   openaiApiKey?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   openaiModel?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   defaultLanguage?: Prisma.StringFilter<"SystemSettings"> | string
@@ -360,6 +370,7 @@ export type SystemSettingsOrderByWithAggregationInput = {
   smtpFromName?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpFromEmail?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   openaiModel?: Prisma.SortOrderInput | Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
@@ -387,6 +398,7 @@ export type SystemSettingsScalarWhereWithAggregatesInput = {
   smtpFromName?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
   smtpFromEmail?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
   smtpSecure?: Prisma.BoolWithAggregatesFilter<"SystemSettings"> | boolean
+  smtpAllowInvalidCert?: Prisma.BoolWithAggregatesFilter<"SystemSettings"> | boolean
   openaiApiKey?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
   openaiModel?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
   defaultLanguage?: Prisma.StringWithAggregatesFilter<"SystemSettings"> | string
@@ -406,6 +418,7 @@ export type SystemSettingsCreateInput = {
   smtpFromName?: string | null
   smtpFromEmail?: string | null
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: string | null
   openaiModel?: string | null
   defaultLanguage?: string
@@ -425,6 +438,7 @@ export type SystemSettingsUncheckedCreateInput = {
   smtpFromName?: string | null
   smtpFromEmail?: string | null
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: string | null
   openaiModel?: string | null
   defaultLanguage?: string
@@ -444,6 +458,7 @@ export type SystemSettingsUpdateInput = {
   smtpFromName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFromEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
@@ -463,6 +478,7 @@ export type SystemSettingsUncheckedUpdateInput = {
   smtpFromName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFromEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
@@ -482,6 +498,7 @@ export type SystemSettingsCreateManyInput = {
   smtpFromName?: string | null
   smtpFromEmail?: string | null
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: string | null
   openaiModel?: string | null
   defaultLanguage?: string
@@ -501,6 +518,7 @@ export type SystemSettingsUpdateManyMutationInput = {
   smtpFromName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFromEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
@@ -520,6 +538,7 @@ export type SystemSettingsUncheckedUpdateManyInput = {
   smtpFromName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFromEmail?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
@@ -539,6 +558,7 @@ export type SystemSettingsCountOrderByAggregateInput = {
   smtpFromName?: Prisma.SortOrder
   smtpFromEmail?: Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrder
   openaiModel?: Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
@@ -564,6 +584,7 @@ export type SystemSettingsMaxOrderByAggregateInput = {
   smtpFromName?: Prisma.SortOrder
   smtpFromEmail?: Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrder
   openaiModel?: Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
@@ -582,6 +603,7 @@ export type SystemSettingsMinOrderByAggregateInput = {
   smtpFromName?: Prisma.SortOrder
   smtpFromEmail?: Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrder
   openaiModel?: Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
@@ -617,6 +639,7 @@ export type SystemSettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   smtpFromName?: boolean
   smtpFromEmail?: boolean
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
   defaultLanguage?: boolean
@@ -636,6 +659,7 @@ export type SystemSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   smtpFromName?: boolean
   smtpFromEmail?: boolean
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
   defaultLanguage?: boolean
@@ -655,6 +679,7 @@ export type SystemSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   smtpFromName?: boolean
   smtpFromEmail?: boolean
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
   defaultLanguage?: boolean
@@ -674,6 +699,7 @@ export type SystemSettingsSelectScalar = {
   smtpFromName?: boolean
   smtpFromEmail?: boolean
   smtpSecure?: boolean
+  smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
   defaultLanguage?: boolean
@@ -684,7 +710,7 @@ export type SystemSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SystemSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "smtpHost" | "smtpPort" | "smtpUsername" | "smtpPasswordEncrypted" | "smtpFromName" | "smtpFromEmail" | "smtpSecure" | "openaiApiKey" | "openaiModel" | "defaultLanguage" | "supportedLanguages" | "maxNoteSize" | "maxVideoDuration" | "createdAt" | "updatedAt", ExtArgs["result"]["systemSettings"]>
+export type SystemSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "smtpHost" | "smtpPort" | "smtpUsername" | "smtpPasswordEncrypted" | "smtpFromName" | "smtpFromEmail" | "smtpSecure" | "smtpAllowInvalidCert" | "openaiApiKey" | "openaiModel" | "defaultLanguage" | "supportedLanguages" | "maxNoteSize" | "maxVideoDuration" | "createdAt" | "updatedAt", ExtArgs["result"]["systemSettings"]>
 
 export type $SystemSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SystemSettings"
@@ -698,6 +724,7 @@ export type $SystemSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
     smtpFromName: string | null
     smtpFromEmail: string | null
     smtpSecure: boolean
+    smtpAllowInvalidCert: boolean
     openaiApiKey: string | null
     openaiModel: string | null
     defaultLanguage: string
@@ -1137,6 +1164,7 @@ export interface SystemSettingsFieldRefs {
   readonly smtpFromName: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly smtpFromEmail: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly smtpSecure: Prisma.FieldRef<"SystemSettings", 'Boolean'>
+  readonly smtpAllowInvalidCert: Prisma.FieldRef<"SystemSettings", 'Boolean'>
   readonly openaiApiKey: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly openaiModel: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly defaultLanguage: Prisma.FieldRef<"SystemSettings", 'String'>
