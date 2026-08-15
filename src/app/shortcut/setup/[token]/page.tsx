@@ -129,9 +129,18 @@ export default async function ShortcutSetupPage({ params }: Props) {
             }
           }
 
+          // Token gomulu (imzasiz) surum: yapistirma adimi yok
+          function directInstall(e) {
+            e.preventDefault();
+            var url = window.location.origin + '/api/shortcut/' + encodeURIComponent(TOKEN);
+            window.location.href = 'shortcuts://import-shortcut?url=' +
+              encodeURIComponent(url) + '&name=Notlarima-Ekle';
+          }
+
           document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('token-box').addEventListener('click', copyToken);
             document.getElementById('install-btn').addEventListener('click', installShortcut);
+            document.getElementById('direct-install-btn').addEventListener('click', directInstall);
           });
         `}} />
       </head>
@@ -144,33 +153,44 @@ export default async function ShortcutSetupPage({ params }: Props) {
           <div className="step">
             <div className="step-num">1</div>
             <div className="step-body">
-              <div className="step-title">Butona basın</div>
-              <div className="step-desc">Token&apos;ınız otomatik olarak panoya kopyalanır ve Kısayollar uygulaması açılır.</div>
+              <div className="step-title">Bir kez ayarı açın</div>
+              <div className="step-desc">
+                <b>Ayarlar → Kısayollar → Güvenilmeyen Kısayollara İzin Ver</b>.
+                Bu açık değilse iPhone token&apos;ı gömülü kısayolu reddeder.
+              </div>
             </div>
           </div>
 
           <div className="step">
             <div className="step-num">2</div>
             <div className="step-body">
-              <div className="step-title">Token alanına yapıştırın</div>
-              <div className="step-desc">Kısayollar &quot;API Token&apos;ınızı girin&quot; diye soracak. Alana uzun basıp <b>Yapıştır</b> deyin, sonra <b>Kısayolu Ekle</b>.</div>
+              <div className="step-title">Butona basın, bitti</div>
+              <div className="step-desc">
+                Token kısayolun içine gömülüdür; hiçbir şey yapıştırmanız
+                gerekmez. Kısayollar açılır, <b>Kısayolu Ekle</b> deyip çıkarsınız.
+              </div>
             </div>
           </div>
 
-          <a href={SHORTCUT_INSTALL_URL} className="btn" id="install-btn">
-            Kısayolu Kur
+          <a href="#" className="btn" id="direct-install-btn">
+            Tek Dokunuşla Kur
           </a>
-          <p className="note">
-            iPhone&apos;dan Safari ile açın.
-          </p>
+          <p className="note">iPhone&apos;dan Safari ile açın.</p>
 
           <hr className="divider" />
 
-          <div className="step-desc" style={{ fontSize: 12 }}>
-            Token otomatik kopyalanmazsa aşağıya dokunup elle kopyalayabilirsiniz:
+          <div className="step-title" style={{ fontSize: 14 }}>Çalışmazsa: imzalı sürüm</div>
+          <div className="step-desc" style={{ marginBottom: 10 }}>
+            Yukarıdaki ayarı açmak istemiyorsanız bu sürümü kullanın. Butona
+            bastığınızda token panoya kopyalanır; Kısayollar sorduğunda alana
+            uzun basıp <b>Yapıştır</b> deyin.
           </div>
+          <a href={SHORTCUT_INSTALL_URL} className="btn" id="install-btn" style={{ background: "#6e6e73" }}>
+            İmzalı Sürümü Kur
+          </a>
+
+          <div className="copy-hint" id="copy-hint" style={{ marginTop: 14 }}>Kopyalamak için dokun</div>
           <div className="token-box" id="token-box">{token}</div>
-          <div className="copy-hint" id="copy-hint">Kopyalamak için dokun</div>
         </div>
       </body>
     </html>
