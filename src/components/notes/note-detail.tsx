@@ -104,6 +104,17 @@ const statusMap: Record<string, { label: string; variant: "default" | "success" 
   failed: { label: "Hata", variant: "error" },
 };
 
+/** İşlem kayıtlarında ham adım adı yerine gösterilir. */
+const jobLabels: Record<string, string> = {
+  analyze: "Analiz",
+  download: "Video indirme",
+  extract: "İçerik çıkarma",
+  transcribe: "Konuşma çözümleme",
+  translate: "Çeviri",
+  summarize: "Özet",
+  categorize: "Kategori",
+};
+
 /** Bitis tarihini forma yazilabilir "kac gun kaldi" degerine cevirir. */
 function daysUntil(date: string | null): string {
   if (!date) return "";
@@ -128,7 +139,22 @@ export function NoteDetail({ note }: NoteProps) {
   const [maxViews, setMaxViews] = useState(share?.maxViews ? String(share.maxViews) : "");
 
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
-  const skippedJobs = note.jobs.filter((job) => job.status === "skipped");
+  /**
+   * Atlanan adim uyarilari yalnizca her adimin son denemesinden alinir.
+   *
+   * Ayni not birkac kez islenince ayni uyari her denemede tekrar kaydediliyor
+   * ve kutu ayni cumleyi ust uste basiyordu. Daha onemlisi: anahtar sonradan
+   * tanimlanip adim basariyla calistiginda eski "anahtar yok" uyarisi hala
+   * duruyordu. jobs listesi startedAt'e gore yeniden eskiye sirali geldigi
+   * icin her jobType'in ilk gorulen kaydi en guncel olani.
+   */
+  const latestJobPerType = new Map<string, (typeof note.jobs)[number]>();
+  for (const job of note.jobs) {
+    if (!latestJobPerType.has(job.jobType)) latestJobPerType.set(job.jobType, job);
+  }
+  const skippedJobs = [...latestJobPerType.values()].filter(
+    (job) => job.status === "skipped"
+  );
 
   const [showTranscript, setShowTranscript] = useState(false);
   const videoMedia = note.media.find((m) => m.mediaType === "video");
@@ -538,14 +564,26 @@ export function NoteDetail({ note }: NoteProps) {
         </Card>
       )}
 
-      {/* Atlanan adimlar */}
+      {/* Atlanan adimlar: asagidaki islem kaydinin aksine yalnizca son
+          denemede yapilamayanlar, aciklamasiyla birlikte */}
       {skippedJobs.length > 0 && (
         <Card className="mb-6 border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20">
-          {skippedJobs.map((job) => (
-            <p key={job.id} className="text-sm text-amber-700 dark:text-amber-400">
-              {job.message}
-            </p>
-          ))}
+          <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 mb-2">
+            Yapılamayan adımlar
+          </p>
+          <ul className="space-y-1">
+            {skippedJobs.map((job) => (
+              <li
+                key={job.id}
+                className="text-sm text-amber-700 dark:text-amber-400"
+              >
+                <span className="font-medium">
+                  {jobLabels[job.jobType] || job.jobType}:
+                </span>{" "}
+                {job.message}
+              </li>
+            ))}
+          </ul>
         </Card>
       )}
 
@@ -740,7 +778,9 @@ export function NoteDetail({ note }: NoteProps) {
                     >
                       {job.status}
                     </Badge>
-                    <span className="text-zinc-600 dark:text-zinc-400">{job.jobType}</span>
+                    <span className="text-zinc-600 dark:text-zinc-400">
+                      {jobLabels[job.jobType] || job.jobType}
+                    </span>
                   </div>
                   <span className="text-zinc-400 text-xs">
                     {job.message || job.errorText || ""}
