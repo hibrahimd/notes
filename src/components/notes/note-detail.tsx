@@ -71,6 +71,7 @@ interface NoteProps {
       mediaType: string;
       mimeType: string | null;
       duration: number | null;
+      size: number | null;
     }[];
     transcripts: {
       id: string;
@@ -136,6 +137,21 @@ export function NoteDetail({ note }: NoteProps) {
   const transcript = note.transcripts[0];
   const mediaUrl = (mediaId: string) => `/api/notes/${note.id}/media/${mediaId}`;
   const canTranscribe = Boolean(note.sourceUrl);
+  const [deletingVideo, setDeletingVideo] = useState(false);
+
+  async function deleteVideoFile(mediaId: string) {
+    if (
+      !confirm(
+        "Video dosyası sunucudan silinsin mi? Transkript ve altyazılar kalacak, " +
+          "videoyu izlemek isterseniz yeniden işlemeniz gerekir."
+      )
+    )
+      return;
+    setDeletingVideo(true);
+    await fetch(`/api/notes/${note.id}/media/${mediaId}`, { method: "DELETE" });
+    router.refresh();
+    setDeletingVideo(false);
+  }
 
   const [enriching, setEnriching] = useState<string | null>(null);
   const busy = [
@@ -413,7 +429,34 @@ export function NoteDetail({ note }: NoteProps) {
               />
             )}
           </video>
+          <div className="flex items-center justify-between gap-3 mt-2 flex-wrap">
+            <span className="text-xs text-zinc-400">
+              Video sunucuda saklanıyor
+              {videoMedia.size
+                ? ` — ${(videoMedia.size / 1024 / 1024).toFixed(1)} MB`
+                : ""}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => deleteVideoFile(videoMedia.id)}
+              loading={deletingVideo}
+            >
+              <Trash2 size={16} /> Videoyu Sil
+            </Button>
+          </div>
         </div>
+      )}
+
+      {/* Video silinmis ama altyazi duruyorsa kullanici neden oynatici
+          gormedigini bilsin */}
+      {!videoMedia && transcript && (
+        <Card className="mb-6 border-zinc-200 dark:border-zinc-800">
+          <p className="text-sm text-zinc-500">
+            Video dosyası silinmiş. Transkript ve altyazılar duruyor; tekrar
+            izlemek isterseniz &quot;Videoyu Yeniden İşle&quot; deyin.
+          </p>
+        </Card>
       )}
 
       {/* Transkript */}

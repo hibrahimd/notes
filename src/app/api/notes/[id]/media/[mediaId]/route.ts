@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createReadStream } from "fs";
-import { stat } from "fs/promises";
+import { rm, stat } from "fs/promises";
 import { Readable } from "stream";
 import path from "path";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +14,28 @@ import { getStoragePath } from "@/lib/storage";
  * erisilebilir degil; her istek oturum ve not sahipligi ile dogrulanir.
  * Video icin Range destegi var, yoksa oynaticida ileri sarma calismaz.
  */
+/** Medya kaydini sahiplik kontroluyle bulup guvenli dosya yolunu dondurur. */
+async function resolveMedia(
+  userId: string,
+  noteId: string,
+  mediaId: string
+): Promise<{ media: { storagePath: string; mimeType: string | null }; filePath: string } | null> {
+  const media = await prisma.noteMedia.findFirst({
+    where: { id: mediaId, noteId, note: { userId } },
+  });
+
+  if (!media) return null;
+
+  // Depolama kokunun disina cikan bir yol kabul edilmez
+  const root = path.resolve(getStoragePath());
+  const filePath = path.resolve(root, media.storagePath);
+  if (filePath !== root && !filePath.startsWith(root + path.sep)) {
+    return null;
+  }
+
+  return { media, filePath };
+}
+
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; mediaId: string }> }
@@ -24,21 +46,13 @@ export async function GET(
   }
 
   const { id, mediaId } = await params;
+  const resolved = await resolveMedia(session.userId, id, mediaId);
 
-  const media = await prisma.noteMedia.findFirst({
-    where: { id: mediaId, noteId: id, note: { userId: session.userId } },
-  });
-
-  if (!media) {
+  if (!resolved) {
     return NextResponse.json({ error: "Medya bulunamadı" }, { status: 404 });
   }
 
-  // Depolama kokunun disina cikan bir yol kabul edilmez
-  const root = path.resolve(getStoragePath());
-  const filePath = path.resolve(root, media.storagePath);
-  if (filePath !== root && !filePath.startsWith(root + path.sep)) {
-    return NextResponse.json({ error: "Geçersiz yol" }, { status: 400 });
-  }
+  const { media, filePath } = resolved;
 
   let info;
   try {
@@ -90,4 +104,33 @@ export async function GET(
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+/**
+ * Tek bir medya dosyasini siler. Videoyu izledikten sonra diskten kaldirmak
+ * icin: transkript ve altyazilar veritabaninda kaldigi icin not islevsel
+ * kalmaya devam eder.
+ */
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string; mediaId: string }> }
+) {
+  const session = await getSession();
+  if (!session.userId) {
+    return NextResponse.json({ error: "Yetkisiz" }, { status: 401 });
+  }
+
+  const { id, mediaId } = await params;
+  const resolved = await resolveMedia(session.userId, id, mediaId);
+
+  if (!resolved) {
+    return NextResponse.json({ error: "Medya bulunamadı" }, { status: 404 });
+  }
+
+  await rm(resolved.filePath, { force: true }).catch((error) =>
+    console.error("Medya dosyası silinemedi:", error)
+  );
+  await prisma.noteMedia.delete({ where: { id: mediaId } });
+
+  return NextResponse.json({ message: "Medya silindi" });
 }
