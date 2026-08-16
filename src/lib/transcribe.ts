@@ -29,6 +29,7 @@ export interface Transcription {
  */
 export async function transcribeAudio(
   openaiApiKey: string,
+  model: string,
   audioPath: string
 ): Promise<Transcription> {
   const buffer = await readFile(audioPath);
@@ -42,7 +43,7 @@ export async function transcribeAudio(
 
   const form = new FormData();
   form.append("file", new Blob([new Uint8Array(buffer)]), path.basename(audioPath));
-  form.append("model", "whisper-1");
+  form.append("model", model);
   form.append("response_format", "verbose_json");
   form.append("timestamp_granularities[]", "segment");
 

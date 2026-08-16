@@ -5,19 +5,154 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Save } from "lucide-react";
+import {
+  modelsFor,
+  defaultModelFor,
+  TRANSCRIBE_MODELS,
+  DEFAULT_TRANSCRIBE_MODEL,
+  type ModelOption,
+} from "@/lib/ai-models";
+
+type Provider = "openai" | "anthropic";
+type Task = "summarize" | "translate" | "categorize";
+
+interface SettingsState {
+  preferredLanguage: string;
+  translationLanguage: string;
+  autoSummarize: boolean;
+  autoTranslate: boolean;
+  autoTranscribe: boolean;
+  autoCategorize: boolean;
+  openaiApiKeyEncrypted: string;
+  anthropicApiKeyEncrypted: string;
+  summarizeProvider: Provider;
+  summarizeModel: string;
+  translateProvider: Provider;
+  translateModel: string;
+  categorizeProvider: Provider;
+  categorizeModel: string;
+  transcribeModel: string;
+}
+
+const TASKS: { task: Task; label: string; hint: string }[] = [
+  {
+    task: "translate",
+    label: "Çeviri",
+    hint: "İşlerin en zoru — üslup ve terim tutarlılığı ister",
+  },
+  {
+    task: "summarize",
+    label: "Özet",
+    hint: "Orta zorlukta; akıcı Türkçe yazması gerekir",
+  },
+  {
+    task: "categorize",
+    label: "Kategori",
+    hint: "Kolay — sabit listeden seçim, ucuz model yeter",
+  },
+];
+
+const MASK = "••••••••";
+
+/** Saglayici + model ikilisi icin ortak satir. */
+function ProviderRow({
+  label,
+  hint,
+  provider,
+  model,
+  onProviderChange,
+  onModelChange,
+}: {
+  label: string;
+  hint: string;
+  provider: Provider;
+  model: string;
+  onProviderChange: (value: Provider) => void;
+  onModelChange: (value: string) => void;
+}) {
+  const options: ModelOption[] = modelsFor(provider);
+  const known = options.some((m) => m.id === model);
+  const selectClass =
+    "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
+
+  return (
+    <div className="py-4 border-b border-zinc-100 dark:border-zinc-800 last:border-0 last:pb-0">
+      <div className="mb-2">
+        <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+          {label}
+        </span>
+        <p className="text-xs text-zinc-400">{hint}</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <select
+          aria-label={`${label} sağlayıcı`}
+          value={provider}
+          onChange={(e) => {
+            const next = e.target.value as Provider;
+            onProviderChange(next);
+            // Saglayici degisince modeli de o saglayicinin varsayilanina al,
+            // yoksa gecersiz bir model kimligi kalir
+            onModelChange(defaultModelFor(next));
+          }}
+          className={selectClass}
+        >
+          <option value="openai">OpenAI</option>
+          <option value="anthropic">Anthropic (Claude)</option>
+        </select>
+
+        <select
+          aria-label={`${label} model`}
+          value={known ? model : "__custom"}
+          onChange={(e) => {
+            if (e.target.value === "__custom") {
+              onModelChange("");
+            } else {
+              onModelChange(e.target.value);
+            }
+          }}
+          className={selectClass}
+        >
+          {options.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}
+              {m.hint ? ` — ${m.hint}` : ""}
+            </option>
+          ))}
+          <option value="__custom">Diğer (elle gir)</option>
+        </select>
+      </div>
+
+      {!known && (
+        <div className="mt-3">
+          <Input
+            id={`${label}-custom-model`}
+            placeholder="Model kimliğini birebir yazın"
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function UserSettingsPage() {
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<SettingsState>({
     preferredLanguage: "tr",
     translationLanguage: "tr",
-    autoSummarize: true,
-    autoTranslate: true,
-    autoTranscribe: true,
-    autoCategorize: true,
+    autoSummarize: false,
+    autoTranslate: false,
+    autoTranscribe: false,
+    autoCategorize: false,
     openaiApiKeyEncrypted: "",
     anthropicApiKeyEncrypted: "",
-    aiProvider: "openai",
-    aiModel: "",
+    summarizeProvider: "openai",
+    summarizeModel: defaultModelFor("openai"),
+    translateProvider: "openai",
+    translateModel: defaultModelFor("openai"),
+    categorizeProvider: "openai",
+    categorizeModel: defaultModelFor("openai"),
+    transcribeModel: DEFAULT_TRANSCRIBE_MODEL,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,11 +163,29 @@ export default function UserSettingsPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.settings) {
-          setSettings((prev) => ({ ...prev, ...data.settings }));
+          setSettings((prev) => ({
+            ...prev,
+            ...data.settings,
+            // Kayitli model bossa varsayilani goster
+            summarizeModel:
+              data.settings.summarizeModel ||
+              defaultModelFor(data.settings.summarizeProvider || "openai"),
+            translateModel:
+              data.settings.translateModel ||
+              defaultModelFor(data.settings.translateProvider || "openai"),
+            categorizeModel:
+              data.settings.categorizeModel ||
+              defaultModelFor(data.settings.categorizeProvider || "openai"),
+            transcribeModel:
+              data.settings.transcribeModel || DEFAULT_TRANSCRIBE_MODEL,
+          }));
         }
         setLoading(false);
       });
   }, []);
+
+  const update = (patch: Partial<SettingsState>) =>
+    setSettings((prev) => ({ ...prev, ...patch }));
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -40,8 +193,9 @@ export default function UserSettingsPage() {
     setMessage("");
 
     const body: Record<string, unknown> = { ...settings };
-    if (settings.openaiApiKeyEncrypted === "••••••••") delete body.openaiApiKeyEncrypted;
-    if (settings.anthropicApiKeyEncrypted === "••••••••")
+    // Maskeli deger geri gonderilirse kayitli anahtar ezilmesin
+    if (settings.openaiApiKeyEncrypted === MASK) delete body.openaiApiKeyEncrypted;
+    if (settings.anthropicApiKeyEncrypted === MASK)
       delete body.anthropicApiKeyEncrypted;
 
     const res = await fetch("/api/settings", {
@@ -50,30 +204,37 @@ export default function UserSettingsPage() {
       body: JSON.stringify(body),
     });
 
-    if (res.ok) {
-      setMessage("Ayarlar kaydedildi");
-    } else {
-      setMessage("Hata oluştu");
-    }
+    setMessage(res.ok ? "Ayarlar kaydedildi" : "Hata oluştu");
     setSaving(false);
   }
 
   if (loading) return <div className="text-zinc-400">Yükleniyor...</div>;
 
+  const selectClass =
+    "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
+
+  const usesAnthropic = TASKS.some(
+    ({ task }) => settings[`${task}Provider` as const] === "anthropic"
+  );
+
   return (
     <>
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">Ayarlar</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">
+        Ayarlar
+      </h1>
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-6 pb-24">
         <Card>
           <CardTitle>Dil Tercihleri</CardTitle>
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Tercih Edilen Dil</label>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Tercih Edilen Dil
+              </label>
               <select
                 value={settings.preferredLanguage}
-                onChange={(e) => setSettings({ ...settings, preferredLanguage: e.target.value })}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                onChange={(e) => update({ preferredLanguage: e.target.value })}
+                className={selectClass}
               >
                 <option value="tr">Türkçe</option>
                 <option value="en">English</option>
@@ -83,11 +244,13 @@ export default function UserSettingsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">Çeviri Dili</label>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Çeviri Dili
+              </label>
               <select
                 value={settings.translationLanguage}
-                onChange={(e) => setSettings({ ...settings, translationLanguage: e.target.value })}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                onChange={(e) => update({ translationLanguage: e.target.value })}
+                className={selectClass}
               >
                 <option value="tr">Türkçe</option>
                 <option value="en">English</option>
@@ -100,68 +263,58 @@ export default function UserSettingsPage() {
         </Card>
 
         <Card>
-          <CardTitle>Otomatik İşlemler</CardTitle>
-          <div className="mt-4 space-y-3">
-            {[
-              { key: "autoSummarize", label: "Otomatik Özetleme" },
-              { key: "autoTranslate", label: "Otomatik Çeviri" },
-              { key: "autoTranscribe", label: "Otomatik Transkript" },
-              { key: "autoCategorize", label: "Otomatik Kategorileme" },
-            ].map((item) => (
-              <label key={item.key} className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300">
-                <input
-                  type="checkbox"
-                  checked={(settings as Record<string, unknown>)[item.key] as boolean}
-                  onChange={(e) => setSettings({ ...settings, [item.key]: e.target.checked })}
-                  className="rounded border-zinc-300"
-                />
-                {item.label}
-              </label>
+          <CardTitle>İşlem Sağlayıcıları</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1">
+            Her işlem için ayrı sağlayıcı ve model seçebilirsiniz.
+          </p>
+          <div className="mt-2">
+            {TASKS.map(({ task, label, hint }) => (
+              <ProviderRow
+                key={task}
+                label={label}
+                hint={hint}
+                provider={settings[`${task}Provider` as const]}
+                model={settings[`${task}Model` as const]}
+                onProviderChange={(value) =>
+                  update({ [`${task}Provider`]: value } as Partial<SettingsState>)
+                }
+                onModelChange={(value) =>
+                  update({ [`${task}Model`]: value } as Partial<SettingsState>)
+                }
+              />
             ))}
           </div>
         </Card>
 
         <Card>
-          <CardTitle>Yapay Zekâ Sağlayıcı</CardTitle>
-          <p className="text-sm text-zinc-500 mt-1 mb-4">
-            Özet, çeviri ve kategorileme bu sağlayıcı ile yapılır.
+          <CardTitle>Altyazı (Konuşma Tanıma)</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1 mb-3">
+            Videonun sesini metne çevirir. Sağlayıcı seçimi yok: Anthropic&apos;in
+            konuşma tanıma API&apos;si olmadığı için bu adım her zaman OpenAI ile
+            yapılır. Altyazının çevirisi yukarıdaki <b>Çeviri</b> ayarını kullanır.
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                Sağlayıcı
-              </label>
-              <select
-                value={settings.aiProvider}
-                onChange={(e) => setSettings({ ...settings, aiProvider: e.target.value })}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              >
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic (Claude)</option>
-              </select>
-            </div>
-            <Input
-              id="aiModel"
-              label="Model"
-              placeholder={
-                settings.aiProvider === "anthropic" ? "claude-opus-5" : "gpt-4o-mini"
-              }
-              value={settings.aiModel || ""}
-              onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
-            />
-          </div>
-          <p className="mt-3 text-xs text-zinc-400">
-            Model alanını boş bırakırsanız sağlayıcının varsayılanı kullanılır. Model
-            kimliğini sağlayıcının kendi dokümanından birebir kopyalayın; yanlış
-            yazılırsa istek hata döner.
-          </p>
+          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            Model
+          </label>
+          <select
+            value={settings.transcribeModel}
+            onChange={(e) => update({ transcribeModel: e.target.value })}
+            className={selectClass}
+          >
+            {TRANSCRIBE_MODELS.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+                {m.hint ? ` — ${m.hint}` : ""}
+              </option>
+            ))}
+          </select>
         </Card>
 
         <Card>
-          <CardTitle>API Anahtarları (Kişisel)</CardTitle>
+          <CardTitle>API Anahtarları</CardTitle>
           <p className="text-sm text-zinc-500 mt-1 mb-4">
-            Yalnızca seçtiğiniz sağlayıcının anahtarı kullanılır; ikisini de
-            kaydedip aralarında geçiş yapabilirsiniz.
+            Anahtarlar burada tek yerden yönetilir; yukarıdaki her işlem
+            seçtiği sağlayıcının anahtarını kullanır.
           </p>
           <div className="space-y-4">
             <Input
@@ -170,7 +323,7 @@ export default function UserSettingsPage() {
               type="password"
               placeholder="sk-..."
               value={settings.openaiApiKeyEncrypted || ""}
-              onChange={(e) => setSettings({ ...settings, openaiApiKeyEncrypted: e.target.value })}
+              onChange={(e) => update({ openaiApiKeyEncrypted: e.target.value })}
             />
             <Input
               id="anthropicKey"
@@ -179,23 +332,53 @@ export default function UserSettingsPage() {
               placeholder="sk-ant-..."
               value={settings.anthropicApiKeyEncrypted || ""}
               onChange={(e) =>
-                setSettings({ ...settings, anthropicApiKeyEncrypted: e.target.value })
+                update({ anthropicApiKeyEncrypted: e.target.value })
               }
             />
           </div>
           <div className="mt-4 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-3">
             <p className="text-sm text-blue-800 dark:text-blue-300">
-              <b>Video altyazısı için OpenAI anahtarı şart.</b> Konuşma tanıma
-              Whisper ile yapılıyor ve Anthropic&apos;in konuşma tanıma API&apos;si
-              yok. Sağlayıcı olarak Anthropic seçseniz bile videolarda
-              transkripsiyon OpenAI ile, altyazı çevirisi seçtiğiniz sağlayıcı ile
-              yapılır.
+              Video işleyecekseniz <b>OpenAI anahtarı şart</b>
+              {usesAnthropic
+                ? " — işlemleri Anthropic'e almış olsanız bile konuşma tanıma OpenAI ile yapılıyor."
+                : "."}
             </p>
           </div>
         </Card>
 
+        <Card>
+          <CardTitle>Otomatik İşlemler</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1 mb-3">
+            Kapalıyken not detayındaki butonlardan tek tek tetiklersiniz.
+          </p>
+          <div className="space-y-3">
+            {[
+              { key: "autoSummarize", label: "Otomatik Özetleme" },
+              { key: "autoTranslate", label: "Otomatik Çeviri" },
+              { key: "autoCategorize", label: "Otomatik Kategorileme" },
+            ].map((item) => (
+              <label
+                key={item.key}
+                className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings[item.key as keyof SettingsState])}
+                  onChange={(e) =>
+                    update({ [item.key]: e.target.checked } as Partial<SettingsState>)
+                  }
+                  className="rounded border-zinc-300"
+                />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </Card>
+
         {message && (
-          <p className={`text-sm ${message.includes("Hata") ? "text-red-500" : "text-emerald-500"}`}>
+          <p
+            className={`text-sm ${message.includes("Hata") ? "text-red-500" : "text-emerald-500"}`}
+          >
             {message}
           </p>
         )}

@@ -60,7 +60,9 @@ export async function POST(
       select: {
         openaiApiKeyEncrypted: true,
         anthropicApiKeyEncrypted: true,
-        aiProvider: true,
+        summarizeProvider: true,
+        translateProvider: true,
+        categorizeProvider: true,
       },
     }),
     prisma.systemSettings.findUnique({
@@ -69,7 +71,16 @@ export async function POST(
     }),
   ]);
 
-  const provider = userSettings?.aiProvider === "anthropic" ? "anthropic" : "openai";
+  // Her is icin ayri saglayici secilebiliyor; kontrol edilen, bu eylemin kendi
+  // saglayicisi. Video icin altyazi cevirisi "ceviri" ayarini kullanir.
+  const providerForAction =
+    action === "summarize"
+      ? userSettings?.summarizeProvider
+      : action === "categorize"
+        ? userSettings?.categorizeProvider
+        : userSettings?.translateProvider;
+
+  const provider = providerForAction === "anthropic" ? "anthropic" : "openai";
   const providerLabel = provider === "anthropic" ? "Anthropic" : "OpenAI";
 
   const hasProviderKey =

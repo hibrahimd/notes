@@ -6,10 +6,10 @@ import {
   chat,
   chatJson,
   translateLongText,
-  defaultModelFor,
   type AiConfig,
   type AiProvider,
 } from "../../lib/ai";
+import { defaultModelFor, isProvider } from "../../lib/ai-models";
 import {
   prisma,
   updateStatus,
@@ -95,25 +95,39 @@ interface AiContext {
   source: "user" | "system";
 }
 
+/** Ayarlarda ayri ayri secilebilen isler. */
+export type AiTask = "summarize" | "translate" | "categorize";
+
 /**
- * Metin isleri icin saglayici, anahtar ve modeli cozer.
+ * Bir is icin saglayici, anahtar ve modeli cozer. Her is ayri
+ * secilebiliyor: kategori kolay bir siniflandirma, ceviri ise en zor is.
  * Anahtar once kullanici ayarlarindan, yoksa sistem ayarlarindan alinir.
- * Hicbiri yoksa null doner ve cagiran taraf durumu nota gorunur sekilde yazar.
  */
-export async function resolveAi(userId: string): Promise<AiContext | null> {
+export async function resolveAi(
+  userId: string,
+  task: AiTask
+): Promise<AiContext | null> {
   const [systemSettings, userSettings] = await Promise.all([
     prisma.systemSettings.findUnique({ where: { id: "default" } }),
     prisma.userSettings.findUnique({ where: { userId } }),
   ]);
 
-  const provider = (userSettings?.aiProvider === "anthropic"
-    ? "anthropic"
-    : "openai") as AiProvider;
+  const rawProvider =
+    task === "summarize"
+      ? userSettings?.summarizeProvider
+      : task === "translate"
+        ? userSettings?.translateProvider
+        : userSettings?.categorizeProvider;
 
-  const model =
-    userSettings?.aiModel?.trim() ||
-    (provider === "openai" ? systemSettings?.openaiModel : null) ||
-    defaultModelFor(provider);
+  const rawModel =
+    task === "summarize"
+      ? userSettings?.summarizeModel
+      : task === "translate"
+        ? userSettings?.translateModel
+        : userSettings?.categorizeModel;
+
+  const provider: AiProvider = isProvider(rawProvider) ? rawProvider : "openai";
+  const model = rawModel?.trim() || defaultModelFor(provider);
 
   const userKey = tryDecrypt(
     provider === "anthropic"
@@ -137,19 +151,24 @@ export async function resolveAi(userId: string): Promise<AiContext | null> {
 }
 
 /**
- * Konusma tanima her zaman OpenAI Whisper ile yapilir; metin saglayicisi
- * Anthropic secilmis olsa bile video icin OpenAI anahtari gerekiyor.
+ * Konusma tanima her zaman OpenAI Whisper ile yapilir; Anthropic'in konusma
+ * tanima API'si yok, dolayisiyla video icin OpenAI anahtari gerekiyor.
  */
-export async function resolveOpenAiKey(userId: string): Promise<string | null> {
+export async function resolveTranscription(
+  userId: string
+): Promise<{ apiKey: string; model: string } | null> {
   const [systemSettings, userSettings] = await Promise.all([
     prisma.systemSettings.findUnique({ where: { id: "default" } }),
     prisma.userSettings.findUnique({ where: { userId } }),
   ]);
 
-  return (
+  const apiKey =
     tryDecrypt(userSettings?.openaiApiKeyEncrypted) ||
-    tryDecrypt(systemSettings?.openaiApiKey)
-  );
+    tryDecrypt(systemSettings?.openaiApiKey);
+
+  if (!apiKey) return null;
+
+  return { apiKey, model: userSettings?.transcribeModel?.trim() || "whisper-1" };
 }
 
 export async function processNote(noteId: string, userId: string) {
@@ -184,7 +203,7 @@ export async function processNote(noteId: string, userId: string) {
   }
 }
 
-export type EnrichAction = "summarize" | "translate" | "categorize";
+export type EnrichAction = AiTask;
 
 /**
  * Tek bir AI adimini talep uzerine calistirir. Otomatik islem kapali oldugu
@@ -216,12 +235,13 @@ export async function enrichNote(
     return;
   }
 
-  const ai = await resolveAi(userId);
+  const ai = await resolveAi(userId, action);
   if (!ai) {
     await skipJob(
       noteId,
       action,
-      "OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından ekleyebilirsiniz."
+      "Bu işlem için seçilen sağlayıcının API anahtarı tanımlı değil. " +
+        "Ayarlar sayfasından ekleyebilirsiniz."
     );
     await updateStatus(noteId, "ready");
     return;
@@ -372,39 +392,44 @@ async function runAiPipeline(
   text: string,
   title: string | null
 ) {
-  const ai = await resolveAi(userId);
-
-  if (!ai) {
-    await skipJob(
-      noteId,
-      "ai",
-      "OpenAI API anahtarı tanımlı olmadığı için özet, çeviri ve kategori adımları atlandı. " +
-        "Ayarlar sayfasından kendi anahtarınızı ekleyebilirsiniz."
-    );
-    return;
-  }
-
   const userSettings = await prisma.userSettings.findUnique({
     where: { userId },
   });
   const user = await prisma.user.findUnique({ where: { id: userId } });
 
-  if (userSettings?.autoSummarize !== false) {
-    await summarize(noteId, ai.config, text, user?.preferredLanguage || "tr");
-  }
+  const steps: { task: AiTask; enabled: boolean }[] = [
+    { task: "summarize", enabled: userSettings?.autoSummarize === true },
+    { task: "translate", enabled: userSettings?.autoTranslate === true },
+    { task: "categorize", enabled: userSettings?.autoCategorize === true },
+  ];
 
-  if (userSettings?.autoTranslate !== false) {
-    await translate(
-      noteId,
-      ai.config,
-      text,
-      title,
-      user?.translationLanguage || "tr"
-    );
-  }
+  for (const step of steps) {
+    if (!step.enabled) continue;
 
-  if (userSettings?.autoCategorize !== false) {
-    await categorize(noteId, ai.config, text);
+    const ai = await resolveAi(userId, step.task);
+    if (!ai) {
+      await skipJob(
+        noteId,
+        step.task,
+        "Bu adım için seçilen sağlayıcının API anahtarı tanımlı değil. " +
+          "Ayarlar sayfasından ekleyebilirsiniz."
+      );
+      continue;
+    }
+
+    if (step.task === "summarize") {
+      await summarize(noteId, ai.config, text, user?.preferredLanguage || "tr");
+    } else if (step.task === "translate") {
+      await translate(
+        noteId,
+        ai.config,
+        text,
+        title,
+        user?.translationLanguage || "tr"
+      );
+    } else {
+      await categorize(noteId, ai.config, text);
+    }
   }
 }
 

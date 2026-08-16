@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Star, Archive, ExternalLink, Clock, Globe } from "lucide-react";
+import { ExternalLink, Clock, Globe } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { metaDescription } from "@/lib/utils";
 
 interface NoteCardProps {
@@ -52,33 +51,10 @@ const typeMap: Record<string, string> = {
 };
 
 export function NoteCard({ note }: NoteCardProps) {
-  const router = useRouter();
   const [coverFailed, setCoverFailed] = useState(false);
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
   const preview = note.summary || metaDescription(note.metadataJson);
   const showCover = Boolean(note.coverImage) && !coverFailed;
-
-  async function toggleFavorite(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    await fetch(`/api/notes/${note.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ favorite: !note.favorite }),
-    });
-    router.refresh();
-  }
-
-  async function toggleArchive(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    await fetch(`/api/notes/${note.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archived: !note.archived, inbox: false }),
-    });
-    router.refresh();
-  }
 
   return (
     <Link
@@ -126,6 +102,20 @@ export function NoteCard({ note }: NoteCardProps) {
               <span className="flex items-center gap-1 min-w-0">
                 <Globe size={12} className="shrink-0" />
                 <span className="truncate">{note.siteName}</span>
+                {note.sourceUrl && (
+                  // Kartin kendisi nota gidiyor; kaynagi acmak isteyen bu
+                  // ikona basar, tiklama karta yayilmasin diye durduruluyor
+                  <a
+                    href={note.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Kaynağı yeni sekmede aç"
+                    onClick={(e) => e.stopPropagation()}
+                    className="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                  >
+                    <ExternalLink size={12} />
+                  </a>
+                )}
               </span>
             )}
             {note.readingTime && (
@@ -149,34 +139,6 @@ export function NoteCard({ note }: NoteCardProps) {
           )}
         </div>
 
-        {/* Dokunmatik cihazlarda hover yok: butonlar gizli kalirsa gorunmez
-            ama tiklanabilir oluyor ve karta basarken yanlislikla kaynak link
-            aciliyordu. Kucuk ekranlarda gorunur birakiliyor. */}
-        <div className="flex flex-col gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={toggleFavorite}
-            className={`p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
-          >
-            <Star size={16} fill={note.favorite ? "currentColor" : "none"} />
-          </button>
-          <button
-            onClick={toggleArchive}
-            className={`p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.archived ? "text-blue-500" : "text-zinc-400"}`}
-          >
-            <Archive size={16} fill={note.archived ? "currentColor" : "none"} />
-          </button>
-          {note.sourceUrl && (
-            <a
-              href={note.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400"
-            >
-              <ExternalLink size={16} />
-            </a>
-          )}
-        </div>
       </div>
     </Link>
   );

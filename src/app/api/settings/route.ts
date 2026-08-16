@@ -92,13 +92,21 @@ export async function PUT(req: NextRequest) {
     }
   }
 
-  // Saglayici secimi ve model
-  if (body.aiProvider === "openai" || body.aiProvider === "anthropic") {
-    updateData.aiProvider = body.aiProvider;
+  // Her is icin saglayici ve model
+  for (const task of ["summarize", "translate", "categorize"] as const) {
+    const providerField = `${task}Provider`;
+    const modelField = `${task}Model`;
+
+    if (body[providerField] === "openai" || body[providerField] === "anthropic") {
+      updateData[providerField] = body[providerField];
+    }
+    if (typeof body[modelField] === "string") {
+      // Bos birakilirsa saglayicinin varsayilani kullanilir
+      updateData[modelField] = body[modelField].trim() || null;
+    }
   }
-  if (typeof body.aiModel === "string") {
-    // Bos birakilirsa saglayicinin varsayilan modeli kullanilir
-    updateData.aiModel = body.aiModel.trim() || null;
+  if (typeof body.transcribeModel === "string") {
+    updateData.transcribeModel = body.transcribeModel.trim() || null;
   }
 
   if (Object.keys(updateData).length > 0) {

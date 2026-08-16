@@ -49,12 +49,18 @@ model UserSettings {
   deeplApiKeyEncrypted  String?  @map("deepl_api_key_encrypted")
   openaiApiKeyEncrypted String?  @map("openai_api_key_encrypted")
   anthropicApiKeyEncrypted String? @map("anthropic_api_key_encrypted")
-  // Metin isleri (ozet, ceviri, kategori) icin saglayici ve model secimi.
-  // Model bos birakilirsa saglayicinin varsayilani kullanilir.
-  // Not: konusma tanima her zaman OpenAI Whisper ile yapilir; Anthropic'in
-  // konusma tanima API'si yok, dolayisiyla video icin OpenAI anahtari sart.
-  aiProvider            String   @default("openai") @map("ai_provider")
-  aiModel               String?  @map("ai_model")
+
+  // Her is icin ayri saglayici ve model. Isler farkli zorlukta oldugu icin
+  // (kategori kolay, ceviri zor) tek bir secim herkese uymuyor.
+  summarizeProvider     String   @default("openai") @map("summarize_provider")
+  summarizeModel        String?  @map("summarize_model")
+  translateProvider     String   @default("openai") @map("translate_provider")
+  translateModel        String?  @map("translate_model")
+  categorizeProvider    String   @default("openai") @map("categorize_provider")
+  categorizeModel       String?  @map("categorize_model")
+  // Konusma tanima yalnizca OpenAI Whisper ile yapilabiliyor; saglayici secimi
+  // yok, sadece model secilebiliyor.
+  transcribeModel       String?  @map("transcribe_model")
   // Varsayilan kapali: AI adimlari maliyetli ve her not icin istenmiyor.
   // Kullanici not detayindan tek tek tetikler, ayarlardan otomatige alabilir.
   autoSummarize         Boolean  @default(false) @map("auto_summarize")

@@ -266,49 +266,18 @@ export function NoteDetail({ note }: NoteProps) {
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
+      {/* Header: sadece geri ve durum rozetleri */}
+      <div className="flex items-center gap-3 mb-4">
         <Link
           href="/dashboard"
-          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
+          className="p-2 -ml-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500"
         >
           <ArrowLeft size={20} />
         </Link>
-        <div className="flex-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant={status.variant}>{status.label}</Badge>
-            {note.category && <Badge variant="info">{note.category}</Badge>}
-            {note.type && <Badge>{note.type}</Badge>}
-          </div>
-        </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={toggleFavorite}
-            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
-          >
-            <Star size={20} fill={note.favorite ? "currentColor" : "none"} />
-          </button>
-          <button
-            onClick={toggleArchive}
-            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.archived ? "text-blue-500" : "text-zinc-400"}`}
-          >
-            <Archive size={20} fill={note.archived ? "currentColor" : "none"} />
-          </button>
-          <button
-            onClick={() => setShareOpen(true)}
-            title="Paylaşım"
-            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${share ? "text-emerald-500" : "text-zinc-400"}`}
-          >
-            <Share2 size={20} />
-          </button>
-          {note.status !== "ready" && (
-            <Button variant="outline" size="sm" onClick={handleReprocess} loading={reprocessing}>
-              <RefreshCw size={16} /> Yeniden İşle
-            </Button>
-          )}
-          <Button variant="danger" size="sm" onClick={handleDelete} loading={deleting}>
-            <Trash2 size={16} />
-          </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge variant={status.variant}>{status.label}</Badge>
+          {note.category && <Badge variant="info">{note.category}</Badge>}
+          {note.type && <Badge>{note.type}</Badge>}
         </div>
       </div>
 
@@ -320,11 +289,23 @@ export function NoteDetail({ note }: NoteProps) {
         <p className="text-sm text-zinc-500 mb-2">{note.title}</p>
       )}
 
-      {/* Meta */}
-      <div className="flex items-center gap-4 text-sm text-zinc-400 mb-6 flex-wrap">
+      {/* Meta: kaynak adinin yaninda yeni sekmede acma ikonu */}
+      <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4 flex-wrap">
         {note.siteName && (
-          <span className="flex items-center gap-1">
-            <Globe size={14} /> {note.siteName}
+          <span className="flex items-center gap-1 min-w-0">
+            <Globe size={14} className="shrink-0" />
+            <span className="truncate">{note.siteName}</span>
+            {note.sourceUrl && (
+              <a
+                href={note.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Kaynağı yeni sekmede aç"
+                className="shrink-0 text-blue-500 hover:text-blue-600"
+              >
+                <ExternalLink size={14} />
+              </a>
+            )}
           </span>
         )}
         {note.readingTime && (
@@ -333,16 +314,47 @@ export function NoteDetail({ note }: NoteProps) {
           </span>
         )}
         <span>{new Date(note.createdAt).toLocaleString("tr-TR")}</span>
-        {note.sourceUrl && (
-          <a
-            href={note.sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-blue-500 hover:text-blue-600"
-          >
-            <ExternalLink size={14} /> Kaynağa git
-          </a>
-        )}
+      </div>
+
+      {/* Aksiyonlar: sag ust kosede degil, metanin altinda */}
+      <div className="flex items-center gap-1 mb-6 flex-wrap">
+        <button
+          onClick={toggleFavorite}
+          title={note.favorite ? "Favoriden çıkar" : "Favorile"}
+          className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
+        >
+          <Star size={20} fill={note.favorite ? "currentColor" : "none"} />
+        </button>
+        <button
+          onClick={toggleArchive}
+          title={note.archived ? "Arşivden çıkar" : "Arşivle"}
+          className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.archived ? "text-blue-500" : "text-zinc-400"}`}
+        >
+          <Archive size={20} fill={note.archived ? "currentColor" : "none"} />
+        </button>
+        <button
+          onClick={() => setShareOpen(true)}
+          title="Paylaşım"
+          className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${share ? "text-emerald-500" : "text-zinc-400"}`}
+        >
+          <Share2 size={20} />
+        </button>
+        <button
+          onClick={handleReprocess}
+          disabled={reprocessing || busy}
+          title="İçeriği yeniden çıkar"
+          className="p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 cursor-pointer disabled:opacity-50"
+        >
+          <RefreshCw size={20} className={reprocessing ? "animate-spin" : ""} />
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          title="Notu sil"
+          className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 cursor-pointer disabled:opacity-50"
+        >
+          <Trash2 size={20} />
+        </button>
       </div>
 
       {/* Tags */}

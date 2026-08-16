@@ -152,9 +152,9 @@ export function Sidebar({ role }: SidebarProps) {
 
   return (
     <>
-      {/* Mobil ust bar: buton serbest gezmek yerine kendi satirinda durur,
-          boylece sayfa basliklarinin uzerine binmez */}
-      <div className="lg:hidden fixed top-0 inset-x-0 z-50 h-14 flex items-center gap-2 px-4 bg-white/95 dark:bg-zinc-900/95 backdrop-blur border-b border-zinc-200 dark:border-zinc-800">
+      {/* Mobil ust bar akisin icinde duruyor (fixed degil): boylece sayfa
+          basligi asla altina girmiyor ve kaydirinca uzerine binmiyor */}
+      <div className="lg:hidden shrink-0 h-14 flex items-center gap-2 px-4 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label={mobileOpen ? "Menüyü kapat" : "Menüyü aç"}

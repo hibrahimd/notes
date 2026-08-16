@@ -1,5 +1,5 @@
-import { openaiChat, OPENAI_DEFAULT_MODEL } from "./openai";
-import { anthropicChat, ANTHROPIC_DEFAULT_MODEL } from "./anthropic";
+import { openaiChat } from "./openai";
+import { anthropicChat } from "./anthropic";
 
 /**
  * Metin islerinde (ozet, ceviri, kategori) saglayici bagimsiz katman.
@@ -14,10 +14,6 @@ export interface AiConfig {
   provider: AiProvider;
   apiKey: string;
   model: string;
-}
-
-export function defaultModelFor(provider: AiProvider): string {
-  return provider === "anthropic" ? ANTHROPIC_DEFAULT_MODEL : OPENAI_DEFAULT_MODEL;
 }
 
 export interface ChatOptions {
