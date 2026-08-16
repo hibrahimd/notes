@@ -118,15 +118,22 @@ export interface SafeFetchResult {
   body: string;
 }
 
+export interface SafeFetchBinaryResult {
+  finalUrl: string;
+  status: number;
+  contentType: string | null;
+  body: Buffer;
+}
+
 /**
  * Yonlendirmeleri elle takip ederek her adimda hedefi yeniden dogrulayan fetch.
  * `redirect: "follow"` kullanilsaydi, guvenli bir alan adi 127.0.0.1'e
  * yonlendirerek kontrolu atlayabilirdi.
  */
-export async function safeFetchText(
+export async function safeFetchBinary(
   rawUrl: string,
   options: SafeFetchOptions = {}
-): Promise<SafeFetchResult> {
+): Promise<SafeFetchBinaryResult> {
   const { headers = {}, timeoutMs = 15000, maxBytes = 5 * 1024 * 1024 } = options;
 
   let currentUrl = rawUrl;
@@ -169,9 +176,21 @@ export async function safeFetchText(
       finalUrl: url.toString(),
       status: response.status,
       contentType: response.headers.get("content-type"),
-      body: new TextDecoder().decode(buffer),
+      body: Buffer.from(buffer),
     };
   }
 
   throw new BlockedUrlError("Cok fazla yonlendirme");
+}
+
+/**
+ * Metin surumu. Ikili surumun uzerine kuruludur: yonlendirme dogrulamasi ve
+ * boyut siniri tek yerde kalsin.
+ */
+export async function safeFetchText(
+  rawUrl: string,
+  options: SafeFetchOptions = {}
+): Promise<SafeFetchResult> {
+  const result = await safeFetchBinary(rawUrl, options);
+  return { ...result, body: new TextDecoder().decode(result.body) };
 }

@@ -164,6 +164,7 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
 
   const [showTranscript, setShowTranscript] = useState(false);
   const videoMedia = note.media.find((m) => m.mediaType === "video");
+  const photos = note.media.filter((m) => m.mediaType === "image");
   const subtitleOriginal = note.media.find((m) => m.mediaType === "subtitle_original");
   const subtitleTranslated = note.media.find((m) => m.mediaType === "subtitle_translated");
   const transcript = note.transcripts[0];
@@ -538,6 +539,33 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
           <p className="text-xs text-emerald-500 text-right mt-2">Kaydedildi</p>
         )}
       </Card>
+
+      {/* Tweet fotograflari. Tek fotografta tam genislik, birden fazlasinda
+          izgara: dort fotografli bir tweet'te hepsi ust uste uzayinca
+          sayfa okunmaz oluyordu. */}
+      {photos.length > 0 && (
+        <div
+          className={`grid gap-2 mb-6 ${photos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
+        >
+          {photos.map((photo, index) => (
+            <a
+              key={photo.id}
+              href={mediaUrl(photo.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={mediaUrl(photo.id)}
+                alt={`Fotoğraf ${index + 1}`}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Video oynatici. Altyazi <track> ile degil elle ciziliyor: ::cue
           konum ve bosluk ayarina izin vermiyor, iOS'ta altyazi karenin en

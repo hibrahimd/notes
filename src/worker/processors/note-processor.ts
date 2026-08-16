@@ -2,6 +2,10 @@ import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { safeFetchText, BlockedUrlError } from "../../lib/safe-fetch";
 import { looksLikeVideoUrl, probeVideo } from "../../lib/media";
+import { fetchTweetMedia, originalSizeUrl, tweetId } from "../../lib/twitter";
+import { safeFetchBinary } from "../../lib/safe-fetch";
+import { saveFile } from "../../lib/storage";
+import path from "path";
 import { transcribeNote } from "./video-processor";
 import {
   chat,
@@ -226,6 +230,84 @@ export async function enrichNote(
   }
 }
 
+
+/**
+ * Notun turu. Fotograf ve video birlikteyse "mixed": tweet'lerde ikisi ayni
+ * gonderide bulunabiliyor ve tek bir tur ikisini de anlatmiyor.
+ */
+function noteType(
+  hasVideo: boolean,
+  photoCount: number,
+  fallback: "link" | "article"
+): string {
+  if (hasVideo && photoCount > 0) return "mixed";
+  if (hasVideo) return "video";
+  if (photoCount > 0) return "image";
+  return fallback;
+}
+
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+  "image/gif": "gif",
+};
+
+/**
+ * Tweet fotograflarini indirip nota baglar.
+ *
+ * Uzak adresi saklamak yerine dosyayi indiriyoruz: bu bir yakalama
+ * uygulamasi, kaynak silinince notun icerigi de gitmemeli.
+ *
+ * @returns kaydedilen fotograf sayisi
+ */
+async function saveTweetPhotos(
+  noteId: string,
+  photoUrls: string[]
+): Promise<number> {
+  // Ayni not yeniden islenirse fotograflar cogalmasin
+  await prisma.noteMedia.deleteMany({ where: { noteId, mediaType: "image" } });
+
+  let saved = 0;
+
+  for (const [index, photoUrl] of photoUrls.entries()) {
+    try {
+      const result = await safeFetchBinary(originalSizeUrl(photoUrl), {
+        timeoutMs: 20000,
+        maxBytes: 12 * 1024 * 1024,
+      });
+
+      const mimeType = (result.contentType || "image/jpeg").split(";")[0].trim();
+      const extension = IMAGE_EXTENSIONS[mimeType];
+      if (!extension) continue;
+
+      const relativePath = await saveFile(
+        path.join("notes", noteId),
+        `photo-${index + 1}.${extension}`,
+        result.body
+      );
+
+      await prisma.noteMedia.create({
+        data: {
+          noteId,
+          mediaType: "image",
+          storagePath: relativePath,
+          mimeType,
+          size: result.body.byteLength,
+        },
+      });
+      saved++;
+    } catch (error) {
+      console.warn(
+        `[Tweet] ${noteId}: fotoğraf indirilemedi (${photoUrl}):`,
+        error instanceof Error ? error.message : error
+      );
+    }
+  }
+
+  return saved;
+}
+
 async function processLink(noteId: string, url: string, userId: string) {
   await createJob(noteId, "analyze", "running", "Link analiz ediliyor...");
 
@@ -250,7 +332,31 @@ async function processLink(noteId: string, url: string, userId: string) {
     }
   }
 
-  await completeJob(noteId, "analyze", "Link analiz edildi");
+  // Tweet'lerde fotograflar ayri bir yoldan geliyor: yt-dlp yalnizca videoyu
+  // goruyor, cektigimiz HTML'den de tek bir OpenGraph gorseli cikiyor. Dort
+  // fotografli bir tweet bu yuzden tek kapakla kaydediliyordu.
+  let tweetPhotoCount = 0;
+  let tweetText: string | null = null;
+
+  if (tweetId(url)) {
+    const tweet = await fetchTweetMedia(url);
+
+    if (tweet) {
+      tweetText = tweet.text;
+      if (tweet.hasVideo) isVideo = true;
+      if (tweet.photoUrls.length > 0) {
+        tweetPhotoCount = await saveTweetPhotos(noteId, tweet.photoUrls);
+      }
+    }
+  }
+
+  await completeJob(
+    noteId,
+    "analyze",
+    tweetPhotoCount > 0
+      ? `Link analiz edildi — ${tweetPhotoCount} fotoğraf kaydedildi`
+      : "Link analiz edildi"
+  );
 
   // Fetch and extract article content
   await updateStatus(noteId, "extracting");
@@ -276,11 +382,12 @@ async function processLink(noteId: string, url: string, userId: string) {
       await prisma.note.update({
         where: { id: noteId },
         data: {
-          type: isVideo || preview.hasVideo ? "video" : "link",
+          type: noteType(isVideo || preview.hasVideo, tweetPhotoCount, "link"),
           title: preview.title || url,
           siteName: preview.siteName || hostname,
           coverImage: preview.image,
-          metadataJson: { description: preview.description },
+          originalText: tweetText,
+          metadataJson: { description: tweetText || preview.description },
         },
       });
       await completeJob(
@@ -300,7 +407,7 @@ async function processLink(noteId: string, url: string, userId: string) {
     await prisma.note.update({
       where: { id: noteId },
       data: {
-        type: isVideo || preview.hasVideo ? "video" : "article",
+        type: noteType(isVideo || preview.hasVideo, tweetPhotoCount, "article"),
         title: article.title || preview.title || null,
         originalText: article.textContent || null,
         siteName: article.siteName || preview.siteName || hostname,

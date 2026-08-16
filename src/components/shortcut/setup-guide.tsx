@@ -155,18 +155,16 @@ export function SetupGuide({ token }: Props) {
           Kisayollar'a devredebilmesi icin dogrudan gezinmesi gerekiyor.
           Indirmeye giderken token panoya yazilir ki import ekrani
           sordugunda hazir olsun. */}
-      <a
-        href={SHORTCUT_FILE_URL}
-        onClick={() => copy(true)}
-        className="block mt-6"
-      >
-        <Button className="w-full justify-center">
-          <Smartphone size={16} /> Kısayolu İndir
-        </Button>
-      </a>
-      <p className="text-xs text-zinc-400 text-center mt-2">
-        iPhone&apos;dan Safari ile açın.
-      </p>
+      <div className="flex items-center gap-3 flex-wrap mt-6">
+        <a href={SHORTCUT_FILE_URL} onClick={() => copy(true)}>
+          <Button size="sm">
+            <Smartphone size={16} /> Kısayolu İndir
+          </Button>
+        </a>
+        <span className="text-xs text-zinc-400">
+          iPhone&apos;dan Safari ile açın.
+        </span>
+      </div>
 
       <div className="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800">
         <p className="text-xs text-zinc-400 mb-2">
