@@ -154,6 +154,7 @@ export function NoteDetail({ note }: NoteProps) {
   }
 
   const [enriching, setEnriching] = useState<string | null>(null);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
   const busy = [
     "pending",
     "analyzing",
@@ -176,11 +177,21 @@ export function NoteDetail({ note }: NoteProps) {
     action: "summarize" | "translate" | "categorize" | "transcribe"
   ) {
     setEnriching(action);
-    await fetch(`/api/notes/${note.id}/enrich`, {
+    setEnrichError(null);
+
+    const res = await fetch(`/api/notes/${note.id}/enrich`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action }),
     });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setEnrichError(data.error || "İşlem başlatılamadı");
+      setEnriching(null);
+      return;
+    }
+
     router.refresh();
     // Bundan sonrasini not.status uzerinden izliyoruz
     setEnriching(null);
@@ -397,6 +408,9 @@ export function NoteDetail({ note }: NoteProps) {
             </span>
           )}
         </div>
+        {enrichError && (
+          <p className="mt-3 text-sm text-red-500">{enrichError}</p>
+        )}
       </Card>
 
       {/* Video oynatici: altyazilar ayri parca olarak eklenir, izleyici

@@ -118,18 +118,24 @@ export function NoteCard({ note }: NoteCardProps) {
             </p>
           )}
 
-          <div className="flex items-center gap-3 mt-3 text-xs text-zinc-400">
+          {/* flex-wrap sart: site adi OpenGraph'tan geldiginde uzun olabiliyor
+              ("X (formerly Twitter)") ve satir sarmadan tasip tum sayfayi
+              yatay kaydiriyordu */}
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-zinc-400">
             {note.siteName && (
-              <span className="flex items-center gap-1">
-                <Globe size={12} /> {note.siteName}
+              <span className="flex items-center gap-1 min-w-0">
+                <Globe size={12} className="shrink-0" />
+                <span className="truncate">{note.siteName}</span>
               </span>
             )}
             {note.readingTime && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 shrink-0">
                 <Clock size={12} /> {note.readingTime} dk
               </span>
             )}
-            <span>{new Date(note.createdAt).toLocaleDateString("tr-TR")}</span>
+            <span className="shrink-0">
+              {new Date(note.createdAt).toLocaleDateString("tr-TR")}
+            </span>
           </div>
 
           {note.tags.length > 0 && (

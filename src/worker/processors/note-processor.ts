@@ -34,6 +34,8 @@ interface PagePreview {
   description: string | null;
   image: string | null;
   siteName: string | null;
+  /** Sayfada gercekten oynatilabilir bir video var mi */
+  hasVideo: boolean;
 }
 
 /**
@@ -64,11 +66,24 @@ function extractPreview(doc: Document, pageUrl: string): PagePreview {
     }
   }
 
+  // Alan adina bakip "x.com ise videodur" demek yanlis sonuc veriyordu:
+  // videosuz tweetler de video olarak isaretleniyordu. Sayfanin kendi
+  // bildirdigi video etiketlerine bakiliyor.
+  const hasVideo = Boolean(
+    meta(
+      "og:video",
+      "og:video:url",
+      "og:video:secure_url",
+      "twitter:player:stream"
+    ) || doc.querySelector("video source[src], video[src]")
+  );
+
   return {
     title: meta("og:title", "twitter:title") || doc.title?.trim() || null,
     description: meta("og:description", "twitter:description", "description"),
     image,
     siteName: meta("og:site_name", "application-name"),
+    hasVideo,
   };
 }
 
@@ -155,12 +170,15 @@ export async function enrichNote(
   const metadata = note.metadataJson as { description?: string } | null;
   const text = note.originalText || metadata?.description || null;
 
+  // Erken cikislarda durumu geri almak sart: aksi halde not "isleniyor"
+  // durumunda kalir ve arayuz sonsuza kadar bekler
   if (!text) {
     await skipJob(
       noteId,
       action,
       "Bu notta işlenecek metin yok. Önce 'Yeniden İşle' ile içeriği çıkarmayı deneyin."
     );
+    await updateStatus(noteId, "ready");
     return;
   }
 
@@ -171,6 +189,7 @@ export async function enrichNote(
       action,
       "OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından ekleyebilirsiniz."
     );
+    await updateStatus(noteId, "ready");
     return;
   }
 
@@ -198,23 +217,7 @@ export async function enrichNote(
 async function processLink(noteId: string, url: string, userId: string) {
   await createJob(noteId, "analyze", "running", "Link analiz ediliyor...");
 
-  // Detect URL type
-  const urlLower = url.toLowerCase();
-  const isVideo =
-    urlLower.includes("youtube.com") ||
-    urlLower.includes("youtu.be") ||
-    urlLower.includes("twitter.com/") ||
-    urlLower.includes("x.com/") ||
-    urlLower.includes("instagram.com");
-
-  if (isVideo) {
-    // For now, mark as video but don't process video pipeline (v2)
-    await prisma.note.update({
-      where: { id: noteId },
-      data: { type: "video" },
-    });
-    await completeJob(noteId, "analyze", "Video linki tespit edildi");
-  }
+  await completeJob(noteId, "analyze", "Link analiz edildi");
 
   // Fetch and extract article content
   await updateStatus(noteId, "extracting");
@@ -240,7 +243,7 @@ async function processLink(noteId: string, url: string, userId: string) {
       await prisma.note.update({
         where: { id: noteId },
         data: {
-          type: isVideo ? "video" : "link",
+          type: preview.hasVideo ? "video" : "link",
           title: preview.title || url,
           siteName: preview.siteName || hostname,
           coverImage: preview.image,
@@ -264,7 +267,7 @@ async function processLink(noteId: string, url: string, userId: string) {
     await prisma.note.update({
       where: { id: noteId },
       data: {
-        type: isVideo ? "video" : "article",
+        type: preview.hasVideo ? "video" : "article",
         title: article.title || preview.title || null,
         originalText: article.textContent || null,
         siteName: article.siteName || preview.siteName || hostname,

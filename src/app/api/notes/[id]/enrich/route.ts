@@ -52,6 +52,29 @@ export async function POST(
     return NextResponse.json({ error: "Not bulunamadı" }, { status: 404 });
   }
 
+  // Anahtar yoksa isi hic baslatma: aksi halde not "isleniyor" durumunda
+  // takilip kaliyor ve kullanici bekledigini saniyor
+  const [userSettings, systemSettings] = await Promise.all([
+    prisma.userSettings.findUnique({
+      where: { userId: session.userId },
+      select: { openaiApiKeyEncrypted: true },
+    }),
+    prisma.systemSettings.findUnique({
+      where: { id: "default" },
+      select: { openaiApiKey: true },
+    }),
+  ]);
+
+  if (!userSettings?.openaiApiKeyEncrypted && !systemSettings?.openaiApiKey) {
+    return NextResponse.json(
+      {
+        error:
+          "OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından ekledikten sonra tekrar deneyin.",
+      },
+      { status: 400 }
+    );
+  }
+
   // Durumu hemen guncelle ki arayuz beklemeye gectigini gosterebilsin
   await prisma.note.update({
     where: { id },
