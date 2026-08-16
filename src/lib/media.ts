@@ -161,6 +161,10 @@ export async function extractAudio(
       "-y",
       "-i",
       videoPath,
+      // Birden fazla ses akisi varsa ilkini (varsayilani) al; belirtilmezse
+      // ffmpeg'in secimi dosyaya gore degisebiliyor
+      "-map",
+      "0:a:0",
       "-vn",
       "-ac",
       "1",

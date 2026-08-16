@@ -71,13 +71,20 @@ function extractPreview(doc: Document, pageUrl: string): PagePreview {
   // Alan adina bakip "x.com ise videodur" demek yanlis sonuc veriyordu:
   // videosuz tweetler de video olarak isaretleniyordu. Sayfanin kendi
   // bildirdigi video etiketlerine bakiliyor.
+  const ogType = meta("og:type") || "";
+  const twitterCard = meta("twitter:card") || "";
+
   const hasVideo = Boolean(
     meta(
       "og:video",
       "og:video:url",
       "og:video:secure_url",
-      "twitter:player:stream"
-    ) || doc.querySelector("video source[src], video[src]")
+      "twitter:player:stream",
+      "twitter:player"
+    ) ||
+      ogType.startsWith("video") ||
+      twitterCard === "player" ||
+      doc.querySelector("video source[src], video[src]")
   );
 
   return {
@@ -221,7 +228,19 @@ export async function enrichNote(
   }
 
   const metadata = note.metadataJson as { description?: string } | null;
-  const text = note.originalText || metadata?.description || null;
+
+  // Video notlarinda makale metni yok; asil icerik transkriptte duruyor.
+  // Ozet ve ceviri onu kullanmali, yoksa "islenecek metin yok" deyip cikiyordu.
+  const transcript = await prisma.transcript.findFirst({
+    where: { noteId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const text =
+    transcript?.transcriptText ||
+    note.originalText ||
+    metadata?.description ||
+    null;
 
   // Erken cikislarda durumu geri almak sart: aksi halde not "isleniyor"
   // durumunda kalir ve arayuz sonsuza kadar bekler
@@ -229,7 +248,8 @@ export async function enrichNote(
     await skipJob(
       noteId,
       action,
-      "Bu notta işlenecek metin yok. Önce 'Yeniden İşle' ile içeriği çıkarmayı deneyin."
+      "Bu notta işlenecek metin yok. Link için 'Yeniden İşle', video için " +
+        "'Videoyu İşle' ile önce içeriği çıkarın."
     );
     await updateStatus(noteId, "ready");
     return;
@@ -271,6 +291,15 @@ export async function enrichNote(
 async function processLink(noteId: string, url: string, userId: string) {
   await createJob(noteId, "analyze", "running", "Link analiz ediliyor...");
 
+  // Not daha once video olarak islendiyse tipi koru: OpenGraph etiketleri
+  // videoyu bildirmese bile elimizde indirilmis video ve transkript var,
+  // yeniden isleme bunu "makale"ye dusurmemeli
+  const [mediaCount, transcriptCount] = await Promise.all([
+    prisma.noteMedia.count({ where: { noteId, mediaType: "video" } }),
+    prisma.transcript.count({ where: { noteId } }),
+  ]);
+  const alreadyVideo = mediaCount > 0 || transcriptCount > 0;
+
   await completeJob(noteId, "analyze", "Link analiz edildi");
 
   // Fetch and extract article content
@@ -297,7 +326,7 @@ async function processLink(noteId: string, url: string, userId: string) {
       await prisma.note.update({
         where: { id: noteId },
         data: {
-          type: preview.hasVideo ? "video" : "link",
+          type: alreadyVideo || preview.hasVideo ? "video" : "link",
           title: preview.title || url,
           siteName: preview.siteName || hostname,
           coverImage: preview.image,
@@ -321,7 +350,7 @@ async function processLink(noteId: string, url: string, userId: string) {
     await prisma.note.update({
       where: { id: noteId },
       data: {
-        type: preview.hasVideo ? "video" : "article",
+        type: alreadyVideo || preview.hasVideo ? "video" : "article",
         title: article.title || preview.title || null,
         originalText: article.textContent || null,
         siteName: article.siteName || preview.siteName || hostname,

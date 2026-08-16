@@ -10,7 +10,7 @@ import {
   Archive,
   Settings,
   Share2,
-  Link2,
+  Smartphone,
   LogOut,
   Shield,
   Menu,
@@ -32,7 +32,7 @@ const userMenuItems = [
 
 const userSettingsItems = [
   { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
-  { href: "/dashboard/shortcut", label: "Kısayollar", icon: Link2 },
+  { href: "/dashboard/shortcut", label: "Mobil Kurulum", icon: Smartphone },
 ];
 
 const adminMenuItems = [

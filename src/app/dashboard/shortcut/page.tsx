@@ -60,7 +60,7 @@ export default function ShortcutPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">Kısayollar</h1>
+      <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">Mobil Kurulum</h1>
 
       {/* iPhone Kisayolu - once kurulum */}
       <Card className="mb-6">
