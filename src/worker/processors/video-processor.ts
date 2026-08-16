@@ -137,20 +137,29 @@ export async function transcribeNote(noteId: string, userId: string) {
     const originalVttPath = path.join(dir, "original.vtt");
     await writeFile(originalVttPath, originalVtt, "utf-8");
 
-    // 5) Ceviri
+    // 5) Ceviri — konusma zaten hedef dildeyse atlanir
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const targetLanguage = user?.translationLanguage || "tr";
 
-    await updateStatus(noteId, "translating");
-    await progressJob(noteId, "transcribe", "Altyazı çevriliyor...", 75);
+    const spokenLanguage = transcription.language?.toLowerCase().slice(0, 2);
+    const needsTranslation =
+      !spokenLanguage || spokenLanguage !== targetLanguage.toLowerCase().slice(0, 2);
 
-    const translatedSegments = await translateSegments(
-      ai.config,
-      transcription.segments,
-      targetLanguage
-    );
-    const translatedVttPath = path.join(dir, "translated.vtt");
-    await writeFile(translatedVttPath, buildVtt(translatedSegments), "utf-8");
+    let translatedSegments = transcription.segments;
+    let translatedVttPath: string | null = null;
+
+    if (needsTranslation) {
+      await updateStatus(noteId, "translating");
+      await progressJob(noteId, "transcribe", "Altyazı çevriliyor...", 75);
+
+      translatedSegments = await translateSegments(
+        ai.config,
+        transcription.segments,
+        targetLanguage
+      );
+      translatedVttPath = path.join(dir, "translated.vtt");
+      await writeFile(translatedVttPath, buildVtt(translatedSegments), "utf-8");
+    }
 
     // 6) Kayit. Iki altyazi da NoteMedia olarak yazilir ki oynatici ikisini de
     //    ayri parca olarak sunabilsin.
@@ -160,27 +169,32 @@ export async function transcribeNote(noteId: string, userId: string) {
         noteId,
         language: transcription.language || "bilinmiyor",
         transcriptText: transcription.text,
-        translatedText: translatedSegments.map((s) => s.text).join(" "),
+        translatedText: needsTranslation
+          ? translatedSegments.map((s) => s.text).join(" ")
+          : null,
         subtitleVttPath: path.relative(getStoragePath(), originalVttPath),
       },
     });
 
-    await prisma.noteMedia.createMany({
-      data: [
-        {
-          noteId,
-          mediaType: "subtitle_original",
-          storagePath: path.relative(getStoragePath(), originalVttPath),
-          mimeType: "text/vtt",
-        },
-        {
+    await prisma.noteMedia.create({
+      data: {
+        noteId,
+        mediaType: "subtitle_original",
+        storagePath: path.relative(getStoragePath(), originalVttPath),
+        mimeType: "text/vtt",
+      },
+    });
+
+    if (translatedVttPath) {
+      await prisma.noteMedia.create({
+        data: {
           noteId,
           mediaType: "subtitle_translated",
           storagePath: path.relative(getStoragePath(), translatedVttPath),
           mimeType: "text/vtt",
         },
-      ],
-    });
+      });
+    }
 
     await prisma.note.update({
       where: { id: noteId },
@@ -196,7 +210,9 @@ export async function transcribeNote(noteId: string, userId: string) {
     await completeJob(
       noteId,
       "transcribe",
-      `Altyazı hazır (${transcription.segments.length} satır)`
+      needsTranslation
+        ? `Altyazı hazır (${transcription.segments.length} satır)`
+        : `Altyazı hazır (${transcription.segments.length} satır) — konuşma zaten ${targetLanguage} dilinde, çeviri atlandı`
     );
     await updateStatus(noteId, "ready");
   } catch (error) {

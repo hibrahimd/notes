@@ -136,7 +136,10 @@ export function NoteDetail({ note }: NoteProps) {
   const subtitleTranslated = note.media.find((m) => m.mediaType === "subtitle_translated");
   const transcript = note.transcripts[0];
   const mediaUrl = (mediaId: string) => `/api/notes/${note.id}/media/${mediaId}`;
-  const canTranscribe = Boolean(note.sourceUrl);
+  // Video butonu yalnizca gercekten video olan notlarda: tip analiz sirasinda
+  // yt-dlp ile kesinlestiriliyor, makale notlarinda bu butonun isi yok
+  const canTranscribe =
+    Boolean(note.sourceUrl) && (note.type === "video" || Boolean(transcript));
   const [deletingVideo, setDeletingVideo] = useState(false);
 
   async function deleteVideoFile(mediaId: string) {

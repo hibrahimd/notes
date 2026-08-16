@@ -20,18 +20,35 @@ export async function GET() {
     where: { userId: session.userId },
   });
 
-  if (!settings?.shortcutTokenHash) {
-    return NextResponse.json({ token: null, hasToken: false });
+  const existing = settings?.shortcutTokenHash
+    ? tryDecrypt(settings.shortcutTokenEncrypted)
+    : null;
+
+  if (existing) {
+    return NextResponse.json({ token: existing });
   }
 
-  const token = tryDecrypt(settings.shortcutTokenEncrypted);
+  // Token kalici bir kimlik: her kullanicinin bir tanesi olur ve ilk istekte
+  // kendiliginden uretilir. Yenilemek kurulu kisayolu bozdugu icin rutin bir
+  // islem degil — kullanicinin "olustur" demesini beklemiyoruz.
+  const { token, prefix, hash } = await generateToken();
 
-  return NextResponse.json({
-    token,
-    hasToken: true,
-    // Sifreleme oncesi uretilmis tokenlar geri okunamaz, yenilenmesi gerekir
-    needsRegenerate: token === null,
+  await prisma.userSettings.upsert({
+    where: { userId: session.userId },
+    update: {
+      shortcutTokenHash: hash,
+      shortcutTokenPrefix: prefix,
+      shortcutTokenEncrypted: encrypt(token),
+    },
+    create: {
+      userId: session.userId,
+      shortcutTokenHash: hash,
+      shortcutTokenPrefix: prefix,
+      shortcutTokenEncrypted: encrypt(token),
+    },
   });
+
+  return NextResponse.json({ token });
 }
 
 export async function POST() {

@@ -24,7 +24,6 @@ interface SidebarProps {
 
 const userMenuItems = [
   { href: "/dashboard", label: "Inbox", icon: Inbox },
-  { href: "/dashboard/notes", label: "Tüm Notlar", icon: FileText },
   { href: "/dashboard/favorites", label: "Favoriler", icon: Star },
   { href: "/dashboard/archive", label: "Arşiv", icon: Archive },
   { href: "/dashboard/shared", label: "Paylaşılan", icon: Share2 },
