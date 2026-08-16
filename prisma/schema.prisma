@@ -48,10 +48,12 @@ model UserSettings {
   userId                String   @unique @map("user_id")
   deeplApiKeyEncrypted  String?  @map("deepl_api_key_encrypted")
   openaiApiKeyEncrypted String?  @map("openai_api_key_encrypted")
-  autoSummarize         Boolean  @default(true) @map("auto_summarize")
-  autoTranslate         Boolean  @default(true) @map("auto_translate")
-  autoTranscribe        Boolean  @default(true) @map("auto_transcribe")
-  autoCategorize        Boolean  @default(true) @map("auto_categorize")
+  // Varsayilan kapali: AI adimlari maliyetli ve her not icin istenmiyor.
+  // Kullanici not detayindan tek tek tetikler, ayarlardan otomatige alabilir.
+  autoSummarize         Boolean  @default(false) @map("auto_summarize")
+  autoTranslate         Boolean  @default(false) @map("auto_translate")
+  autoTranscribe        Boolean  @default(false) @map("auto_transcribe")
+  autoCategorize        Boolean  @default(false) @map("auto_categorize")
   shortcutTokenHash     String?  @map("shortcut_token_hash")
   shortcutTokenPrefix   String?  @map("shortcut_token_prefix")
   // Kisayol tokeni kurulum icin tekrar gosterilebilmeli: kullanici telefonunda

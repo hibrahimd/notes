@@ -9,7 +9,6 @@ import {
   Star,
   Archive,
   Settings,
-  Key,
   Share2,
   Link2,
   LogOut,
@@ -33,7 +32,6 @@ const userMenuItems = [
 
 const userSettingsItems = [
   { href: "/dashboard/settings", label: "Ayarlar", icon: Settings },
-  { href: "/dashboard/api-keys", label: "API Anahtarları", icon: Key },
   { href: "/dashboard/shortcut", label: "Kısayollar", icon: Link2 },
 ];
 

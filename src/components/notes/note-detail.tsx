@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,9 @@ import {
   Copy,
   Check,
   X,
+  Sparkles,
+  Languages,
+  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -110,6 +113,36 @@ export function NoteDetail({ note }: NoteProps) {
 
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
   const skippedJobs = note.jobs.filter((job) => job.status === "skipped");
+
+  const [enriching, setEnriching] = useState<string | null>(null);
+  const busy = [
+    "pending",
+    "analyzing",
+    "extracting",
+    "summarizing",
+    "translating",
+    "categorizing",
+  ].includes(note.status);
+
+  // Islem surerken sayfayi tazele ki sonuc geldiginde aninda gorunsun
+  useEffect(() => {
+    if (!busy) {
+      setEnriching(null);
+      return;
+    }
+    const timer = setInterval(() => router.refresh(), 2500);
+    return () => clearInterval(timer);
+  }, [busy, router]);
+
+  async function runEnrich(action: "summarize" | "translate" | "categorize") {
+    setEnriching(action);
+    await fetch(`/api/notes/${note.id}/enrich`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action }),
+    });
+    router.refresh();
+  }
 
   async function postShare(extra: Record<string, unknown> = {}) {
     setSharing(true);
@@ -269,6 +302,46 @@ export function NoteDetail({ note }: NoteProps) {
           ))}
         </div>
       )}
+
+      {/* AI islemleri: otomatik degil, istenildiginde tetiklenir */}
+      <Card className="mb-6">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => runEnrich("summarize")}
+              loading={enriching === "summarize" || note.status === "summarizing"}
+              disabled={busy}
+            >
+              <Sparkles size={16} /> {note.summary ? "Özeti Yenile" : "Özetle"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => runEnrich("translate")}
+              loading={enriching === "translate" || note.status === "translating"}
+              disabled={busy}
+            >
+              <Languages size={16} /> {note.translatedText ? "Çeviriyi Yenile" : "Çevir"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => runEnrich("categorize")}
+              loading={enriching === "categorize" || note.status === "categorizing"}
+              disabled={busy}
+            >
+              <Tag size={16} /> {note.category ? "Kategoriyi Yenile" : "Kategorile"}
+            </Button>
+          </div>
+          {busy && (
+            <span className="text-xs text-zinc-400">
+              İşleniyor, sonuç hazır olunca burada görünecek...
+            </span>
+          )}
+        </div>
+      </Card>
 
       {/* Kapak gorseli */}
       {note.coverImage && (

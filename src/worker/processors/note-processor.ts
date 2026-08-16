@@ -132,6 +132,66 @@ export async function processNote(noteId: string, userId: string) {
   }
 }
 
+export type EnrichAction = "summarize" | "translate" | "categorize";
+
+/**
+ * Tek bir AI adimini talep uzerine calistirir. Otomatik islem kapali oldugu
+ * icin kullanici not detayindan ozet/ceviri/kategori istedikce buraya dusuyor.
+ */
+export async function enrichNote(
+  noteId: string,
+  userId: string,
+  action: EnrichAction
+) {
+  const note = await prisma.note.findFirst({ where: { id: noteId, userId } });
+  if (!note) {
+    console.error(`[Processor] Note ${noteId} not found`);
+    return;
+  }
+
+  const metadata = note.metadataJson as { description?: string } | null;
+  const text = note.originalText || metadata?.description || null;
+
+  if (!text) {
+    await skipJob(
+      noteId,
+      action,
+      "Bu notta işlenecek metin yok. Önce 'Yeniden İşle' ile içeriği çıkarmayı deneyin."
+    );
+    return;
+  }
+
+  const ai = await resolveAi(userId);
+  if (!ai) {
+    await skipJob(
+      noteId,
+      action,
+      "OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından ekleyebilirsiniz."
+    );
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  try {
+    if (action === "summarize") {
+      await summarize(noteId, ai.config, text, user?.preferredLanguage || "tr");
+    } else if (action === "translate") {
+      await translate(
+        noteId,
+        ai.config,
+        text,
+        note.title,
+        user?.translationLanguage || "tr"
+      );
+    } else {
+      await categorize(noteId, ai.config, text);
+    }
+  } finally {
+    await updateStatus(noteId, "ready");
+  }
+}
+
 async function processLink(noteId: string, url: string, userId: string) {
   await createJob(noteId, "analyze", "running", "Link analiz ediliyor...");
 
