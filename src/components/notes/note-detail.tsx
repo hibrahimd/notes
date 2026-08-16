@@ -25,6 +25,7 @@ import {
   Tag,
   Video,
   PenLine,
+  PlayCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -184,6 +185,11 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
       url: mediaUrl(subtitleOriginal.id),
     },
   ].filter((t) => t !== null && t !== undefined);
+  // Gomulu YouTube oynaticisi yalnizca altyazi hazirsa cikiyor
+  const youtubePlayerShown =
+    !videoMedia && Boolean(youtubeId) && subtitleTracks.length > 0;
+  const hasVideo = note.type === "video" || note.type === "mixed";
+
   // Video butonu yalnizca gercekten video olan notlarda: tip analiz sirasinda
   // yt-dlp ile kesinlestiriliyor, makale notlarinda bu butonun isi yok.
   // "mixed" de video iceriyor: fotograf ve video ayni tweet'te olabiliyor ve
@@ -569,6 +575,38 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
         </div>
       )}
 
+      {/* Video var ama henuz islenmemis. Onceden bu durumda sayfada hicbir iz
+          yoktu: notun video icerdigi yalnizca ustteki butonun varligindan
+          anlasiliyordu, o da gozden kaciyordu. */}
+      {!videoMedia && !youtubePlayerShown && hasVideo && (
+        <button
+          type="button"
+          onClick={() => runEnrich("transcribe")}
+          disabled={busy}
+          className="relative block w-full aspect-video rounded-xl overflow-hidden bg-zinc-900 mb-6 cursor-pointer disabled:cursor-wait"
+        >
+          {note.coverImage && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={note.coverImage}
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover opacity-40"
+            />
+          )}
+          <span className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-white px-4 text-center">
+            <PlayCircle size={44} />
+            <span className="text-sm font-semibold">
+              {busy ? "Video işleniyor..." : "Bu notta video var"}
+            </span>
+            <span className="text-xs text-white/70">
+              {busy
+                ? "Bitince oynatıcı burada açılacak"
+                : "İndirip altyazısını çıkarmak için dokunun"}
+            </span>
+          </span>
+        </button>
+      )}
+
       {/* Video oynatici. Altyazi <track> ile degil elle ciziliyor: ::cue
           konum ve bosluk ayarina izin vermiyor, iOS'ta altyazi karenin en
           dibine yapisiyordu (bkz. subtitles.tsx). */}
@@ -652,8 +690,10 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
         </Card>
       )}
 
-      {/* Kapak gorseli */}
-      {!videoMedia && note.coverImage && (
+      {/* Kapak gorseli. Tweet fotograflari varsa basilmiyor: kapak zaten o
+          fotograflardan biri oluyor ve ayni gorsel iki kez cikiyordu. Video
+          yer tutucusu da kapagi kendi icinde kullaniyor. */}
+      {!videoMedia && !youtubePlayerShown && !hasVideo && photos.length === 0 && note.coverImage && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={note.coverImage}

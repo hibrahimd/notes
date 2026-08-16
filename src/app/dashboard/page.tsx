@@ -58,6 +58,14 @@ export default async function InboxPage({ searchParams }: PageProps) {
   // listeden kaybolmasin
   const [notes, total, categories, types] = await Promise.all([
     prisma.note.findMany({
+      // Gorsel notlarinda uzak bir kapak yok; ilk fotograf onizleme oluyor
+      include: {
+        media: {
+          where: { mediaType: "image" },
+          take: 1,
+          select: { id: true },
+        },
+      },
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,

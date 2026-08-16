@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --text: #18181b;
+        --muted: #71717a;
+        --hover: #f4f4f5;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #18181b;
+          --text: #fafafa;
+          --muted: #a1a1aa;
+          --hover: #27272a;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-width: 220px;
+        background: var(--bg);
+        color: var(--text);
+        font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      button {
+        display: block;
+        width: 100%;
+        padding: 11px 14px;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+      button:hover { background: var(--hover); }
+      hr { border: 0; border-top: 1px solid var(--hover); margin: 0; }
+      .muted { color: var(--muted); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <button id="save">Bu sayfayı Notlarıma Ekle</button>
+    <hr />
+    <button id="options" class="muted">Ayarlar</button>
+    <script src="popup.js"></script>
+  </body>
+</html>

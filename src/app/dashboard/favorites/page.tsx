@@ -7,6 +7,14 @@ export default async function FavoritesPage() {
   const user = await requireAuth();
 
   const notes = await prisma.note.findMany({
+      // Gorsel notlarinda uzak bir kapak yok; ilk fotograf onizleme oluyor
+      include: {
+        media: {
+          where: { mediaType: "image" },
+          take: 1,
+          select: { id: true },
+        },
+      },
     where: { userId: user.id, favorite: true },
     orderBy: { createdAt: "desc" },
   });

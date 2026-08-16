@@ -14,6 +14,7 @@ interface NoteCardProps {
     sourceUrl: string | null;
     summary: string | null;
     userNote: string | null;
+    media?: { id: string }[];
     category: string | null;
     tags: string[];
     status: string;
@@ -55,7 +56,14 @@ export function NoteCard({ note }: NoteCardProps) {
   const [coverFailed, setCoverFailed] = useState(false);
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
   const preview = note.summary || metaDescription(note.metadataJson);
-  const showCover = Boolean(note.coverImage) && !coverFailed;
+
+  // Gorsel notlarinda uzak bir kapak olmuyor; dosya bizde duruyorsa onu
+  // onizleme olarak kullaniyoruz
+  const localPreviewId = note.media?.[0]?.id;
+  const coverSrc =
+    note.coverImage ||
+    (localPreviewId ? `/api/notes/${note.id}/media/${localPreviewId}` : null);
+  const showCover = Boolean(coverSrc) && !coverFailed;
 
   return (
     <Link
@@ -69,7 +77,7 @@ export function NoteCard({ note }: NoteCardProps) {
                 adlarindan geliyor, hepsini yapilandirmak mumkun degil */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={note.coverImage!}
+              src={coverSrc!}
               alt=""
               loading="lazy"
               className="w-full h-full object-cover"

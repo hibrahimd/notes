@@ -82,8 +82,17 @@ export async function transcribeNote(noteId: string, userId: string) {
 
     await ensureDir(dir);
 
-    // Yeniden calistirildiginda eski medya kayitlari birikmesin
-    await prisma.noteMedia.deleteMany({ where: { noteId } });
+    // Yeniden calistirildiginda eski medya kayitlari birikmesin. Yalnizca bu
+    // hattin urettikleri siliniyor: tweet fotograflari analiz adiminda
+    // kaydediliyor ve hepsini birden silmek onlari da goturuyordu.
+    await prisma.noteMedia.deleteMany({
+      where: {
+        noteId,
+        mediaType: {
+          in: ["video", "audio", "subtitle_original", "subtitle_translated"],
+        },
+      },
+    });
 
     // Gomulu oynatilabilen kaynaklarda video dosyasi saklanmiyor
     const embeddable = youtubeVideoId(note.sourceUrl) !== null;

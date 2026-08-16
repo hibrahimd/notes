@@ -308,8 +308,111 @@ async function saveTweetPhotos(
   return saved;
 }
 
+/**
+ * Adresin dogrudan bir gorsele isaret edip etmedigini soyler.
+ *
+ * Tarayici eklentisinden "medyayi kaydet" denince gelen adres bir HTML sayfasi
+ * degil, gorselin kendisi oluyor. Makale cikarici bu icerikte hicbir sey
+ * bulamiyor ve not "bozuk dosya" gibi gorunuyordu.
+ *
+ * Uzantiya bakmak yetmiyor: pbs.twimg.com adresleri
+ * ".../HP2U__LWEAA80kw?format=jpg" gibi uzantisiz geliyor. Bu yuzden once
+ * sunucunun bildirdigi tur, sonra sorgu parametresi, en son uzanti.
+ */
+async function detectImageUrl(url: string): Promise<string | null> {
+  try {
+    const parsed = new URL(url);
+
+    const format = parsed.searchParams.get("format");
+    if (format && IMAGE_EXTENSIONS_BY_NAME[format.toLowerCase()]) {
+      return IMAGE_EXTENSIONS_BY_NAME[format.toLowerCase()];
+    }
+
+    const extension = parsed.pathname.split(".").pop()?.toLowerCase();
+    if (extension && IMAGE_EXTENSIONS_BY_NAME[extension]) {
+      return IMAGE_EXTENSIONS_BY_NAME[extension];
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+const IMAGE_EXTENSIONS_BY_NAME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+};
+
+/**
+ * Dogrudan gorsel adresini indirip nota baglar.
+ * @returns kaydedildiyse true
+ */
+async function processImageUrl(noteId: string, url: string): Promise<boolean> {
+  try {
+    const result = await safeFetchBinary(url, {
+      timeoutMs: 20000,
+      maxBytes: 12 * 1024 * 1024,
+    });
+
+    const mimeType = (result.contentType || "").split(";")[0].trim();
+    if (!mimeType.startsWith("image/")) return false;
+
+    const extension = IMAGE_EXTENSIONS[mimeType];
+    if (!extension) return false;
+
+    await prisma.noteMedia.deleteMany({ where: { noteId, mediaType: "image" } });
+
+    const relativePath = await saveFile(
+      path.join("notes", noteId),
+      `photo-1.${extension}`,
+      result.body
+    );
+
+    await prisma.noteMedia.create({
+      data: {
+        noteId,
+        mediaType: "image",
+        storagePath: relativePath,
+        mimeType,
+        size: result.body.byteLength,
+      },
+    });
+
+    await prisma.note.update({
+      where: { id: noteId },
+      data: {
+        type: "image",
+        title: decodeURIComponent(new URL(url).pathname.split("/").pop() || "Görsel"),
+        siteName: safeHostname(url),
+        errorText: null,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.warn(
+      `[Görsel] ${noteId}: indirilemedi (${url}):`,
+      error instanceof Error ? error.message : error
+    );
+    return false;
+  }
+}
+
 async function processLink(noteId: string, url: string, userId: string) {
   await createJob(noteId, "analyze", "running", "Link analiz ediliyor...");
+
+  // Adres dogrudan bir gorselse makale cikariciya hic gonderilmiyor
+  if (await detectImageUrl(url)) {
+    if (await processImageUrl(noteId, url)) {
+      await completeJob(noteId, "analyze", "Görsel kaydedildi");
+      await updateStatus(noteId, "ready");
+      return;
+    }
+  }
 
   // Not daha once video olarak islendiyse tipi koru: OpenGraph etiketleri
   // videoyu bildirmese bile elimizde indirilmis video ve transkript var,

@@ -28,6 +28,8 @@ document.getElementById("save").addEventListener("click", async () => {
 
   await api.storage.sync.set({ token });
   setStatus("✅ Kaydedildi.", true);
+  // Token yokken denenen istek beklemede olabilir; kaldigi yerden devam etsin
+  api.runtime.sendMessage({ type: "token-saved" });
 });
 
 /**
@@ -60,6 +62,7 @@ document.getElementById("fetch").addEventListener("click", async () => {
     tokenInput.value = data.token;
     await api.storage.sync.set({ token: data.token });
     setStatus("✅ Token alındı ve kaydedildi.", true);
+    api.runtime.sendMessage({ type: "token-saved" });
   } catch (error) {
     setStatus(`Bağlanılamadı: ${error.message}`, false);
   }

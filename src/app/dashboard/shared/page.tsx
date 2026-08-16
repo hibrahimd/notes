@@ -12,7 +12,15 @@ export default async function SharedNotesPage() {
       shares: { some: {} },
     },
     orderBy: { createdAt: "desc" },
-    include: { shares: true },
+    include: {
+      shares: true,
+      // Gorsel notlarinda uzak bir kapak yok; ilk fotograf onizleme oluyor
+      media: {
+        where: { mediaType: "image" },
+        take: 1,
+        select: { id: true },
+      },
+    },
   });
 
   return (
