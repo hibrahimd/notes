@@ -1,0 +1,29 @@
+# Derleme baglami: Docker'a yalnizca imaja girecek dosyalar gonderilir.
+# .gitignore burada gecerli degil, ayri bir liste tutmak zorunlu.
+
+# Yerelde derlendiginde baglami yuzlerce MB sisiriyorlar; sunucuda Coolify
+# temiz bir klon aldigi icin zaten yoklar
+node_modules
+.next
+out
+
+# Surum gecmisi imajda ise yaramiyor
+.git
+.gitignore
+
+# Sirlar imaja hic girmemeli
+.env
+.env.*
+!.env.example
+
+# Uretim imajinin parcasi degiller
+browser-extension
+storage
+*.log
+.vscode
+.idea
+.DS_Store
+
+# Belgeler
+*.md
+!AGENTS.md
