@@ -65,6 +65,26 @@ function lastMeaningfulLine(stderr: string): string | null {
   return (errorLine || lines[lines.length - 1] || "").slice(0, 400) || null;
 }
 
+const VIDEO_HOSTS = [
+  "youtube.com",
+  "youtu.be",
+  "twitter.com",
+  "x.com",
+  "instagram.com",
+  "vimeo.com",
+  "tiktok.com",
+];
+
+/** URL, video barindirdigi bilinen bir siteye mi ait. */
+export function looksLikeVideoUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return VIDEO_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
+  } catch {
+    return false;
+  }
+}
+
 export interface VideoInfo {
   id: string;
   title: string | null;

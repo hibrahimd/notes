@@ -61,6 +61,29 @@ export async function chatJson<T>(
   }
 }
 
+/**
+ * Metnin dilini iki harfli kodla dondurur (tr, en, de...).
+ * Kucuk ve ucuz bir cagri: yalnizca ilk parca gonderilir ve tek kelime beklenir.
+ * Amaci ceviriyi gereksiz yere calistirmamak.
+ */
+export async function detectLanguage(
+  config: AiConfig,
+  text: string
+): Promise<string | null> {
+  const sample = text.slice(0, 1500);
+
+  const raw = await chat(
+    config,
+    "Aşağıdaki metnin dilini ISO 639-1 iki harfli kodla söyle. " +
+      "Sadece kodu yaz, başka hiçbir şey yazma.\n\n" +
+      sample,
+    { maxTokens: 10 }
+  );
+
+  const code = raw.trim().toLowerCase().match(/^[a-z]{2}/)?.[0];
+  return code || null;
+}
+
 /** Metni paragraf sinirlarinda, verilen karakter butcesine gore parcalara boler. */
 export function chunkText(text: string, maxChars: number): string[] {
   if (text.length <= maxChars) return [text];

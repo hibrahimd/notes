@@ -18,7 +18,7 @@ import {
   completeJob,
   failJob,
 } from "../db";
-import { resolveAi, resolveTranscription } from "./note-processor";
+import { resolveAi, resolveTranscription } from "../ai-config";
 
 /**
  * Video isleme hatti: indir -> sesi cikar -> transkript -> ceviri -> altyazi.
@@ -26,25 +26,6 @@ import { resolveAi, resolveTranscription } from "./note-processor";
  * Talep uzerine calisir; otomatik degil. Videolar diske yazildigi icin her
  * notun dosyalari kendi klasorunde tutulur ve not silindiginde birlikte gider.
  */
-
-const VIDEO_HOSTS = [
-  "youtube.com",
-  "youtu.be",
-  "twitter.com",
-  "x.com",
-  "instagram.com",
-  "vimeo.com",
-  "tiktok.com",
-];
-
-export function looksLikeVideoUrl(url: string): boolean {
-  try {
-    const host = new URL(url).hostname.replace(/^www\./, "");
-    return VIDEO_HOSTS.some((h) => host === h || host.endsWith(`.${h}`));
-  } catch {
-    return false;
-  }
-}
 
 /** Notun medya dosyalarinin durdugu klasor. */
 export function noteMediaDir(noteId: string): string {

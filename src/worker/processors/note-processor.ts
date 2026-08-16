@@ -1,15 +1,19 @@
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
-import { tryDecrypt } from "../../lib/crypto";
 import { safeFetchText, BlockedUrlError } from "../../lib/safe-fetch";
+import { looksLikeVideoUrl, probeVideo } from "../../lib/media";
+import { transcribeNote } from "./video-processor";
 import {
   chat,
   chatJson,
   translateLongText,
+  detectLanguage,
   type AiConfig,
-  type AiProvider,
 } from "../../lib/ai";
-import { defaultModelFor, isProvider } from "../../lib/ai-models";
+import {
+  resolveAi,
+  type AiTask,
+} from "../ai-config";
 import {
   prisma,
   updateStatus,
@@ -96,88 +100,6 @@ function extractPreview(doc: Document, pageUrl: string): PagePreview {
   };
 }
 
-interface AiContext {
-  config: AiConfig;
-  /** Anahtarin nereden geldigi; kullaniciya gosterilir */
-  source: "user" | "system";
-}
-
-/** Ayarlarda ayri ayri secilebilen isler. */
-export type AiTask = "summarize" | "translate" | "categorize";
-
-/**
- * Bir is icin saglayici, anahtar ve modeli cozer. Her is ayri
- * secilebiliyor: kategori kolay bir siniflandirma, ceviri ise en zor is.
- * Anahtar once kullanici ayarlarindan, yoksa sistem ayarlarindan alinir.
- */
-export async function resolveAi(
-  userId: string,
-  task: AiTask
-): Promise<AiContext | null> {
-  const [systemSettings, userSettings] = await Promise.all([
-    prisma.systemSettings.findUnique({ where: { id: "default" } }),
-    prisma.userSettings.findUnique({ where: { userId } }),
-  ]);
-
-  const rawProvider =
-    task === "summarize"
-      ? userSettings?.summarizeProvider
-      : task === "translate"
-        ? userSettings?.translateProvider
-        : userSettings?.categorizeProvider;
-
-  const rawModel =
-    task === "summarize"
-      ? userSettings?.summarizeModel
-      : task === "translate"
-        ? userSettings?.translateModel
-        : userSettings?.categorizeModel;
-
-  const provider: AiProvider = isProvider(rawProvider) ? rawProvider : "openai";
-  const model = rawModel?.trim() || defaultModelFor(provider);
-
-  const userKey = tryDecrypt(
-    provider === "anthropic"
-      ? userSettings?.anthropicApiKeyEncrypted
-      : userSettings?.openaiApiKeyEncrypted
-  );
-  if (userKey) {
-    return { config: { provider, apiKey: userKey, model }, source: "user" };
-  }
-
-  const systemKey = tryDecrypt(
-    provider === "anthropic"
-      ? systemSettings?.anthropicApiKey
-      : systemSettings?.openaiApiKey
-  );
-  if (systemKey) {
-    return { config: { provider, apiKey: systemKey, model }, source: "system" };
-  }
-
-  return null;
-}
-
-/**
- * Konusma tanima her zaman OpenAI Whisper ile yapilir; Anthropic'in konusma
- * tanima API'si yok, dolayisiyla video icin OpenAI anahtari gerekiyor.
- */
-export async function resolveTranscription(
-  userId: string
-): Promise<{ apiKey: string; model: string } | null> {
-  const [systemSettings, userSettings] = await Promise.all([
-    prisma.systemSettings.findUnique({ where: { id: "default" } }),
-    prisma.userSettings.findUnique({ where: { userId } }),
-  ]);
-
-  const apiKey =
-    tryDecrypt(userSettings?.openaiApiKeyEncrypted) ||
-    tryDecrypt(systemSettings?.openaiApiKey);
-
-  if (!apiKey) return null;
-
-  return { apiKey, model: userSettings?.transcribeModel?.trim() || "whisper-1" };
-}
-
 export async function processNote(noteId: string, userId: string) {
   const note = await prisma.note.findFirst({
     where: { id: noteId, userId },
@@ -236,11 +158,27 @@ export async function enrichNote(
     orderBy: { createdAt: "desc" },
   });
 
-  const text =
+  let text =
     transcript?.transcriptText ||
     note.originalText ||
     metadata?.description ||
     null;
+
+  // Elde islenecek metin yok ama not bir video linki ise once transkripti
+  // cikar: kullanicinin "Ozetle" demek icin ayrica "Videoyu Isle" demesi
+  // gerekmesin
+  if (!text && note.sourceUrl && looksLikeVideoUrl(note.sourceUrl)) {
+    await transcribeNote(noteId, userId);
+    const fresh = await prisma.transcript.findFirst({
+      where: { noteId },
+      orderBy: { createdAt: "desc" },
+    });
+    text = fresh?.transcriptText || null;
+    if (!text) {
+      // transcribeNote hatayi zaten nota yazdi
+      return;
+    }
+  }
 
   // Erken cikislarda durumu geri almak sart: aksi halde not "isleniyor"
   // durumunda kalir ve arayuz sonsuza kadar bekler
@@ -298,7 +236,19 @@ async function processLink(noteId: string, url: string, userId: string) {
     prisma.noteMedia.count({ where: { noteId, mediaType: "video" } }),
     prisma.transcript.count({ where: { noteId } }),
   ]);
-  const alreadyVideo = mediaCount > 0 || transcriptCount > 0;
+  let isVideo = mediaCount > 0 || transcriptCount > 0;
+
+  // X gibi siteler cektigimiz HTML'de video etiketlerini her zaman
+  // yayinlamiyor. Bilinen video sitelerinde kesin cevabi yt-dlp veriyor:
+  // video bulamazsa hata doner, o zaman gercekten video yoktur.
+  if (!isVideo && looksLikeVideoUrl(url)) {
+    try {
+      await probeVideo(url);
+      isVideo = true;
+    } catch {
+      // Videosuz tweet / gonderi — normal akisa devam
+    }
+  }
 
   await completeJob(noteId, "analyze", "Link analiz edildi");
 
@@ -326,7 +276,7 @@ async function processLink(noteId: string, url: string, userId: string) {
       await prisma.note.update({
         where: { id: noteId },
         data: {
-          type: alreadyVideo || preview.hasVideo ? "video" : "link",
+          type: isVideo || preview.hasVideo ? "video" : "link",
           title: preview.title || url,
           siteName: preview.siteName || hostname,
           coverImage: preview.image,
@@ -350,7 +300,7 @@ async function processLink(noteId: string, url: string, userId: string) {
     await prisma.note.update({
       where: { id: noteId },
       data: {
-        type: alreadyVideo || preview.hasVideo ? "video" : "article",
+        type: isVideo || preview.hasVideo ? "video" : "article",
         title: article.title || preview.title || null,
         originalText: article.textContent || null,
         siteName: article.siteName || preview.siteName || hostname,
@@ -495,12 +445,38 @@ async function translate(
   await createJob(noteId, "translate", "running", "Çeviri yapılıyor...");
 
   try {
+    // Icerik zaten hedef dildeyse cevirmenin anlami yok: hem para harciyor
+    // hem de metni gereksiz yere yeniden yaziyor
+    const note = await prisma.note.findUnique({ where: { id: noteId } });
+    let detected = note?.languageDetected || null;
+
+    if (!detected) {
+      detected = await detectLanguage(config, text);
+      if (detected) {
+        await prisma.note.update({
+          where: { id: noteId },
+          data: { languageDetected: detected },
+        });
+      }
+    }
+
+    if (detected && detected === targetLanguage.toLowerCase().slice(0, 2)) {
+      await completeJob(
+        noteId,
+        "translate",
+        `İçerik zaten ${targetLanguage} dilinde, çeviri atlandı`
+      );
+      return;
+    }
+
     const result = await translateLongText(config, text, targetLanguage);
 
     const translatedTitle = title
       ? await chat(
           config,
-          `Aşağıdaki başlığı ${targetLanguage} diline çevir. Sadece çeviriyi döndür:\n\n${title}`,
+          `Aşağıdaki başlığı ${targetLanguage} diline çevir. Sadece çeviriyi döndür:
+
+${title}`,
           { maxTokens: 200 }
         )
       : null;
