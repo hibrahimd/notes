@@ -84,6 +84,11 @@ export default async function ShortcutSetupPage({ params }: Props) {
           .step-title { font-size: 15px; font-weight: 600; color: #1d1d1f; margin-bottom: 4px; }
           .step-desc { font-size: 13px; color: #6e6e73; line-height: 1.5; }
           .token-box {
+            display: block;
+            width: 100%;
+            text-align: left;
+            -webkit-appearance: none;
+            appearance: none;
             background: #f5f5f7;
             border: 1px solid #e5e5ea;
             border-radius: 10px;
@@ -117,30 +122,71 @@ export default async function ShortcutSetupPage({ params }: Props) {
         <script dangerouslySetInnerHTML={{ __html: `
           var TOKEN = ${JSON.stringify(token)};
 
-          function copyToken() {
-            return navigator.clipboard.writeText(TOKEN).then(function() {
-              var el = document.getElementById('copy-hint');
-              el.textContent = '\u2705 Kopyaland\u0131!';
-              setTimeout(function() { el.textContent = 'Kopyalamak i\u00e7in dokun'; }, 2000);
-            });
-          }
-
-          // Indirme baslamadan once token panoya yazilir; import ekrani
-          // sordugunda hazir olsun. Indirmeyi engellemeyiz, sadece isaretleriz.
-          function markCopied() {
+          function hint(text, revert) {
             var el = document.getElementById('copy-hint');
-            el.textContent = '✅ Token panoya kopyalandı';
-          }
-
-          function onDownload() {
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(TOKEN).then(markCopied, function(){});
+            el.textContent = text;
+            if (revert) {
+              setTimeout(function() {
+                el.textContent = 'Kopyalamak için dokun';
+              }, 2500);
             }
           }
 
+          // navigator.clipboard iOS'ta sayfa odakta degilse veya izin
+          // verilmediginde sessizce reddediyor. Secim + execCommand eski bir
+          // yontem ama Safari'de hala calisiyor ve tek yedegimiz.
+          function legacyCopy(text) {
+            var field = document.createElement('textarea');
+            field.value = text;
+            field.setAttribute('readonly', '');
+            field.style.position = 'fixed';
+            field.style.top = '0';
+            field.style.opacity = '0';
+            document.body.appendChild(field);
+
+            field.focus();
+            field.select();
+            // iOS'ta select() tek basina yetmiyor, arali acikca vermek gerekiyor
+            if (field.setSelectionRange) {
+              field.setSelectionRange(0, text.length);
+            }
+
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+
+            document.body.removeChild(field);
+            return ok;
+          }
+
+          function copyToken(quiet) {
+            function done() {
+              hint(quiet ? '✅ Token panoya kopyalandı' : '✅ Kopyalandı!', !quiet);
+            }
+            function fallback() {
+              if (legacyCopy(TOKEN)) done();
+              else hint("Kopyalanamadı — token'a uzun basıp elle kopyalayın", true);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              try {
+                navigator.clipboard.writeText(TOKEN).then(done, fallback);
+                return;
+              } catch (e) {
+                // asagidaki yedege duser
+              }
+            }
+            fallback();
+          }
+
           document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('token-box').addEventListener('click', copyToken);
-            document.getElementById('download-btn').addEventListener('click', onDownload);
+            document.getElementById('token-box').addEventListener('click', function() {
+              copyToken(false);
+            });
+            // Indirme baslamadan once token panoya yazilir ki import ekrani
+            // sordugunda hazir olsun. Indirmeyi engellemeyiz.
+            document.getElementById('download-btn').addEventListener('click', function() {
+              copyToken(true);
+            });
           });
         `}} />
       </head>
@@ -194,7 +240,11 @@ export default async function ShortcutSetupPage({ params }: Props) {
           <hr className="divider" />
 
           <div className="copy-hint" id="copy-hint">Kopyalamak için dokun</div>
-          <div className="token-box" id="token-box">{token}</div>
+          {/* button, div degil: iOS Safari etkilesimli olmayan ogelerde
+              dokunusu click olayina cevirmiyor */}
+          <button type="button" className="token-box" id="token-box">
+            {token}
+          </button>
         </div>
       </body>
     </html>
