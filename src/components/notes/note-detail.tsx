@@ -185,9 +185,12 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
     },
   ].filter((t) => t !== null && t !== undefined);
   // Video butonu yalnizca gercekten video olan notlarda: tip analiz sirasinda
-  // yt-dlp ile kesinlestiriliyor, makale notlarinda bu butonun isi yok
+  // yt-dlp ile kesinlestiriliyor, makale notlarinda bu butonun isi yok.
+  // "mixed" de video iceriyor: fotograf ve video ayni tweet'te olabiliyor ve
+  // o notlarda buton hic cikmiyordu.
   const canTranscribe =
-    Boolean(note.sourceUrl) && (note.type === "video" || Boolean(transcript));
+    Boolean(note.sourceUrl) &&
+    (note.type === "video" || note.type === "mixed" || Boolean(transcript));
   const [deletingVideo, setDeletingVideo] = useState(false);
 
   const [userNote, setUserNote] = useState(note.userNote || "");
@@ -540,20 +543,19 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
         )}
       </Card>
 
-      {/* Tweet fotograflari. Tek fotografta tam genislik, birden fazlasinda
-          izgara: dort fotografli bir tweet'te hepsi ust uste uzayinca
-          sayfa okunmaz oluyordu. */}
+      {/* Tweet fotograflari kucuk onizleme olarak: tam boy basilinca tek bir
+          fotograf ekrani dolduruyor ve altindaki icerik gorunmuyordu.
+          Dokununca yeni sekmede tam boy aciliyor. */}
       {photos.length > 0 && (
-        <div
-          className={`grid gap-2 mb-6 ${photos.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}
-        >
+        <div className="flex flex-wrap gap-2 mb-6">
           {photos.map((photo, index) => (
             <a
               key={photo.id}
               href={mediaUrl(photo.id)}
               target="_blank"
               rel="noopener noreferrer"
-              className="block rounded-xl overflow-hidden bg-zinc-100 dark:bg-zinc-800"
+              title="Tam boy aç"
+              className="block w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800 hover:opacity-80 transition-opacity"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    Not Al: yer imi = "karsina cikani yakala". 16 pikselde de okunsun diye tek
+    bir dolu bicim; ince cizgi veya detay yok.
+  -->
+  <rect width="32" height="32" rx="7" fill="#18181b"/>
+  <path
+    d="M10 9.5A2.5 2.5 0 0 1 12.5 7h7A2.5 2.5 0 0 1 22 9.5V25a1 1 0 0 1-1.55.83L16 22.9l-4.45 2.93A1 1 0 0 1 10 25z"
+    fill="#fafafa"
+  />
+</svg>

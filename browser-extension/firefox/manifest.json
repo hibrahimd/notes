@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Not Al",
+  "version": "1.0.0",
+  "description": "Sağ tıkladığın sayfayı, linki, görseli veya seçtiğin metni tek hamlede Not Al'a kaydet.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "notal@kronomondo.org",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": ["contextMenus", "storage", "notifications"],
+  "host_permissions": ["https://notes.kronomondo.org/*"],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "action": {
+    "default_title": "Bu sayfayı Not Al'a kaydet",
+    "default_icon": {
+      "48": "icon.svg",
+      "96": "icon.svg"
+    }
+  },
+  "icons": {
+    "48": "icon.svg",
+    "96": "icon.svg"
+  }
+}

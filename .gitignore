@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Prisma generated files are needed for build - do not gitignore
 # /src/generated/prisma
+
+# Tarayici eklentisi paketleri
+browser-extension/dist/
