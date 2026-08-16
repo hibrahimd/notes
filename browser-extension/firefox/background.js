@@ -73,40 +73,72 @@ async function report(tabId, message, ok) {
   });
 }
 
-/** Sayfaya enjekte edilen fonksiyon; buradaki kapsam sayfaya ait. */
+/**
+ * Sayfaya enjekte edilen fonksiyon; buradaki kapsam sayfaya ait, disaridan
+ * degisken tasinamaz.
+ *
+ * Sag ustte duruyor: alttaki ince serit fark edilmiyordu. Olculer de
+ * bilerek buyuk — bu tek geri bildirim, gozden kacmamali.
+ */
 function showToast(message, ok) {
   const ID = "notal-toast";
   document.getElementById(ID)?.remove();
 
   const box = document.createElement("div");
   box.id = ID;
-  box.textContent = message;
+
+  const icon = document.createElement("div");
+  icon.textContent = ok ? "✅" : "❌";
+  icon.style.cssText = "font-size:20px;line-height:1;flex-shrink:0";
+
+  const body = document.createElement("div");
+
+  const title = document.createElement("div");
+  title.textContent = "Not Al";
+  title.style.cssText = "font-weight:700;font-size:13px;opacity:.75;margin-bottom:2px";
+
+  const text = document.createElement("div");
+  // Sunucudan gelen mesaj zaten emojiyle basliyor, ikonla tekrarlanmasin
+  text.textContent = message.replace(/^[✅❌]\s*/, "");
+  text.style.cssText = "font-size:15px;font-weight:600;line-height:1.35";
+
+  body.append(title, text);
+  box.append(icon, body);
+
   box.style.cssText = [
     "position:fixed",
-    "left:50%",
-    "bottom:24px",
-    "transform:translateX(-50%)",
+    "top:20px",
+    "right:20px",
     "z-index:2147483647",
-    "max-width:min(420px,90vw)",
-    "padding:12px 18px",
-    "border-radius:12px",
+    "display:flex",
+    "gap:12px",
+    "align-items:flex-start",
+    "width:320px",
+    "max-width:calc(100vw - 40px)",
+    "padding:16px 18px",
+    "border-radius:14px",
+    "border:1px solid " + (ok ? "rgba(255,255,255,.14)" : "rgba(255,120,120,.35)"),
     "background:" + (ok ? "#18181b" : "#7f1d1d"),
     "color:#fff",
-    "font:14px/1.4 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif",
-    "box-shadow:0 8px 28px rgba(0,0,0,.35)",
+    "font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif",
+    "box-shadow:0 12px 40px rgba(0,0,0,.4)",
     "opacity:0",
-    "transition:opacity .18s ease",
+    "transform:translateX(16px)",
+    "transition:opacity .2s ease,transform .2s ease",
     "pointer-events:none",
-    "text-align:center",
   ].join(";");
 
   document.body.appendChild(box);
-  requestAnimationFrame(() => (box.style.opacity = "1"));
+  requestAnimationFrame(() => {
+    box.style.opacity = "1";
+    box.style.transform = "translateX(0)";
+  });
 
   setTimeout(() => {
     box.style.opacity = "0";
+    box.style.transform = "translateX(16px)";
     setTimeout(() => box.remove(), 250);
-  }, 3200);
+  }, 3800);
 }
 
 /**

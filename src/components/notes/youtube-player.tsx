@@ -193,8 +193,10 @@ export function YouTubePlayer({ videoId, tracks, initialPrefs }: Props) {
           : "mb-6"
       }
     >
+      {/* max-w: 16:9 korunurken yukseklik ekranin %70'ini gecmesin.
+          Genis ekranlarda oynatici sayfayi yutuyordu. */}
       <div
-        className={`relative w-full aspect-video bg-black ${expanded ? "" : "rounded-xl overflow-hidden"}`}
+        className={`relative w-full aspect-video bg-black mx-auto max-h-[70vh] max-w-[calc(70vh*16/9)] ${expanded ? "" : "rounded-xl overflow-hidden"}`}
       >
         {/* Oynatici bu kabin icine imperatif olarak ekleniyor */}
         <div ref={mountRef} className="absolute inset-0 [&>iframe]:w-full [&>iframe]:h-full" />

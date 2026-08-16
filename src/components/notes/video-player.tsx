@@ -113,14 +113,17 @@ export function VideoPlayer({
   return (
     // Dis bosluk cagirana ait: bu bilesenin altinda dosya bilgisi satiri var
     <>
-      <div className="relative w-full rounded-xl overflow-hidden bg-black">
+      {/* Yukseklik ekranin %70'i ile sinirli: video kendi dogal oraninda
+          buyuyordu ve dikey bir video masaustunde sayfanin tamamini
+          kapliyordu. Dar videolar ortalanir, kenarlar siyah kalir. */}
+      <div className="relative w-full rounded-xl overflow-hidden bg-black flex justify-center">
         <video
           ref={videoRef}
           controls
           playsInline
           preload="metadata"
           poster={poster || undefined}
-          className="w-full block"
+          className="block max-h-[70vh] max-w-full w-auto"
           // timeupdate saniyede dort kez tetikleniyor, altyazi icin yeterli
           onTimeUpdate={() => {
             const time = videoRef.current?.currentTime ?? 0;
