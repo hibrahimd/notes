@@ -15,7 +15,9 @@ export default function UserSettingsPage() {
     autoTranscribe: true,
     autoCategorize: true,
     openaiApiKeyEncrypted: "",
-    deeplApiKeyEncrypted: "",
+    anthropicApiKeyEncrypted: "",
+    aiProvider: "openai",
+    aiModel: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,7 +41,8 @@ export default function UserSettingsPage() {
 
     const body: Record<string, unknown> = { ...settings };
     if (settings.openaiApiKeyEncrypted === "••••••••") delete body.openaiApiKeyEncrypted;
-    if (settings.deeplApiKeyEncrypted === "••••••••") delete body.deeplApiKeyEncrypted;
+    if (settings.anthropicApiKeyEncrypted === "••••••••")
+      delete body.anthropicApiKeyEncrypted;
 
     const res = await fetch("/api/settings", {
       method: "PUT",
@@ -119,9 +122,46 @@ export default function UserSettingsPage() {
         </Card>
 
         <Card>
+          <CardTitle>Yapay Zekâ Sağlayıcı</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1 mb-4">
+            Özet, çeviri ve kategorileme bu sağlayıcı ile yapılır.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+                Sağlayıcı
+              </label>
+              <select
+                value={settings.aiProvider}
+                onChange={(e) => setSettings({ ...settings, aiProvider: e.target.value })}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              >
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic (Claude)</option>
+              </select>
+            </div>
+            <Input
+              id="aiModel"
+              label="Model"
+              placeholder={
+                settings.aiProvider === "anthropic" ? "claude-opus-5" : "gpt-4o-mini"
+              }
+              value={settings.aiModel || ""}
+              onChange={(e) => setSettings({ ...settings, aiModel: e.target.value })}
+            />
+          </div>
+          <p className="mt-3 text-xs text-zinc-400">
+            Model alanını boş bırakırsanız sağlayıcının varsayılanı kullanılır. Model
+            kimliğini sağlayıcının kendi dokümanından birebir kopyalayın; yanlış
+            yazılırsa istek hata döner.
+          </p>
+        </Card>
+
+        <Card>
           <CardTitle>API Anahtarları (Kişisel)</CardTitle>
           <p className="text-sm text-zinc-500 mt-1 mb-4">
-            Notlarınızın otomatik özetlenmesi, çevirisi ve kategorilenmesi için API anahtarlarınızı girin.
+            Yalnızca seçtiğiniz sağlayıcının anahtarı kullanılır; ikisini de
+            kaydedip aralarında geçiş yapabilirsiniz.
           </p>
           <div className="space-y-4">
             <Input
@@ -133,13 +173,24 @@ export default function UserSettingsPage() {
               onChange={(e) => setSettings({ ...settings, openaiApiKeyEncrypted: e.target.value })}
             />
             <Input
-              id="deeplKey"
-              label="DeepL API Key"
+              id="anthropicKey"
+              label="Anthropic API Key"
               type="password"
-              placeholder="DeepL API anahtarı"
-              value={settings.deeplApiKeyEncrypted || ""}
-              onChange={(e) => setSettings({ ...settings, deeplApiKeyEncrypted: e.target.value })}
+              placeholder="sk-ant-..."
+              value={settings.anthropicApiKeyEncrypted || ""}
+              onChange={(e) =>
+                setSettings({ ...settings, anthropicApiKeyEncrypted: e.target.value })
+              }
             />
+          </div>
+          <div className="mt-4 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-3">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
+              <b>Video altyazısı için OpenAI anahtarı şart.</b> Konuşma tanıma
+              Whisper ile yapılıyor ve Anthropic&apos;in konuşma tanıma API&apos;si
+              yok. Sağlayıcı olarak Anthropic seçseniz bile videolarda
+              transkripsiyon OpenAI ile, altyazı çevirisi seçtiğiniz sağlayıcı ile
+              yapılır.
+            </p>
           </div>
         </Card>
 

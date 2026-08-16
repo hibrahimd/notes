@@ -48,6 +48,13 @@ model UserSettings {
   userId                String   @unique @map("user_id")
   deeplApiKeyEncrypted  String?  @map("deepl_api_key_encrypted")
   openaiApiKeyEncrypted String?  @map("openai_api_key_encrypted")
+  anthropicApiKeyEncrypted String? @map("anthropic_api_key_encrypted")
+  // Metin isleri (ozet, ceviri, kategori) icin saglayici ve model secimi.
+  // Model bos birakilirsa saglayicinin varsayilani kullanilir.
+  // Not: konusma tanima her zaman OpenAI Whisper ile yapilir; Anthropic'in
+  // konusma tanima API'si yok, dolayisiyla video icin OpenAI anahtari sart.
+  aiProvider            String   @default("openai") @map("ai_provider")
+  aiModel               String?  @map("ai_model")
   // Varsayilan kapali: AI adimlari maliyetli ve her not icin istenmiyor.
   // Kullanici not detayindan tek tek tetikler, ayarlardan otomatige alabilir.
   autoSummarize         Boolean  @default(false) @map("auto_summarize")
@@ -202,6 +209,7 @@ model SystemSettings {
   smtpAllowInvalidCert  Boolean  @default(false) @map("smtp_allow_invalid_cert")
   openaiApiKey          String?  @map("openai_api_key")
   openaiModel           String?  @default("gpt-4o-mini") @map("openai_model")
+  anthropicApiKey       String?  @map("anthropic_api_key")
   defaultLanguage       String   @default("tr") @map("default_language")
   supportedLanguages    String[] @default(["tr", "en", "de", "fr", "es"]) @map("supported_languages")
   maxNoteSize           Int      @default(10485760) @map("max_note_size")

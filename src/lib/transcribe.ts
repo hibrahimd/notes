@@ -1,6 +1,6 @@
 import { readFile } from "fs/promises";
 import path from "path";
-import { chatJson, type OpenAIConfig } from "./openai";
+import { chatJson, type AiConfig } from "./ai";
 import type { Segment } from "./media";
 
 /**
@@ -22,8 +22,13 @@ export interface Transcription {
   segments: Segment[];
 }
 
+/**
+ * Konusma tanima yalnizca OpenAI Whisper ile yapilir; Anthropic'in konusma
+ * tanima API'si yok. Bu yuzden metin saglayicisi Anthropic secilse bile video
+ * islemek icin bir OpenAI anahtari gerekiyor.
+ */
 export async function transcribeAudio(
-  config: OpenAIConfig,
+  openaiApiKey: string,
   audioPath: string
 ): Promise<Transcription> {
   const buffer = await readFile(audioPath);
@@ -43,7 +48,7 @@ export async function transcribeAudio(
 
   const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
     method: "POST",
-    headers: { Authorization: `Bearer ${config.apiKey}` },
+    headers: { Authorization: `Bearer ${openaiApiKey}` },
     body: form,
     signal: AbortSignal.timeout(600000),
   });
@@ -76,7 +81,7 @@ export async function transcribeAudio(
  * boylece satir sayisi ve sirasi korunur.
  */
 export async function translateSegments(
-  config: OpenAIConfig,
+  config: AiConfig,
   segments: Segment[],
   targetLanguage: string
 ): Promise<Segment[]> {

@@ -57,19 +57,46 @@ export async function POST(
   const [userSettings, systemSettings] = await Promise.all([
     prisma.userSettings.findUnique({
       where: { userId: session.userId },
-      select: { openaiApiKeyEncrypted: true },
+      select: {
+        openaiApiKeyEncrypted: true,
+        anthropicApiKeyEncrypted: true,
+        aiProvider: true,
+      },
     }),
     prisma.systemSettings.findUnique({
       where: { id: "default" },
-      select: { openaiApiKey: true },
+      select: { openaiApiKey: true, anthropicApiKey: true },
     }),
   ]);
 
-  if (!userSettings?.openaiApiKeyEncrypted && !systemSettings?.openaiApiKey) {
+  const provider = userSettings?.aiProvider === "anthropic" ? "anthropic" : "openai";
+  const providerLabel = provider === "anthropic" ? "Anthropic" : "OpenAI";
+
+  const hasProviderKey =
+    provider === "anthropic"
+      ? Boolean(userSettings?.anthropicApiKeyEncrypted || systemSettings?.anthropicApiKey)
+      : Boolean(userSettings?.openaiApiKeyEncrypted || systemSettings?.openaiApiKey);
+
+  if (!hasProviderKey) {
+    return NextResponse.json(
+      {
+        error: `${providerLabel} API anahtarı tanımlı değil. Ayarlar sayfasından ekledikten sonra tekrar deneyin.`,
+      },
+      { status: 400 }
+    );
+  }
+
+  // Transkripsiyon Whisper ile yapiliyor; secilen saglayici ne olursa olsun
+  // burada OpenAI anahtari gerekiyor
+  if (
+    action === "transcribe" &&
+    !userSettings?.openaiApiKeyEncrypted &&
+    !systemSettings?.openaiApiKey
+  ) {
     return NextResponse.json(
       {
         error:
-          "OpenAI API anahtarı tanımlı değil. Ayarlar sayfasından ekledikten sonra tekrar deneyin.",
+          "Video transkripsiyonu OpenAI Whisper ile yapılıyor. Ayarlar sayfasından OpenAI API anahtarınızı ekleyin.",
       },
       { status: 400 }
     );

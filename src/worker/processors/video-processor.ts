@@ -18,7 +18,7 @@ import {
   completeJob,
   failJob,
 } from "../db";
-import { resolveAi } from "./note-processor";
+import { resolveAi, resolveOpenAiKey } from "./note-processor";
 
 /**
  * Video isleme hatti: indir -> sesi cikar -> transkript -> ceviri -> altyazi.
@@ -70,7 +70,21 @@ export async function transcribeNote(noteId: string, userId: string) {
     await skipJob(
       noteId,
       "transcribe",
-      "OpenAI API anahtarı tanımlı değil; transkripsiyon yapılamıyor."
+      "AI sağlayıcı anahtarı tanımlı değil; altyazı çevirisi yapılamıyor."
+    );
+    await updateStatus(noteId, "ready");
+    return;
+  }
+
+  // Konusma tanima yalnizca Whisper ile yapiliyor: metin saglayicisi Anthropic
+  // secilmis olsa bile burada OpenAI anahtari sart
+  const openaiKey = await resolveOpenAiKey(userId);
+  if (!openaiKey) {
+    await skipJob(
+      noteId,
+      "transcribe",
+      "Video transkripsiyonu OpenAI Whisper ile yapılıyor. Ayarlar sayfasından " +
+        "OpenAI API anahtarınızı ekleyin (metin işlemleri için başka bir sağlayıcı seçmiş olsanız bile)."
     );
     await updateStatus(noteId, "ready");
     return;
@@ -127,7 +141,7 @@ export async function transcribeNote(noteId: string, userId: string) {
     // 4) Transkript
     await updateStatus(noteId, "transcribing");
     await progressJob(noteId, "transcribe", "Konuşma çözümleniyor...", 50);
-    const transcription = await transcribeAudio(ai.config, audio.filePath);
+    const transcription = await transcribeAudio(openaiKey, audio.filePath);
 
     if (transcription.segments.length === 0) {
       throw new Error("Videoda konuşma bulunamadı");

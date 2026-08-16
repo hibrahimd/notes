@@ -37,6 +37,7 @@ export async function GET() {
       ...settings,
       deeplApiKeyEncrypted: settings.deeplApiKeyEncrypted ? "••••••••" : null,
       openaiApiKeyEncrypted: settings.openaiApiKeyEncrypted ? "••••••••" : null,
+      anthropicApiKeyEncrypted: settings.anthropicApiKeyEncrypted ? "••••••••" : null,
       shortcutTokenHash: settings.shortcutTokenHash ? true : false,
       preferredLanguage: user?.preferredLanguage,
       translationLanguage: user?.translationLanguage,
@@ -70,7 +71,11 @@ export async function PUT(req: NextRequest) {
     "autoTranscribe",
     "autoCategorize",
   ];
-  const secretFields = ["deeplApiKeyEncrypted", "openaiApiKeyEncrypted"];
+  const secretFields = [
+    "deeplApiKeyEncrypted",
+    "openaiApiKeyEncrypted",
+    "anthropicApiKeyEncrypted",
+  ];
 
   const updateData: Record<string, unknown> = {};
   for (const field of booleanFields) {
@@ -85,6 +90,15 @@ export async function PUT(req: NextRequest) {
     if (encrypted !== undefined) {
       updateData[field] = encrypted;
     }
+  }
+
+  // Saglayici secimi ve model
+  if (body.aiProvider === "openai" || body.aiProvider === "anthropic") {
+    updateData.aiProvider = body.aiProvider;
+  }
+  if (typeof body.aiModel === "string") {
+    // Bos birakilirsa saglayicinin varsayilan modeli kullanilir
+    updateData.aiModel = body.aiModel.trim() || null;
   }
 
   if (Object.keys(updateData).length > 0) {

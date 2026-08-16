@@ -41,6 +41,7 @@ export async function GET() {
       ...settings,
       smtpPasswordEncrypted: settings.smtpPasswordEncrypted ? "••••••••" : null,
       openaiApiKey: settings.openaiApiKey ? "••••••••" : null,
+      anthropicApiKey: settings.anthropicApiKey ? "••••••••" : null,
     },
   });
 }
@@ -65,7 +66,7 @@ export async function PUT(req: NextRequest) {
     "supportedLanguages",
     "openaiModel",
   ];
-  const secretFields = ["smtpPasswordEncrypted", "openaiApiKey"];
+  const secretFields = ["smtpPasswordEncrypted", "openaiApiKey", "anthropicApiKey"];
 
   const updateData: Record<string, unknown> = {};
   for (const field of allowedFields) {

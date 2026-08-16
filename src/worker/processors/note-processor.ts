@@ -6,8 +6,10 @@ import {
   chat,
   chatJson,
   translateLongText,
-  type OpenAIConfig,
-} from "../../lib/openai";
+  defaultModelFor,
+  type AiConfig,
+  type AiProvider,
+} from "../../lib/ai";
 import {
   prisma,
   updateStatus,
@@ -88,13 +90,14 @@ function extractPreview(doc: Document, pageUrl: string): PagePreview {
 }
 
 interface AiContext {
-  config: OpenAIConfig;
+  config: AiConfig;
   /** Anahtarin nereden geldigi; kullaniciya gosterilir */
   source: "user" | "system";
 }
 
 /**
- * OpenAI anahtarini once kullanici ayarlarindan, yoksa sistem ayarlarindan alir.
+ * Metin isleri icin saglayici, anahtar ve modeli cozer.
+ * Anahtar once kullanici ayarlarindan, yoksa sistem ayarlarindan alinir.
  * Hicbiri yoksa null doner ve cagiran taraf durumu nota gorunur sekilde yazar.
  */
 export async function resolveAi(userId: string): Promise<AiContext | null> {
@@ -103,19 +106,50 @@ export async function resolveAi(userId: string): Promise<AiContext | null> {
     prisma.userSettings.findUnique({ where: { userId } }),
   ]);
 
-  const model = systemSettings?.openaiModel || "gpt-4o-mini";
+  const provider = (userSettings?.aiProvider === "anthropic"
+    ? "anthropic"
+    : "openai") as AiProvider;
 
-  const userKey = tryDecrypt(userSettings?.openaiApiKeyEncrypted);
+  const model =
+    userSettings?.aiModel?.trim() ||
+    (provider === "openai" ? systemSettings?.openaiModel : null) ||
+    defaultModelFor(provider);
+
+  const userKey = tryDecrypt(
+    provider === "anthropic"
+      ? userSettings?.anthropicApiKeyEncrypted
+      : userSettings?.openaiApiKeyEncrypted
+  );
   if (userKey) {
-    return { config: { apiKey: userKey, model }, source: "user" };
+    return { config: { provider, apiKey: userKey, model }, source: "user" };
   }
 
-  const systemKey = tryDecrypt(systemSettings?.openaiApiKey);
+  const systemKey = tryDecrypt(
+    provider === "anthropic"
+      ? systemSettings?.anthropicApiKey
+      : systemSettings?.openaiApiKey
+  );
   if (systemKey) {
-    return { config: { apiKey: systemKey, model }, source: "system" };
+    return { config: { provider, apiKey: systemKey, model }, source: "system" };
   }
 
   return null;
+}
+
+/**
+ * Konusma tanima her zaman OpenAI Whisper ile yapilir; metin saglayicisi
+ * Anthropic secilmis olsa bile video icin OpenAI anahtari gerekiyor.
+ */
+export async function resolveOpenAiKey(userId: string): Promise<string | null> {
+  const [systemSettings, userSettings] = await Promise.all([
+    prisma.systemSettings.findUnique({ where: { id: "default" } }),
+    prisma.userSettings.findUnique({ where: { userId } }),
+  ]);
+
+  return (
+    tryDecrypt(userSettings?.openaiApiKeyEncrypted) ||
+    tryDecrypt(systemSettings?.openaiApiKey)
+  );
 }
 
 export async function processNote(noteId: string, userId: string) {
@@ -376,7 +410,7 @@ async function runAiPipeline(
 
 async function summarize(
   noteId: string,
-  config: OpenAIConfig,
+  config: AiConfig,
   text: string,
   language: string
 ) {
@@ -398,7 +432,7 @@ async function summarize(
 
 async function translate(
   noteId: string,
-  config: OpenAIConfig,
+  config: AiConfig,
   text: string,
   title: string | null,
   targetLanguage: string
@@ -436,7 +470,7 @@ async function translate(
 
 async function categorize(
   noteId: string,
-  config: OpenAIConfig,
+  config: AiConfig,
   text: string
 ) {
   await updateStatus(noteId, "categorizing");

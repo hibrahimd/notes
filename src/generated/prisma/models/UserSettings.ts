@@ -29,6 +29,9 @@ export type UserSettingsMinAggregateOutputType = {
   userId: string | null
   deeplApiKeyEncrypted: string | null
   openaiApiKeyEncrypted: string | null
+  anthropicApiKeyEncrypted: string | null
+  aiProvider: string | null
+  aiModel: string | null
   autoSummarize: boolean | null
   autoTranslate: boolean | null
   autoTranscribe: boolean | null
@@ -45,6 +48,9 @@ export type UserSettingsMaxAggregateOutputType = {
   userId: string | null
   deeplApiKeyEncrypted: string | null
   openaiApiKeyEncrypted: string | null
+  anthropicApiKeyEncrypted: string | null
+  aiProvider: string | null
+  aiModel: string | null
   autoSummarize: boolean | null
   autoTranslate: boolean | null
   autoTranscribe: boolean | null
@@ -61,6 +67,9 @@ export type UserSettingsCountAggregateOutputType = {
   userId: number
   deeplApiKeyEncrypted: number
   openaiApiKeyEncrypted: number
+  anthropicApiKeyEncrypted: number
+  aiProvider: number
+  aiModel: number
   autoSummarize: number
   autoTranslate: number
   autoTranscribe: number
@@ -79,6 +88,9 @@ export type UserSettingsMinAggregateInputType = {
   userId?: true
   deeplApiKeyEncrypted?: true
   openaiApiKeyEncrypted?: true
+  anthropicApiKeyEncrypted?: true
+  aiProvider?: true
+  aiModel?: true
   autoSummarize?: true
   autoTranslate?: true
   autoTranscribe?: true
@@ -95,6 +107,9 @@ export type UserSettingsMaxAggregateInputType = {
   userId?: true
   deeplApiKeyEncrypted?: true
   openaiApiKeyEncrypted?: true
+  anthropicApiKeyEncrypted?: true
+  aiProvider?: true
+  aiModel?: true
   autoSummarize?: true
   autoTranslate?: true
   autoTranscribe?: true
@@ -111,6 +126,9 @@ export type UserSettingsCountAggregateInputType = {
   userId?: true
   deeplApiKeyEncrypted?: true
   openaiApiKeyEncrypted?: true
+  anthropicApiKeyEncrypted?: true
+  aiProvider?: true
+  aiModel?: true
   autoSummarize?: true
   autoTranslate?: true
   autoTranscribe?: true
@@ -200,6 +218,9 @@ export type UserSettingsGroupByOutputType = {
   userId: string
   deeplApiKeyEncrypted: string | null
   openaiApiKeyEncrypted: string | null
+  anthropicApiKeyEncrypted: string | null
+  aiProvider: string
+  aiModel: string | null
   autoSummarize: boolean
   autoTranslate: boolean
   autoTranscribe: boolean
@@ -237,6 +258,9 @@ export type UserSettingsWhereInput = {
   userId?: Prisma.StringFilter<"UserSettings"> | string
   deeplApiKeyEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   openaiApiKeyEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  anthropicApiKeyEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  aiProvider?: Prisma.StringFilter<"UserSettings"> | string
+  aiModel?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   autoSummarize?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoTranslate?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoTranscribe?: Prisma.BoolFilter<"UserSettings"> | boolean
@@ -254,6 +278,9 @@ export type UserSettingsOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   deeplApiKeyEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
   openaiApiKeyEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
+  anthropicApiKeyEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiProvider?: Prisma.SortOrder
+  aiModel?: Prisma.SortOrderInput | Prisma.SortOrder
   autoSummarize?: Prisma.SortOrder
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
@@ -274,6 +301,9 @@ export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserSettingsWhereInput | Prisma.UserSettingsWhereInput[]
   deeplApiKeyEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   openaiApiKeyEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  anthropicApiKeyEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
+  aiProvider?: Prisma.StringFilter<"UserSettings"> | string
+  aiModel?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   autoSummarize?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoTranslate?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoTranscribe?: Prisma.BoolFilter<"UserSettings"> | boolean
@@ -291,6 +321,9 @@ export type UserSettingsOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   deeplApiKeyEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
   openaiApiKeyEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
+  anthropicApiKeyEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiProvider?: Prisma.SortOrder
+  aiModel?: Prisma.SortOrderInput | Prisma.SortOrder
   autoSummarize?: Prisma.SortOrder
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
@@ -313,6 +346,9 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
   deeplApiKeyEncrypted?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
   openaiApiKeyEncrypted?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
+  anthropicApiKeyEncrypted?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
+  aiProvider?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
+  aiModel?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
   autoSummarize?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   autoTranslate?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   autoTranscribe?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
@@ -328,6 +364,9 @@ export type UserSettingsCreateInput = {
   id?: string
   deeplApiKeyEncrypted?: string | null
   openaiApiKeyEncrypted?: string | null
+  anthropicApiKeyEncrypted?: string | null
+  aiProvider?: string
+  aiModel?: string | null
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -345,6 +384,9 @@ export type UserSettingsUncheckedCreateInput = {
   userId: string
   deeplApiKeyEncrypted?: string | null
   openaiApiKeyEncrypted?: string | null
+  anthropicApiKeyEncrypted?: string | null
+  aiProvider?: string
+  aiModel?: string | null
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -360,6 +402,9 @@ export type UserSettingsUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   deeplApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiProvider?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoSummarize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -377,6 +422,9 @@ export type UserSettingsUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   deeplApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiProvider?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoSummarize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -393,6 +441,9 @@ export type UserSettingsCreateManyInput = {
   userId: string
   deeplApiKeyEncrypted?: string | null
   openaiApiKeyEncrypted?: string | null
+  anthropicApiKeyEncrypted?: string | null
+  aiProvider?: string
+  aiModel?: string | null
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -408,6 +459,9 @@ export type UserSettingsUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   deeplApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiProvider?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoSummarize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -424,6 +478,9 @@ export type UserSettingsUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   deeplApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiProvider?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoSummarize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -445,6 +502,9 @@ export type UserSettingsCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   deeplApiKeyEncrypted?: Prisma.SortOrder
   openaiApiKeyEncrypted?: Prisma.SortOrder
+  anthropicApiKeyEncrypted?: Prisma.SortOrder
+  aiProvider?: Prisma.SortOrder
+  aiModel?: Prisma.SortOrder
   autoSummarize?: Prisma.SortOrder
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
@@ -461,6 +521,9 @@ export type UserSettingsMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   deeplApiKeyEncrypted?: Prisma.SortOrder
   openaiApiKeyEncrypted?: Prisma.SortOrder
+  anthropicApiKeyEncrypted?: Prisma.SortOrder
+  aiProvider?: Prisma.SortOrder
+  aiModel?: Prisma.SortOrder
   autoSummarize?: Prisma.SortOrder
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
@@ -477,6 +540,9 @@ export type UserSettingsMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   deeplApiKeyEncrypted?: Prisma.SortOrder
   openaiApiKeyEncrypted?: Prisma.SortOrder
+  anthropicApiKeyEncrypted?: Prisma.SortOrder
+  aiProvider?: Prisma.SortOrder
+  aiModel?: Prisma.SortOrder
   autoSummarize?: Prisma.SortOrder
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
@@ -528,6 +594,9 @@ export type UserSettingsCreateWithoutUserInput = {
   id?: string
   deeplApiKeyEncrypted?: string | null
   openaiApiKeyEncrypted?: string | null
+  anthropicApiKeyEncrypted?: string | null
+  aiProvider?: string
+  aiModel?: string | null
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -543,6 +612,9 @@ export type UserSettingsUncheckedCreateWithoutUserInput = {
   id?: string
   deeplApiKeyEncrypted?: string | null
   openaiApiKeyEncrypted?: string | null
+  anthropicApiKeyEncrypted?: string | null
+  aiProvider?: string
+  aiModel?: string | null
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -574,6 +646,9 @@ export type UserSettingsUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   deeplApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiProvider?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoSummarize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -589,6 +664,9 @@ export type UserSettingsUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   deeplApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKeyEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiProvider?: Prisma.StringFieldUpdateOperationsInput | string
+  aiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   autoSummarize?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -607,6 +685,9 @@ export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
   userId?: boolean
   deeplApiKeyEncrypted?: boolean
   openaiApiKeyEncrypted?: boolean
+  anthropicApiKeyEncrypted?: boolean
+  aiProvider?: boolean
+  aiModel?: boolean
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -624,6 +705,9 @@ export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   userId?: boolean
   deeplApiKeyEncrypted?: boolean
   openaiApiKeyEncrypted?: boolean
+  anthropicApiKeyEncrypted?: boolean
+  aiProvider?: boolean
+  aiModel?: boolean
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -641,6 +725,9 @@ export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   userId?: boolean
   deeplApiKeyEncrypted?: boolean
   openaiApiKeyEncrypted?: boolean
+  anthropicApiKeyEncrypted?: boolean
+  aiProvider?: boolean
+  aiModel?: boolean
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -658,6 +745,9 @@ export type UserSettingsSelectScalar = {
   userId?: boolean
   deeplApiKeyEncrypted?: boolean
   openaiApiKeyEncrypted?: boolean
+  anthropicApiKeyEncrypted?: boolean
+  aiProvider?: boolean
+  aiModel?: boolean
   autoSummarize?: boolean
   autoTranslate?: boolean
   autoTranscribe?: boolean
@@ -669,7 +759,7 @@ export type UserSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "deeplApiKeyEncrypted" | "openaiApiKeyEncrypted" | "autoSummarize" | "autoTranslate" | "autoTranscribe" | "autoCategorize" | "shortcutTokenHash" | "shortcutTokenPrefix" | "shortcutTokenEncrypted" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
+export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "deeplApiKeyEncrypted" | "openaiApiKeyEncrypted" | "anthropicApiKeyEncrypted" | "aiProvider" | "aiModel" | "autoSummarize" | "autoTranslate" | "autoTranscribe" | "autoCategorize" | "shortcutTokenHash" | "shortcutTokenPrefix" | "shortcutTokenEncrypted" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
 export type UserSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -690,6 +780,9 @@ export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     userId: string
     deeplApiKeyEncrypted: string | null
     openaiApiKeyEncrypted: string | null
+    anthropicApiKeyEncrypted: string | null
+    aiProvider: string
+    aiModel: string | null
     autoSummarize: boolean
     autoTranslate: boolean
     autoTranscribe: boolean
@@ -1127,6 +1220,9 @@ export interface UserSettingsFieldRefs {
   readonly userId: Prisma.FieldRef<"UserSettings", 'String'>
   readonly deeplApiKeyEncrypted: Prisma.FieldRef<"UserSettings", 'String'>
   readonly openaiApiKeyEncrypted: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly anthropicApiKeyEncrypted: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly aiProvider: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly aiModel: Prisma.FieldRef<"UserSettings", 'String'>
   readonly autoSummarize: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly autoTranslate: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly autoTranscribe: Prisma.FieldRef<"UserSettings", 'Boolean'>

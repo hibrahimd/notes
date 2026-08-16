@@ -50,6 +50,7 @@ export type SystemSettingsMinAggregateOutputType = {
   smtpAllowInvalidCert: boolean | null
   openaiApiKey: string | null
   openaiModel: string | null
+  anthropicApiKey: string | null
   defaultLanguage: string | null
   maxNoteSize: number | null
   maxVideoDuration: number | null
@@ -69,6 +70,7 @@ export type SystemSettingsMaxAggregateOutputType = {
   smtpAllowInvalidCert: boolean | null
   openaiApiKey: string | null
   openaiModel: string | null
+  anthropicApiKey: string | null
   defaultLanguage: string | null
   maxNoteSize: number | null
   maxVideoDuration: number | null
@@ -88,6 +90,7 @@ export type SystemSettingsCountAggregateOutputType = {
   smtpAllowInvalidCert: number
   openaiApiKey: number
   openaiModel: number
+  anthropicApiKey: number
   defaultLanguage: number
   supportedLanguages: number
   maxNoteSize: number
@@ -122,6 +125,7 @@ export type SystemSettingsMinAggregateInputType = {
   smtpAllowInvalidCert?: true
   openaiApiKey?: true
   openaiModel?: true
+  anthropicApiKey?: true
   defaultLanguage?: true
   maxNoteSize?: true
   maxVideoDuration?: true
@@ -141,6 +145,7 @@ export type SystemSettingsMaxAggregateInputType = {
   smtpAllowInvalidCert?: true
   openaiApiKey?: true
   openaiModel?: true
+  anthropicApiKey?: true
   defaultLanguage?: true
   maxNoteSize?: true
   maxVideoDuration?: true
@@ -160,6 +165,7 @@ export type SystemSettingsCountAggregateInputType = {
   smtpAllowInvalidCert?: true
   openaiApiKey?: true
   openaiModel?: true
+  anthropicApiKey?: true
   defaultLanguage?: true
   supportedLanguages?: true
   maxNoteSize?: true
@@ -267,6 +273,7 @@ export type SystemSettingsGroupByOutputType = {
   smtpAllowInvalidCert: boolean
   openaiApiKey: string | null
   openaiModel: string | null
+  anthropicApiKey: string | null
   defaultLanguage: string
   supportedLanguages: string[]
   maxNoteSize: number
@@ -310,6 +317,7 @@ export type SystemSettingsWhereInput = {
   smtpAllowInvalidCert?: Prisma.BoolFilter<"SystemSettings"> | boolean
   openaiApiKey?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   openaiModel?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
+  anthropicApiKey?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   defaultLanguage?: Prisma.StringFilter<"SystemSettings"> | string
   supportedLanguages?: Prisma.StringNullableListFilter<"SystemSettings">
   maxNoteSize?: Prisma.IntFilter<"SystemSettings"> | number
@@ -330,6 +338,7 @@ export type SystemSettingsOrderByWithRelationInput = {
   smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   openaiModel?: Prisma.SortOrderInput | Prisma.SortOrder
+  anthropicApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
   supportedLanguages?: Prisma.SortOrder
   maxNoteSize?: Prisma.SortOrder
@@ -353,6 +362,7 @@ export type SystemSettingsWhereUniqueInput = Prisma.AtLeast<{
   smtpAllowInvalidCert?: Prisma.BoolFilter<"SystemSettings"> | boolean
   openaiApiKey?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   openaiModel?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
+  anthropicApiKey?: Prisma.StringNullableFilter<"SystemSettings"> | string | null
   defaultLanguage?: Prisma.StringFilter<"SystemSettings"> | string
   supportedLanguages?: Prisma.StringNullableListFilter<"SystemSettings">
   maxNoteSize?: Prisma.IntFilter<"SystemSettings"> | number
@@ -373,6 +383,7 @@ export type SystemSettingsOrderByWithAggregationInput = {
   smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   openaiModel?: Prisma.SortOrderInput | Prisma.SortOrder
+  anthropicApiKey?: Prisma.SortOrderInput | Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
   supportedLanguages?: Prisma.SortOrder
   maxNoteSize?: Prisma.SortOrder
@@ -401,6 +412,7 @@ export type SystemSettingsScalarWhereWithAggregatesInput = {
   smtpAllowInvalidCert?: Prisma.BoolWithAggregatesFilter<"SystemSettings"> | boolean
   openaiApiKey?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
   openaiModel?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
+  anthropicApiKey?: Prisma.StringNullableWithAggregatesFilter<"SystemSettings"> | string | null
   defaultLanguage?: Prisma.StringWithAggregatesFilter<"SystemSettings"> | string
   supportedLanguages?: Prisma.StringNullableListFilter<"SystemSettings">
   maxNoteSize?: Prisma.IntWithAggregatesFilter<"SystemSettings"> | number
@@ -421,6 +433,7 @@ export type SystemSettingsCreateInput = {
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: string | null
   openaiModel?: string | null
+  anthropicApiKey?: string | null
   defaultLanguage?: string
   supportedLanguages?: Prisma.SystemSettingsCreatesupportedLanguagesInput | string[]
   maxNoteSize?: number
@@ -441,6 +454,7 @@ export type SystemSettingsUncheckedCreateInput = {
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: string | null
   openaiModel?: string | null
+  anthropicApiKey?: string | null
   defaultLanguage?: string
   supportedLanguages?: Prisma.SystemSettingsCreatesupportedLanguagesInput | string[]
   maxNoteSize?: number
@@ -461,6 +475,7 @@ export type SystemSettingsUpdateInput = {
   smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   supportedLanguages?: Prisma.SystemSettingsUpdatesupportedLanguagesInput | string[]
   maxNoteSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -481,6 +496,7 @@ export type SystemSettingsUncheckedUpdateInput = {
   smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   supportedLanguages?: Prisma.SystemSettingsUpdatesupportedLanguagesInput | string[]
   maxNoteSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -501,6 +517,7 @@ export type SystemSettingsCreateManyInput = {
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: string | null
   openaiModel?: string | null
+  anthropicApiKey?: string | null
   defaultLanguage?: string
   supportedLanguages?: Prisma.SystemSettingsCreatesupportedLanguagesInput | string[]
   maxNoteSize?: number
@@ -521,6 +538,7 @@ export type SystemSettingsUpdateManyMutationInput = {
   smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   supportedLanguages?: Prisma.SystemSettingsUpdatesupportedLanguagesInput | string[]
   maxNoteSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -541,6 +559,7 @@ export type SystemSettingsUncheckedUpdateManyInput = {
   smtpAllowInvalidCert?: Prisma.BoolFieldUpdateOperationsInput | boolean
   openaiApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   openaiModel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  anthropicApiKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   defaultLanguage?: Prisma.StringFieldUpdateOperationsInput | string
   supportedLanguages?: Prisma.SystemSettingsUpdatesupportedLanguagesInput | string[]
   maxNoteSize?: Prisma.IntFieldUpdateOperationsInput | number
@@ -561,6 +580,7 @@ export type SystemSettingsCountOrderByAggregateInput = {
   smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrder
   openaiModel?: Prisma.SortOrder
+  anthropicApiKey?: Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
   supportedLanguages?: Prisma.SortOrder
   maxNoteSize?: Prisma.SortOrder
@@ -587,6 +607,7 @@ export type SystemSettingsMaxOrderByAggregateInput = {
   smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrder
   openaiModel?: Prisma.SortOrder
+  anthropicApiKey?: Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
   maxNoteSize?: Prisma.SortOrder
   maxVideoDuration?: Prisma.SortOrder
@@ -606,6 +627,7 @@ export type SystemSettingsMinOrderByAggregateInput = {
   smtpAllowInvalidCert?: Prisma.SortOrder
   openaiApiKey?: Prisma.SortOrder
   openaiModel?: Prisma.SortOrder
+  anthropicApiKey?: Prisma.SortOrder
   defaultLanguage?: Prisma.SortOrder
   maxNoteSize?: Prisma.SortOrder
   maxVideoDuration?: Prisma.SortOrder
@@ -642,6 +664,7 @@ export type SystemSettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
+  anthropicApiKey?: boolean
   defaultLanguage?: boolean
   supportedLanguages?: boolean
   maxNoteSize?: boolean
@@ -662,6 +685,7 @@ export type SystemSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
+  anthropicApiKey?: boolean
   defaultLanguage?: boolean
   supportedLanguages?: boolean
   maxNoteSize?: boolean
@@ -682,6 +706,7 @@ export type SystemSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
+  anthropicApiKey?: boolean
   defaultLanguage?: boolean
   supportedLanguages?: boolean
   maxNoteSize?: boolean
@@ -702,6 +727,7 @@ export type SystemSettingsSelectScalar = {
   smtpAllowInvalidCert?: boolean
   openaiApiKey?: boolean
   openaiModel?: boolean
+  anthropicApiKey?: boolean
   defaultLanguage?: boolean
   supportedLanguages?: boolean
   maxNoteSize?: boolean
@@ -710,7 +736,7 @@ export type SystemSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type SystemSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "smtpHost" | "smtpPort" | "smtpUsername" | "smtpPasswordEncrypted" | "smtpFromName" | "smtpFromEmail" | "smtpSecure" | "smtpAllowInvalidCert" | "openaiApiKey" | "openaiModel" | "defaultLanguage" | "supportedLanguages" | "maxNoteSize" | "maxVideoDuration" | "createdAt" | "updatedAt", ExtArgs["result"]["systemSettings"]>
+export type SystemSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "smtpHost" | "smtpPort" | "smtpUsername" | "smtpPasswordEncrypted" | "smtpFromName" | "smtpFromEmail" | "smtpSecure" | "smtpAllowInvalidCert" | "openaiApiKey" | "openaiModel" | "anthropicApiKey" | "defaultLanguage" | "supportedLanguages" | "maxNoteSize" | "maxVideoDuration" | "createdAt" | "updatedAt", ExtArgs["result"]["systemSettings"]>
 
 export type $SystemSettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "SystemSettings"
@@ -727,6 +753,7 @@ export type $SystemSettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
     smtpAllowInvalidCert: boolean
     openaiApiKey: string | null
     openaiModel: string | null
+    anthropicApiKey: string | null
     defaultLanguage: string
     supportedLanguages: string[]
     maxNoteSize: number
@@ -1167,6 +1194,7 @@ export interface SystemSettingsFieldRefs {
   readonly smtpAllowInvalidCert: Prisma.FieldRef<"SystemSettings", 'Boolean'>
   readonly openaiApiKey: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly openaiModel: Prisma.FieldRef<"SystemSettings", 'String'>
+  readonly anthropicApiKey: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly defaultLanguage: Prisma.FieldRef<"SystemSettings", 'String'>
   readonly supportedLanguages: Prisma.FieldRef<"SystemSettings", 'String[]'>
   readonly maxNoteSize: Prisma.FieldRef<"SystemSettings", 'Int'>

@@ -12,6 +12,7 @@ export default function SystemSettingsPage() {
     supportedLanguages: ["tr", "en", "de", "fr", "es"],
     openaiApiKey: "",
     openaiModel: "gpt-4o-mini",
+    anthropicApiKey: "",
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,6 +37,7 @@ export default function SystemSettingsPage() {
     const body: Record<string, unknown> = { ...settings };
     // Maskeli deger geri gonderilirse kayitli anahtar ezilmesin
     if (settings.openaiApiKey === "••••••••") delete body.openaiApiKey;
+    if (settings.anthropicApiKey === "••••••••") delete body.anthropicApiKey;
 
     const res = await fetch("/api/admin/system-settings", {
       method: "PUT",
@@ -84,10 +86,11 @@ export default function SystemSettingsPage() {
         </Card>
 
         <Card>
-          <CardTitle>OpenAI (Sistem Geneli)</CardTitle>
+          <CardTitle>Yapay Zekâ (Sistem Geneli)</CardTitle>
           <p className="text-sm text-zinc-500 mt-1 mb-4">
-            Kullanıcının kendi anahtarı yoksa bu anahtar kullanılır. Hiçbiri yoksa
-            özet, çeviri ve kategori adımları atlanır ve not detayında belirtilir.
+            Kullanıcının kendi anahtarı yoksa bu anahtarlar kullanılır. Hiçbiri
+            yoksa özet, çeviri ve kategori adımları atlanır ve not detayında
+            belirtilir. Video transkripsiyonu her zaman OpenAI Whisper ile yapılır.
           </p>
           <div className="space-y-4">
             <Input
@@ -100,10 +103,18 @@ export default function SystemSettingsPage() {
             />
             <Input
               id="openaiModel"
-              label="Model"
+              label="Varsayılan OpenAI Modeli"
               placeholder="gpt-4o-mini"
               value={settings.openaiModel || ""}
               onChange={(e) => setSettings({ ...settings, openaiModel: e.target.value })}
+            />
+            <Input
+              id="anthropicApiKey"
+              label="Anthropic API Key"
+              type="password"
+              placeholder="sk-ant-..."
+              value={settings.anthropicApiKey || ""}
+              onChange={(e) => setSettings({ ...settings, anthropicApiKey: e.target.value })}
             />
           </div>
         </Card>
