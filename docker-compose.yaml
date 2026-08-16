@@ -7,7 +7,7 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://notal:${DB_PASSWORD}@notal-db:5432/notal
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://notal-redis:6379
       - SESSION_SECRET=${SESSION_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - ADMIN_EMAIL=${ADMIN_EMAIL}
@@ -19,7 +19,7 @@ services:
     depends_on:
       notal-db:
         condition: service_healthy
-      redis:
+      notal-redis:
         condition: service_healthy
     restart: unless-stopped
     labels:
@@ -46,7 +46,7 @@ services:
       dockerfile: Dockerfile.worker
     environment:
       - DATABASE_URL=postgresql://notal:${DB_PASSWORD}@notal-db:5432/notal
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://notal-redis:6379
       # Worker, kullanicilarin sifreli OpenAI anahtarlarini cozmek zorunda
       - SESSION_SECRET=${SESSION_SECRET}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
@@ -57,7 +57,7 @@ services:
     depends_on:
       notal-db:
         condition: service_healthy
-      redis:
+      notal-redis:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -80,7 +80,7 @@ services:
     networks:
       - notal-network
 
-  redis:
+  notal-redis:
     image: redis:7-alpine
     command: redis-server --appendonly yes
     volumes:
