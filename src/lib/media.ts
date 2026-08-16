@@ -1,5 +1,5 @@
 import { spawn } from "child_process";
-import { mkdir, readdir, stat } from "fs/promises";
+import { mkdir, readdir, readFile, stat } from "fs/promises";
 import path from "path";
 
 /**
@@ -91,6 +91,16 @@ export interface VideoInfo {
   durationSeconds: number | null;
   thumbnail: string | null;
   extractor: string | null;
+  /** Videonun konusuldugu dil (yt-dlp bildiriyorsa) */
+  language: string | null;
+  /** Insan yazimi altyazi dilleri */
+  subtitleLanguages: string[];
+  /** Otomatik uretilmis altyazi dilleri */
+  autoCaptionLanguages: string[];
+}
+
+function languageKeys(value: unknown): string[] {
+  return value && typeof value === "object" ? Object.keys(value) : [];
 }
 
 /** Videoyu indirmeden once meta verisini alir. */
@@ -116,7 +126,104 @@ export async function probeVideo(url: string): Promise<VideoInfo> {
     durationSeconds: Number.isFinite(duration) ? Math.round(duration) : null,
     thumbnail: typeof data.thumbnail === "string" ? data.thumbnail : null,
     extractor: typeof data.extractor === "string" ? data.extractor : null,
+    language: typeof data.language === "string" ? data.language : null,
+    subtitleLanguages: languageKeys(data.subtitles),
+    autoCaptionLanguages: languageKeys(data.automatic_captions),
   };
+}
+
+export interface CaptionChoice {
+  lang: string;
+  /** true ise insan yazimi altyazi, false ise otomatik uretim */
+  manual: boolean;
+}
+
+/**
+ * Kaynak dildeki altyaziyi secer.
+ *
+ * YouTube otomatik altyazilari hedef dile kendi cevirisiyle de sunuyor
+ * ("tr-en" = ingilizceden turkceye) ama o uc nokta sunucu IP'lerine 429
+ * donduruyor ve cevirisi bizim hattimizdan zayif. Bu yuzden yalnizca kaynak
+ * dildeki altyaziyi aliyoruz; ceviriyi secilen AI saglayicisi yapiyor.
+ */
+export function pickCaptionLanguage(info: VideoInfo): CaptionChoice | null {
+  const original = info.language?.toLowerCase() || null;
+
+  const exact = (langs: string[]) =>
+    original ? langs.find((l) => l.toLowerCase() === original) : undefined;
+
+  // Insan yazimi altyazi her zaman tercih edilir
+  const manual =
+    exact(info.subtitleLanguages) ||
+    (original
+      ? info.subtitleLanguages.find((l) =>
+          l.toLowerCase().startsWith(`${original}-`)
+        )
+      : info.subtitleLanguages.find((l) => !l.includes("-"))) ||
+    (!original ? info.subtitleLanguages[0] : undefined);
+
+  if (manual) return { lang: manual, manual: true };
+
+  // Otomatik altyazilarda tireli anahtarlar ceviri varyantlaridir
+  const auto =
+    exact(info.autoCaptionLanguages) ||
+    info.autoCaptionLanguages.find((l) => !l.includes("-"));
+
+  return auto ? { lang: auto, manual: false } : null;
+}
+
+/**
+ * Altyaziyi videoyu indirmeden ceker.
+ *
+ * YouTube sunucu IP'lerinden medya akisini 403 ile kapatiyor ama altyazi
+ * uc noktasi acik. Altyazi varsa video indirmeye de konusma tanimaya da
+ * gerek kalmiyor; hem cok daha hizli hem de bedava.
+ *
+ * Basarisiz olursa hata firlatmaz: cagiran taraf konusma tanimaya duser.
+ */
+export async function fetchCaptions(
+  url: string,
+  targetDir: string,
+  choice: CaptionChoice
+): Promise<{ filePath: string; segments: Segment[] } | null> {
+  await mkdir(targetDir, { recursive: true });
+
+  const base = path.join(targetDir, "captions");
+
+  try {
+    await run(
+      YT_DLP,
+      [
+        "--no-warnings",
+        "--no-playlist",
+        "--skip-download",
+        choice.manual ? "--write-subs" : "--write-auto-subs",
+        "--sub-langs",
+        choice.lang,
+        "--sub-format",
+        "vtt",
+        "-o",
+        base,
+        url,
+      ],
+      180000
+    );
+  } catch (error) {
+    console.warn(
+      `[media] Altyazı indirilemedi (${choice.lang}):`,
+      error instanceof Error ? error.message : error
+    );
+    return null;
+  }
+
+  const files = await readdir(targetDir);
+  const file = files.find((f) => f.startsWith("captions.") && f.endsWith(".vtt"));
+  if (!file) return null;
+
+  const filePath = path.join(targetDir, file);
+  const segments = parseVtt(await readFile(filePath, "utf-8"));
+
+  return segments.length > 0 ? { filePath, segments } : null;
 }
 
 export interface DownloadedVideo {
@@ -216,6 +323,93 @@ function formatTimestamp(seconds: number): string {
 
   const pad = (n: number, size = 2) => String(n).padStart(size, "0");
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)}.${pad(millis, 3)}`;
+}
+
+const VTT_TIMING =
+  /^(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{1,3})\s+-->\s+(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{1,3})/;
+
+function vttSeconds(
+  hours: string | undefined,
+  minutes: string,
+  seconds: string,
+  millis: string
+): number {
+  return (
+    Number(hours || 0) * 3600 +
+    Number(minutes) * 60 +
+    Number(seconds) +
+    Number(millis.padEnd(3, "0")) / 1000
+  );
+}
+
+/** Cue metnindeki bicim etiketlerini ve HTML varliklarini temizler. */
+function cleanCueLine(line: string): string {
+  return line
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * WebVTT dosyasini segmentlere cevirir.
+ *
+ * YouTube'un otomatik altyazilari "yuvarlanan" bicimde gelir: her cue'nun ilk
+ * satiri bir onceki cue'nun tamamlanmis metnini tekrar eder, yeni metin son
+ * satirdadir ve kelime kelime <c> etiketleriyle zamanlanmistir. Aralara da
+ * 10 ms'lik saf tekrar cue'lari serpistirilir. Butun satirlari birlestirmek
+ * metni ikiye katliyor; bu yuzden bu bicim tespit edilince yalnizca son satir
+ * aliniyor. Insan yazimi altyazilarda bu yapi olmadigi icin satirlar normal
+ * sekilde birlestiriliyor.
+ */
+export function parseVtt(content: string): Segment[] {
+  const rolling = content.includes("<c>");
+  const segments: Segment[] = [];
+
+  // Cue'lar bos satirla ayrilir. Bolme sirasinda satirin bosluk icermemesi
+  // sart: YouTube cue govdesinin ilk satirina tek bosluk koyuyor ve bos satir
+  // sayilirsa cue ikiye bolunup metni kayboluyor.
+  for (const block of content.split(/\r?\n\r?\n+/)) {
+    const lines = block.split(/\r?\n/);
+    // Zamanlama satirindan onceki cue kimligi varsa atlanir
+    const timingIndex = lines.findIndex((l) => VTT_TIMING.test(l.trim()));
+    if (timingIndex === -1) continue;
+
+    const match = VTT_TIMING.exec(lines[timingIndex].trim());
+    if (!match) continue;
+
+    const start = vttSeconds(match[1], match[2], match[3], match[4]);
+    const end = vttSeconds(match[5], match[6], match[7], match[8]);
+
+    // Yuvarlanan bicimdeki 10 ms'lik tekrar cue'lari
+    if (rolling && end - start < 0.05) continue;
+
+    const body = lines
+      .slice(timingIndex + 1)
+      .map(cleanCueLine)
+      .filter(Boolean);
+
+    if (body.length === 0) continue;
+
+    const text = rolling ? body[body.length - 1] : body.join(" ");
+    if (!text) continue;
+
+    // Ayni metin ust uste gelirse tek segmentte birlestirilir
+    const previous = segments[segments.length - 1];
+    if (previous && previous.text === text) {
+      previous.end = end;
+      continue;
+    }
+
+    segments.push({ start, end, text });
+  }
+
+  return segments;
 }
 
 export function buildVtt(segments: Segment[]): string {

@@ -3,10 +3,13 @@ import path from "path";
 import { getStoragePath, ensureDir } from "../../lib/storage";
 import {
   probeVideo,
+  pickCaptionLanguage,
+  fetchCaptions,
   downloadVideo,
   extractAudio,
   buildVtt,
   MediaError,
+  type Segment,
 } from "../../lib/media";
 import { transcribeAudio, translateSegments } from "../../lib/transcribe";
 import {
@@ -21,10 +24,19 @@ import {
 import { resolveAi, resolveTranscription } from "../ai-config";
 
 /**
- * Video isleme hatti: indir -> sesi cikar -> transkript -> ceviri -> altyazi.
+ * Video isleme hatti. Iki yolu var:
  *
- * Talep uzerine calisir; otomatik degil. Videolar diske yazildigi icin her
- * notun dosyalari kendi klasorunde tutulur ve not silindiginde birlikte gider.
+ *   1. Altyazi yolu — video sitesinin kendi altyazisi indirilir. Ne video
+ *      indirilir ne konusma tanima calisir; saniyeler surer ve hicbir API
+ *      anahtari gerektirmez.
+ *   2. Konusma yolu — altyazi yoksa video indirilir, sesi ayrilir ve Whisper
+ *      ile cozumlenir.
+ *
+ * Altyazi yolu once denenir. YouTube sunucu IP'lerinden medya akisini 403 ile
+ * kapatiyor ama altyazi uc noktasi acik oldugu icin YouTube pratikte yalnizca
+ * bu yoldan islenebiliyor. Ayrica indirilmeyen her video diskte yer kaplamiyor.
+ *
+ * Talep uzerine calisir; otomatik degil.
  */
 
 /** Notun medya dosyalarinin durdugu klasor. */
@@ -42,32 +54,6 @@ export async function transcribeNote(noteId: string, userId: string) {
 
   if (!note.sourceUrl) {
     await skipJob(noteId, "transcribe", "Bu notta video linki yok.");
-    await updateStatus(noteId, "ready");
-    return;
-  }
-
-  // Altyazi cevirisi "ceviri" isinin saglayicisini kullanir
-  const ai = await resolveAi(userId, "translate");
-  if (!ai) {
-    await skipJob(
-      noteId,
-      "transcribe",
-      "AI sağlayıcı anahtarı tanımlı değil; altyazı çevirisi yapılamıyor."
-    );
-    await updateStatus(noteId, "ready");
-    return;
-  }
-
-  // Konusma tanima yalnizca Whisper ile yapiliyor: metin saglayicisi Anthropic
-  // secilmis olsa bile burada OpenAI anahtari sart
-  const transcription$ = await resolveTranscription(userId);
-  if (!transcription$) {
-    await skipJob(
-      noteId,
-      "transcribe",
-      "Video transkripsiyonu OpenAI Whisper ile yapılıyor. Ayarlar sayfasından " +
-        "OpenAI API anahtarınızı ekleyin (metin işlemleri için başka bir sağlayıcı seçmiş olsanız bile)."
-    );
     await updateStatus(noteId, "ready");
     return;
   }
@@ -98,78 +84,132 @@ export async function transcribeNote(noteId: string, userId: string) {
     // Yeniden calistirildiginda eski medya kayitlari birikmesin
     await prisma.noteMedia.deleteMany({ where: { noteId } });
 
-    // 2) Indirme
-    await updateStatus(noteId, "downloading");
-    await progressJob(noteId, "transcribe", "Video indiriliyor...", 10);
-    const video = await downloadVideo(note.sourceUrl, dir);
+    // 2) Altyazi yolu
+    let segments: Segment[] | null = null;
+    let sourceLanguage: string | null = null;
+    let fromCaptions = false;
 
-    await prisma.noteMedia.create({
-      data: {
+    const choice = pickCaptionLanguage(info);
+
+    if (choice) {
+      await progressJob(
         noteId,
-        mediaType: "video",
-        storagePath: path.relative(getStoragePath(), video.filePath),
-        mimeType: "video/mp4",
-        duration: info.durationSeconds,
-        size: video.sizeBytes,
-      },
-    });
+        "transcribe",
+        choice.manual ? "Altyazı indiriliyor..." : "Otomatik altyazı indiriliyor...",
+        25
+      );
 
-    // 3) Ses
-    await updateStatus(noteId, "extracting");
-    await progressJob(noteId, "transcribe", "Ses ayrıştırılıyor...", 35);
-    const audio = await extractAudio(video.filePath, dir);
-    audioPath = audio.filePath;
+      const captions = await fetchCaptions(note.sourceUrl, dir, choice);
 
-    // 4) Transkript
-    await updateStatus(noteId, "transcribing");
-    await progressJob(noteId, "transcribe", "Konuşma çözümleniyor...", 50);
-    const transcription = await transcribeAudio(
-      transcription$.apiKey,
-      transcription$.model,
-      audio.filePath
-    );
-
-    if (transcription.segments.length === 0) {
-      throw new Error("Videoda konuşma bulunamadı");
+      if (captions) {
+        segments = captions.segments;
+        // "en-US" gibi bolgesel varyantlari iki harfe indirir
+        sourceLanguage = choice.lang.split("-")[0].toLowerCase();
+        fromCaptions = true;
+      }
     }
 
-    const originalVtt = buildVtt(transcription.segments);
-    const originalVttPath = path.join(dir, "original.vtt");
-    await writeFile(originalVttPath, originalVtt, "utf-8");
+    // 3) Konusma yolu — yalnizca altyazi bulunamadiginda
+    if (!segments) {
+      const whisper = await resolveTranscription(userId);
 
-    // 5) Ceviri — konusma zaten hedef dildeyse atlanir
+      if (!whisper) {
+        await skipJob(
+          noteId,
+          "transcribe",
+          (choice
+            ? "Videonun altyazısı indirilemedi. "
+            : "Bu videoda altyazı yok. ") +
+            "Konuşma tanıma OpenAI Whisper ile yapılıyor; Ayarlar sayfasından " +
+            "OpenAI API anahtarınızı ekleyin (metin işlemleri için başka bir " +
+            "sağlayıcı seçmiş olsanız bile)."
+        );
+        await updateStatus(noteId, "ready");
+        return;
+      }
+
+      await updateStatus(noteId, "downloading");
+      await progressJob(noteId, "transcribe", "Video indiriliyor...", 10);
+      const video = await downloadVideo(note.sourceUrl, dir);
+
+      await prisma.noteMedia.create({
+        data: {
+          noteId,
+          mediaType: "video",
+          storagePath: path.relative(getStoragePath(), video.filePath),
+          mimeType: "video/mp4",
+          duration: info.durationSeconds,
+          size: video.sizeBytes,
+        },
+      });
+
+      await updateStatus(noteId, "extracting");
+      await progressJob(noteId, "transcribe", "Ses ayrıştırılıyor...", 35);
+      const audio = await extractAudio(video.filePath, dir);
+      audioPath = audio.filePath;
+
+      await updateStatus(noteId, "transcribing");
+      await progressJob(noteId, "transcribe", "Konuşma çözümleniyor...", 50);
+      const transcription = await transcribeAudio(
+        whisper.apiKey,
+        whisper.model,
+        audio.filePath
+      );
+
+      if (transcription.segments.length === 0) {
+        throw new Error("Videoda konuşma bulunamadı");
+      }
+
+      segments = transcription.segments;
+      sourceLanguage = transcription.language?.toLowerCase().slice(0, 2) || null;
+    }
+
+    const originalText = segments.map((s) => s.text).join(" ");
+    const originalVttPath = path.join(dir, "original.vtt");
+    await writeFile(originalVttPath, buildVtt(segments), "utf-8");
+
+    // 4) Ceviri — kaynak zaten hedef dildeyse veya saglayici yoksa atlanir
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const targetLanguage = user?.translationLanguage || "tr";
+    const target = targetLanguage.toLowerCase().slice(0, 2);
 
-    const spokenLanguage = transcription.language?.toLowerCase().slice(0, 2);
-    const needsTranslation =
-      !spokenLanguage || spokenLanguage !== targetLanguage.toLowerCase().slice(0, 2);
-
-    let translatedSegments = transcription.segments;
+    let translatedSegments: Segment[] | null = null;
     let translatedVttPath: string | null = null;
+    let translationNote = "";
 
-    if (needsTranslation) {
-      await updateStatus(noteId, "translating");
-      await progressJob(noteId, "transcribe", "Altyazı çevriliyor...", 75);
+    if (sourceLanguage && sourceLanguage === target) {
+      translationNote = `konuşma zaten ${targetLanguage} dilinde, çeviri atlandı`;
+    } else {
+      // Altyazi cevirisi "ceviri" isinin saglayicisini kullanir
+      const ai = await resolveAi(userId, "translate");
 
-      translatedSegments = await translateSegments(
-        ai.config,
-        transcription.segments,
-        targetLanguage
-      );
-      translatedVttPath = path.join(dir, "translated.vtt");
-      await writeFile(translatedVttPath, buildVtt(translatedSegments), "utf-8");
+      if (!ai) {
+        translationNote =
+          "çeviri için AI sağlayıcı anahtarı tanımlı olmadığından yalnızca " +
+          "kaynak dildeki altyazı hazırlandı";
+      } else {
+        await updateStatus(noteId, "translating");
+        await progressJob(noteId, "transcribe", "Altyazı çevriliyor...", 75);
+
+        translatedSegments = await translateSegments(
+          ai.config,
+          segments,
+          targetLanguage
+        );
+        translatedVttPath = path.join(dir, "translated.vtt");
+        await writeFile(translatedVttPath, buildVtt(translatedSegments), "utf-8");
+      }
     }
 
-    // 6) Kayit. Iki altyazi da NoteMedia olarak yazilir ki oynatici ikisini de
+    // 5) Kayit. Iki altyazi da NoteMedia olarak yazilir ki oynatici ikisini de
     //    ayri parca olarak sunabilsin.
     await prisma.transcript.deleteMany({ where: { noteId } });
     await prisma.transcript.create({
       data: {
         noteId,
-        language: transcription.language || "bilinmiyor",
-        transcriptText: transcription.text,
-        translatedText: needsTranslation
+        language: sourceLanguage || "bilinmiyor",
+        transcriptText: originalText,
+        translatedText: translatedSegments
           ? translatedSegments.map((s) => s.text).join(" ")
           : null,
         subtitleVttPath: path.relative(getStoragePath(), originalVttPath),
@@ -202,17 +242,22 @@ export async function transcribeNote(noteId: string, userId: string) {
         type: "video",
         title: note.title || info.title,
         coverImage: note.coverImage || info.thumbnail,
-        languageDetected: transcription.language,
+        languageDetected: sourceLanguage,
         errorText: null,
       },
     });
 
+    const how = fromCaptions
+      ? choice?.manual
+        ? "sitenin altyazısından"
+        : "sitenin otomatik altyazısından"
+      : "konuşma tanımayla";
+
     await completeJob(
       noteId,
       "transcribe",
-      needsTranslation
-        ? `Altyazı hazır (${transcription.segments.length} satır)`
-        : `Altyazı hazır (${transcription.segments.length} satır) — konuşma zaten ${targetLanguage} dilinde, çeviri atlandı`
+      `Altyazı hazır — ${how}, ${segments.length} satır` +
+        (translationNote ? ` (${translationNote})` : "")
     );
     await updateStatus(noteId, "ready");
   } catch (error) {

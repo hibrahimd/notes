@@ -24,8 +24,28 @@ export async function createJob(
   });
 }
 
-/** Yapilmayan bir adimi kullaniciya gorunur sekilde kaydeder. */
+/**
+ * Yapilmayan bir adimi kullaniciya gorunur sekilde kaydeder.
+ *
+ * Adim baslatildiktan sonra atlanabiliyor (ornegin altyazi bulunamayip
+ * konusma tanimaya duserken anahtar cikmadiginda). O durumda yeni kayit
+ * acmak yerine calisan kaydi kapatiyoruz, yoksa "running" satiri sonsuza
+ * kadar oyle kaliyor.
+ */
 export async function skipJob(noteId: string, jobType: string, message: string) {
+  const running = await prisma.noteJob.findFirst({
+    where: { noteId, jobType, status: "running" },
+    orderBy: { startedAt: "desc" },
+  });
+
+  if (running) {
+    await prisma.noteJob.update({
+      where: { id: running.id },
+      data: { status: "skipped", message, finishedAt: new Date() },
+    });
+    return;
+  }
+
   await prisma.noteJob.create({
     data: {
       noteId,
