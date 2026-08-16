@@ -23,6 +23,16 @@ export function generateCode(): string {
   return (100000 + (value % range)).toString();
 }
 
+/**
+ * metadataJson serbest bicimli JSON oldugu icin tipi daraltilamiyor;
+ * aciklama alanini calisma zamaninda guvenli sekilde okur.
+ */
+export function metaDescription(metadata: unknown): string | null {
+  if (!metadata || typeof metadata !== "object") return null;
+  const value = (metadata as Record<string, unknown>).description;
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
 export function estimateReadingTime(text: string): number {
   const wordsPerMinute = 200;
   const wordCount = text.split(/\s+/).length;

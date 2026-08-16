@@ -19,9 +19,11 @@ import {
   ChevronUp,
   Copy,
   Check,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { metaDescription } from "@/lib/utils";
 
 interface NoteJob {
   id: string;
@@ -52,6 +54,8 @@ interface NoteProps {
     inbox: boolean;
     siteName: string | null;
     readingTime: number | null;
+    coverImage: string | null;
+    metadataJson: unknown;
     importance: number | null;
     errorText: string | null;
     languageDetected: string | null;
@@ -97,6 +101,7 @@ export function NoteDetail({ note }: NoteProps) {
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   // Form mevcut paylasimin ayarlariyla dolar; dokunulmadan kaydedilirse
   // hicbir sey degismez
   const [expiresInDays, setExpiresInDays] = useState(daysUntil(share?.expiresAt ?? null));
@@ -203,6 +208,13 @@ export function NoteDetail({ note }: NoteProps) {
           >
             <Archive size={20} fill={note.archived ? "currentColor" : "none"} />
           </button>
+          <button
+            onClick={() => setShareOpen(true)}
+            title="Paylaşım"
+            className={`p-2 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${share ? "text-emerald-500" : "text-zinc-400"}`}
+          >
+            <Share2 size={20} />
+          </button>
           {note.status !== "ready" && (
             <Button variant="outline" size="sm" onClick={handleReprocess} loading={reprocessing}>
               <RefreshCw size={16} /> Yeniden İşle
@@ -256,6 +268,25 @@ export function NoteDetail({ note }: NoteProps) {
             </span>
           ))}
         </div>
+      )}
+
+      {/* Kapak gorseli */}
+      {note.coverImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={note.coverImage}
+          alt=""
+          className="w-full max-h-72 object-cover rounded-xl mb-6"
+        />
+      )}
+
+      {/* Ozet yoksa sayfanin kendi aciklamasi gosterilir */}
+      {!note.summary && metaDescription(note.metadataJson) && (
+        <Card className="mb-6">
+          <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed">
+            {metaDescription(note.metadataJson)}
+          </p>
+        </Card>
       )}
 
       {/* Atlanan adimlar */}
@@ -316,11 +347,29 @@ export function NoteDetail({ note }: NoteProps) {
         </Card>
       )}
 
-      {/* Share */}
-      <Card className="mb-6">
-        <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3">
-          Paylaşım
-        </h2>
+      {/* Paylasim, notun kendisinin onune gecmesin diye baslikatki ikonun
+          ardinda bir modalde duruyor */}
+      {shareOpen && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        onClick={() => setShareOpen(false)}
+      >
+      <div
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+      <Card>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            Paylaşım
+          </h2>
+          <button
+            onClick={() => setShareOpen(false)}
+            className="p-1 rounded-lg text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         {share && (
           <>
@@ -407,6 +456,9 @@ export function NoteDetail({ note }: NoteProps) {
           )}
         </div>
       </Card>
+      </div>
+      </div>
+      )}
 
       {/* Jobs / Processing Status */}
       {note.jobs.length > 0 && (

@@ -26,6 +26,49 @@ interface CategoryResult {
   importance?: number;
 }
 
+interface PagePreview {
+  title: string | null;
+  description: string | null;
+  image: string | null;
+  siteName: string | null;
+}
+
+/**
+ * OpenGraph / Twitter Card etiketlerinden onizleme bilgisi cikarir.
+ * Readability'nin icerik cikaramadigi sayfalarda (X, Instagram gibi JS ile
+ * cizilen siteler) elde kalan tek anlamli veri genelde bu etiketlerdir.
+ */
+function extractPreview(doc: Document, pageUrl: string): PagePreview {
+  const meta = (...names: string[]): string | null => {
+    for (const name of names) {
+      const el = doc.querySelector(
+        `meta[property="${name}"], meta[name="${name}"]`
+      );
+      const content = el?.getAttribute("content")?.trim();
+      if (content) return content;
+    }
+    return null;
+  };
+
+  const rawImage = meta("og:image", "og:image:url", "twitter:image", "twitter:image:src");
+  let image: string | null = null;
+  if (rawImage) {
+    try {
+      // Goreli adresleri sayfanin kendi adresine gore cozer
+      image = new URL(rawImage, pageUrl).toString();
+    } catch {
+      image = null;
+    }
+  }
+
+  return {
+    title: meta("og:title", "twitter:title") || doc.title?.trim() || null,
+    description: meta("og:description", "twitter:description", "description"),
+    image,
+    siteName: meta("og:site_name", "application-name"),
+  };
+}
+
 interface AiContext {
   config: OpenAIConfig;
   /** Anahtarin nereden geldigi; kullaniciya gosterilir */
@@ -121,19 +164,33 @@ async function processLink(noteId: string, url: string, userId: string) {
     });
 
     const dom = new JSDOM(response.body, { url: response.finalUrl });
+    // Readability dokumani tukettigi icin onizleme once cikarilir
+    const preview = extractPreview(dom.window.document, response.finalUrl);
     const reader = new Readability(dom.window.document);
     const article = reader.parse();
 
+    const hostname = safeHostname(response.finalUrl) || safeHostname(url);
+
     if (!article) {
-      // No readable content
+      // Icerik cikarilamadi ama OpenGraph etiketleri genelde durur:
+      // baslik, gorsel ve aciklama ile en azindan bir onizleme gosterilir
       await prisma.note.update({
         where: { id: noteId },
         data: {
-          title: dom.window.document.title || url,
-          siteName: new URL(url).hostname,
+          type: isVideo ? "video" : "link",
+          title: preview.title || url,
+          siteName: preview.siteName || hostname,
+          coverImage: preview.image,
+          metadataJson: { description: preview.description },
         },
       });
-      await completeJob(noteId, "extract", "İçerik çıkarılamadı, link kaydedildi");
+      await completeJob(
+        noteId,
+        "extract",
+        preview.image || preview.description
+          ? "Sayfa önizlemesi alındı"
+          : "İçerik çıkarılamadı, link kaydedildi"
+      );
       return;
     }
 
@@ -145,11 +202,13 @@ async function processLink(noteId: string, url: string, userId: string) {
       where: { id: noteId },
       data: {
         type: isVideo ? "video" : "article",
-        title: article.title || null,
+        title: article.title || preview.title || null,
         originalText: article.textContent || null,
-        siteName: article.siteName || new URL(url).hostname,
+        siteName: article.siteName || preview.siteName || hostname,
+        coverImage: preview.image,
         readingTime,
         metadataJson: {
+          description: preview.description || article.excerpt,
           excerpt: article.excerpt,
           byline: article.byline,
           length: article.length,

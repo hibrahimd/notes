@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Star, Archive, ExternalLink, Clock, Globe } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { metaDescription } from "@/lib/utils";
 
 interface NoteCardProps {
   note: {
@@ -20,6 +22,8 @@ interface NoteCardProps {
     inbox: boolean;
     siteName: string | null;
     readingTime: number | null;
+    coverImage: string | null;
+    metadataJson: unknown;
     createdAt: string;
   };
 }
@@ -49,7 +53,10 @@ const typeMap: Record<string, string> = {
 
 export function NoteCard({ note }: NoteCardProps) {
   const router = useRouter();
+  const [coverFailed, setCoverFailed] = useState(false);
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
+  const preview = note.summary || metaDescription(note.metadataJson);
+  const showCover = Boolean(note.coverImage) && !coverFailed;
 
   async function toggleFavorite(e: React.MouseEvent) {
     e.preventDefault();
@@ -79,6 +86,21 @@ export function NoteCard({ note }: NoteCardProps) {
       className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors group"
     >
       <div className="flex items-start justify-between gap-3">
+        {showCover && (
+          <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-lg overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+            {/* next/image kullanilmadi: onizleme gorselleri rastgele alan
+                adlarindan geliyor, hepsini yapilandirmak mumkun degil */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={note.coverImage!}
+              alt=""
+              loading="lazy"
+              className="w-full h-full object-cover"
+              onError={() => setCoverFailed(true)}
+            />
+          </div>
+        )}
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <Badge variant={status.variant}>{status.label}</Badge>
@@ -90,9 +112,9 @@ export function NoteCard({ note }: NoteCardProps) {
             {note.title || note.sourceUrl || "İsimsiz Not"}
           </h3>
 
-          {note.summary && (
+          {preview && (
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">
-              {note.summary}
+              {preview}
             </p>
           )}
 
@@ -121,7 +143,10 @@ export function NoteCard({ note }: NoteCardProps) {
           )}
         </div>
 
-        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Dokunmatik cihazlarda hover yok: butonlar gizli kalirsa gorunmez
+            ama tiklanabilir oluyor ve karta basarken yanlislikla kaynak link
+            aciliyordu. Kucuk ekranlarda gorunur birakiliyor. */}
+        <div className="flex flex-col gap-1 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
           <button
             onClick={toggleFavorite}
             className={`p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer ${note.favorite ? "text-amber-500" : "text-zinc-400"}`}
