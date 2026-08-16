@@ -44,6 +44,36 @@ export function truncate(str: string, maxLength: number): string {
   return str.slice(0, maxLength) + "...";
 }
 
+/**
+ * YouTube URL'sinden video kimligini cikarir, YouTube degilse null doner.
+ *
+ * YouTube sunucu IP'lerinden medya akisini kapatiyor, yani videoyu kendimiz
+ * barindiramiyoruz. Bu kimlikle oynaticiyi gomup altyaziyi ustune biniyoruz.
+ */
+export function youtubeVideoId(url: string | null): string | null {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, "").replace(/^m\./, "");
+
+    if (host === "youtu.be") {
+      return parsed.pathname.slice(1).split("/")[0] || null;
+    }
+
+    if (host !== "youtube.com" && host !== "music.youtube.com") return null;
+
+    const v = parsed.searchParams.get("v");
+    if (v) return v;
+
+    // /shorts/<id>, /embed/<id>, /live/<id>
+    const match = parsed.pathname.match(/^\/(?:shorts|embed|live|v)\/([^/?]+)/);
+    return match ? match[1] : null;
+  } catch {
+    return null;
+  }
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

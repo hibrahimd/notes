@@ -27,7 +27,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { metaDescription } from "@/lib/utils";
+import { metaDescription, youtubeVideoId } from "@/lib/utils";
+import { YouTubePlayer } from "./youtube-player";
 
 interface NoteJob {
   id: string;
@@ -162,6 +163,21 @@ export function NoteDetail({ note }: NoteProps) {
   const subtitleTranslated = note.media.find((m) => m.mediaType === "subtitle_translated");
   const transcript = note.transcripts[0];
   const mediaUrl = (mediaId: string) => `/api/notes/${note.id}/media/${mediaId}`;
+
+  // YouTube videolari sunucuda saklanmiyor (403), gomulu oynatici kullaniliyor
+  const youtubeId = youtubeVideoId(note.sourceUrl);
+  const subtitleTracks = [
+    subtitleTranslated && {
+      id: subtitleTranslated.id,
+      label: "Türkçe",
+      url: mediaUrl(subtitleTranslated.id),
+    },
+    subtitleOriginal && {
+      id: subtitleOriginal.id,
+      label: `Orijinal${transcript?.language ? ` (${transcript.language})` : ""}`,
+      url: mediaUrl(subtitleOriginal.id),
+    },
+  ].filter((t) => t !== null && t !== undefined);
   // Video butonu yalnizca gercekten video olan notlarda: tip analiz sirasinda
   // yt-dlp ile kesinlestiriliyor, makale notlarinda bu butonun isi yok
   const canTranscribe =
@@ -503,9 +519,15 @@ export function NoteDetail({ note }: NoteProps) {
         </div>
       )}
 
+      {/* YouTube: dosya sunucuda yok, oynatici gomulu geliyor ve altyazi
+          uzerine biniyor */}
+      {!videoMedia && youtubeId && subtitleTracks.length > 0 && (
+        <YouTubePlayer videoId={youtubeId} tracks={subtitleTracks} />
+      )}
+
       {/* Video silinmis ama altyazi duruyorsa kullanici neden oynatici
           gormedigini bilsin */}
-      {!videoMedia && transcript && (
+      {!videoMedia && !youtubeId && transcript && (
         <Card className="mb-6 border-zinc-200 dark:border-zinc-800">
           <p className="text-sm text-zinc-500">
             Video dosyası silinmiş. Transkript ve altyazılar duruyor; tekrar
