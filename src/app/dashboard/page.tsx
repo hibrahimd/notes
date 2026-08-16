@@ -17,10 +17,20 @@ interface PageProps {
     search?: string;
     page?: string;
     category?: string;
+    type?: string;
   }>;
 }
 
 const PAGE_SIZE = 20;
+
+const TYPE_LABELS: Record<string, string> = {
+  link: "Link",
+  article: "Makale",
+  video: "Video",
+  image: "Görsel",
+  text: "Metin",
+  mixed: "Karışık",
+};
 
 export default async function InboxPage({ searchParams }: PageProps) {
   const user = await requireAuth();
@@ -29,6 +39,7 @@ export default async function InboxPage({ searchParams }: PageProps) {
   const page = Math.max(1, parseInt(params.page || "1"));
   const search = params.search || "";
   const category = params.category || "";
+  const type = params.type || "";
 
   const where: Record<string, unknown> = { userId: user.id, archived: false };
 
@@ -41,8 +52,11 @@ export default async function InboxPage({ searchParams }: PageProps) {
     ];
   }
   if (category) where.category = category;
+  if (type) where.type = type;
 
-  const [notes, total, categories] = await Promise.all([
+  // Tur sayilari filtreden bagimsiz cikarilir ki secim yapinca digerleri
+  // listeden kaybolmasin
+  const [notes, total, categories, types] = await Promise.all([
     prisma.note.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -56,17 +70,26 @@ export default async function InboxPage({ searchParams }: PageProps) {
       _count: true,
       orderBy: { category: "asc" },
     }),
+    prisma.note.groupBy({
+      by: ["type"],
+      where: { userId: user.id, archived: false },
+      _count: true,
+      orderBy: { type: "asc" },
+    }),
   ]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   /** Filtre ve sayfa baglantilarinda mevcut aramayi korur. */
-  const linkTo = (next: { category?: string; page?: number }) => {
+  const linkTo = (next: { category?: string; type?: string; page?: number }) => {
     const query = new URLSearchParams();
     if (search) query.set("search", search);
 
     const nextCategory = next.category !== undefined ? next.category : category;
     if (nextCategory) query.set("category", nextCategory);
+
+    const nextType = next.type !== undefined ? next.type : type;
+    if (nextType) query.set("type", nextType);
 
     if (next.page && next.page > 1) query.set("page", String(next.page));
 
@@ -85,9 +108,33 @@ export default async function InboxPage({ searchParams }: PageProps) {
     <>
       <NotesHeader title="Inbox" />
 
+      {/* Tur filtresi her zaman var: kategori AI ile atandigi icin anahtar
+          tanimlanana kadar bos kaliyor, tur ise ilk isleme sirasinda belli */}
+      {types.length > 1 && (
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="text-xs text-zinc-400 mr-1">Tür</span>
+          <Link href={linkTo({ type: "", page: 1 })} className={chipClass(!type)}>
+            Tümü
+          </Link>
+          {types.map((t) => (
+            <Link
+              key={t.type}
+              href={linkTo({ type: t.type, page: 1 })}
+              className={chipClass(type === t.type)}
+            >
+              {TYPE_LABELS[t.type] || t.type} ({t._count})
+            </Link>
+          ))}
+        </div>
+      )}
+
       {categories.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          <Link href={linkTo({ category: "", page: 1 })} className={chipClass(!category)}>
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          <span className="text-xs text-zinc-400 mr-1">Kategori</span>
+          <Link
+            href={linkTo({ category: "", page: 1 })}
+            className={chipClass(!category)}
+          >
             Tümü
           </Link>
           {categories.map((cat) => (
@@ -105,7 +152,7 @@ export default async function InboxPage({ searchParams }: PageProps) {
       {notes.length === 0 ? (
         <div className="text-center py-16">
           <p className="text-zinc-400 text-lg">
-            {search || category ? "Not bulunamadı" : "Henüz not yok"}
+            {search || category || type ? "Not bulunamadı" : "Henüz not yok"}
           </p>
         </div>
       ) : (

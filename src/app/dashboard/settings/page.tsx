@@ -375,17 +375,20 @@ export default function UserSettingsPage() {
           </div>
         </Card>
 
-        {message && (
-          <p
-            className={`text-sm ${message.includes("Hata") ? "text-red-500" : "text-emerald-500"}`}
-          >
-            {message}
-          </p>
-        )}
+        {/* Sonuc mesaji butonun solunda: kaydettikten sonra goz zaten orada */}
+        <div className="flex items-center justify-end gap-3 flex-wrap">
+          {message && (
+            <p
+              className={`text-sm ${message.includes("Hata") ? "text-red-500" : "text-emerald-500"}`}
+            >
+              {message}
+            </p>
+          )}
 
-        <Button type="submit" loading={saving}>
-          <Save size={16} /> Kaydet
-        </Button>
+          <Button type="submit" loading={saving}>
+            <Save size={16} /> Kaydet
+          </Button>
+        </div>
       </form>
     </>
   );

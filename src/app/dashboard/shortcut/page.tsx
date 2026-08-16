@@ -12,11 +12,14 @@ import { Copy, Check, Smartphone } from "lucide-react";
  * kendiliginden uretir. "Yeniden olustur" bilerek yok — token degisince
  * telefondaki kisayol calismayi birakiyor ve bastan kurulmasi gerekiyor,
  * yani rutin bir islem degil.
+ *
+ * Token burada ayrica gosterilmiyor: kurulum sayfasi zaten kopyalanabilir
+ * halde basiyor ve kullanicinin ihtiyaci oldugu an orasi.
  */
 export default function MobileSetupPage() {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     fetch("/api/settings/shortcut-token")
@@ -28,10 +31,10 @@ export default function MobileSetupPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  function copyText(text: string, label: string) {
-    navigator.clipboard.writeText(text);
-    setCopied(label);
-    setTimeout(() => setCopied(null), 2000);
+  function copySetupLink(url: string) {
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   const setupUrl =
@@ -47,7 +50,7 @@ export default function MobileSetupPage() {
         Mobil Kurulum
       </h1>
 
-      <Card className="mb-6">
+      <Card>
         <div className="flex items-start gap-4">
           <Smartphone size={24} className="text-zinc-400 mt-1 shrink-0" />
           <div className="flex-1 min-w-0">
@@ -68,10 +71,10 @@ export default function MobileSetupPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => copyText(setupUrl, "link")}
+                    onClick={() => copySetupLink(setupUrl)}
                   >
-                    {copied === "link" ? <Check size={16} /> : <Copy size={16} />}{" "}
-                    Kurulum Linkini Kopyala
+                    {copied ? <Check size={16} /> : <Copy size={16} />} Kurulum
+                    Linkini Kopyala
                   </Button>
                 </div>
                 <p className="text-xs text-zinc-400">
@@ -88,30 +91,6 @@ export default function MobileSetupPage() {
           </div>
         </div>
       </Card>
-
-      {token && (
-        <Card>
-          <CardTitle>API Token</CardTitle>
-          <p className="text-sm text-zinc-500 mt-1 mb-4">
-            Kısayolunuzun sisteme erişmesini bu token sağlar. Hesabınıza
-            bağlıdır ve değişmez; kurulum sırasında elle yapıştırmanız
-            gerekirse buradan kopyalayabilirsiniz.
-          </p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 min-w-0 text-sm bg-zinc-100 dark:bg-zinc-800 px-3 py-2 rounded-lg text-zinc-700 dark:text-zinc-300 break-all">
-              {token}
-            </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => copyText(token, "token")}
-              className="shrink-0"
-            >
-              {copied === "token" ? <Check size={16} /> : <Copy size={16} />}
-            </Button>
-          </div>
-        </Card>
-      )}
     </>
   );
 }
