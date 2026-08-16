@@ -363,25 +363,27 @@ export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
         <p className="text-sm text-zinc-500 mb-2">{note.title}</p>
       )}
 
-      {/* Meta: kaynak adinin yaninda yeni sekmede acma ikonu */}
+      {/* Meta. Kaynak adi ve ikon tek bir link: yalnizca ikon tiklanabilir
+          olunca hedef kucuk kaliyor ve adin da link oldugu anlasilmiyordu. */}
       <div className="flex items-center gap-4 text-sm text-zinc-400 mb-4 flex-wrap">
-        {note.siteName && (
-          <span className="flex items-center gap-1 min-w-0">
-            <Globe size={14} className="shrink-0" />
-            <span className="truncate">{note.siteName}</span>
-            {note.sourceUrl && (
-              <a
-                href={note.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Kaynağı yeni sekmede aç"
-                className="shrink-0 text-blue-500 hover:text-blue-600"
-              >
-                <ExternalLink size={14} />
-              </a>
-            )}
-          </span>
-        )}
+        {note.siteName &&
+          (note.sourceUrl ? (
+            <a
+              href={note.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Kaynağı yeni sekmede aç"
+              className="flex items-center gap-1 min-w-0 text-blue-500 hover:text-blue-600 hover:underline"
+            >
+              <ExternalLink size={14} className="shrink-0" />
+              <span className="truncate">{note.siteName}</span>
+            </a>
+          ) : (
+            <span className="flex items-center gap-1 min-w-0">
+              <Globe size={14} className="shrink-0" />
+              <span className="truncate">{note.siteName}</span>
+            </span>
+          ))}
         {note.readingTime && (
           <span className="flex items-center gap-1">
             <Clock size={14} /> {note.readingTime} dk okuma

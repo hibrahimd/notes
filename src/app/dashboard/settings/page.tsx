@@ -213,10 +213,6 @@ export default function UserSettingsPage() {
   const selectClass =
     "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100";
 
-  const usesAnthropic = TASKS.some(
-    ({ task }) => settings[`${task}Provider` as const] === "anthropic"
-  );
-
   return (
     <>
       <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100 mb-6">
@@ -263,6 +259,35 @@ export default function UserSettingsPage() {
         </Card>
 
         <Card>
+          <CardTitle>Otomatik İşlemler</CardTitle>
+          <p className="text-sm text-zinc-500 mt-1 mb-3">
+            Kapalıyken not detayındaki butonlardan tek tek tetiklersiniz.
+          </p>
+          <div className="space-y-3">
+            {[
+              { key: "autoSummarize", label: "Otomatik Özetleme" },
+              { key: "autoTranslate", label: "Otomatik Çeviri" },
+              { key: "autoCategorize", label: "Otomatik Kategorileme" },
+            ].map((item) => (
+              <label
+                key={item.key}
+                className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300"
+              >
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings[item.key as keyof SettingsState])}
+                  onChange={(e) =>
+                    update({ [item.key]: e.target.checked } as Partial<SettingsState>)
+                  }
+                  className="rounded border-zinc-300"
+                />
+                {item.label}
+              </label>
+            ))}
+          </div>
+        </Card>
+
+        <Card>
           <CardTitle>İşlem Sağlayıcıları</CardTitle>
           <p className="text-sm text-zinc-500 mt-1">
             Her işlem için ayrı sağlayıcı ve model seçebilirsiniz.
@@ -284,30 +309,32 @@ export default function UserSettingsPage() {
               />
             ))}
           </div>
-        </Card>
 
-        <Card>
-          <CardTitle>Altyazı (Konuşma Tanıma)</CardTitle>
-          <p className="text-sm text-zinc-500 mt-1 mb-3">
-            Videonun sesini metne çevirir. Sağlayıcı seçimi yok: Anthropic&apos;in
-            konuşma tanıma API&apos;si olmadığı için bu adım her zaman OpenAI ile
-            yapılır. Altyazının çevirisi yukarıdaki <b>Çeviri</b> ayarını kullanır.
-          </p>
-          <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-            Model
-          </label>
-          <select
-            value={settings.transcribeModel}
-            onChange={(e) => update({ transcribeModel: e.target.value })}
-            className={selectClass}
-          >
-            {TRANSCRIBE_MODELS.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.label}
-                {m.hint ? ` — ${m.hint}` : ""}
-              </option>
-            ))}
-          </select>
+          {/* Konusma tanima ayni sayfada ayri bir kart olarak duruyordu ama
+              o da bir islem saglayicisi secimi; bagimsiz durunca yukaridaki
+              ceviri/ozet secimleriyle iliskisi gorunmuyordu. */}
+          <div className="mt-5 pt-5 border-t border-zinc-100 dark:border-zinc-800">
+            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Altyazı (Konuşma Tanıma)
+            </p>
+            <p className="text-sm text-zinc-500 mt-1 mb-3">
+              Konuşma tanıma API&apos;si olan modeller ile videonun sesi metine
+              çevirilir. Altyazının çevirisi yukarıdaki <b>Çeviri</b> ayarını
+              kullanır.
+            </p>
+            <select
+              value={settings.transcribeModel}
+              onChange={(e) => update({ transcribeModel: e.target.value })}
+              className={selectClass}
+            >
+              {TRANSCRIBE_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                  {m.hint ? ` — ${m.hint}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
         </Card>
 
         <Card>
@@ -335,43 +362,6 @@ export default function UserSettingsPage() {
                 update({ anthropicApiKeyEncrypted: e.target.value })
               }
             />
-          </div>
-          <div className="mt-4 rounded-lg border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-950/20 p-3">
-            <p className="text-sm text-blue-800 dark:text-blue-300">
-              Video işleyecekseniz <b>OpenAI anahtarı şart</b>
-              {usesAnthropic
-                ? " — işlemleri Anthropic'e almış olsanız bile konuşma tanıma OpenAI ile yapılıyor."
-                : "."}
-            </p>
-          </div>
-        </Card>
-
-        <Card>
-          <CardTitle>Otomatik İşlemler</CardTitle>
-          <p className="text-sm text-zinc-500 mt-1 mb-3">
-            Kapalıyken not detayındaki butonlardan tek tek tetiklersiniz.
-          </p>
-          <div className="space-y-3">
-            {[
-              { key: "autoSummarize", label: "Otomatik Özetleme" },
-              { key: "autoTranslate", label: "Otomatik Çeviri" },
-              { key: "autoCategorize", label: "Otomatik Kategorileme" },
-            ].map((item) => (
-              <label
-                key={item.key}
-                className="flex items-center gap-3 text-sm text-zinc-700 dark:text-zinc-300"
-              >
-                <input
-                  type="checkbox"
-                  checked={Boolean(settings[item.key as keyof SettingsState])}
-                  onChange={(e) =>
-                    update({ [item.key]: e.target.checked } as Partial<SettingsState>)
-                  }
-                  className="rounded border-zinc-300"
-                />
-                {item.label}
-              </label>
-            ))}
           </div>
         </Card>
 

@@ -81,10 +81,13 @@ export const POSITION_CUE_SETTINGS: Record<SubtitlePosition, string> = {
   top: "line:10% align:center",
 };
 
+// Genis ekranda kademeler acilir: kucuk ekranda oturan boyutlar buyuk
+// ekranda birbirine cok yakin kaliyor, ozellikle "buyuk" yeterince
+// belirgin degildi
 const SIZE_CLASS: Record<SubtitleSize, string> = {
   small: "text-xs sm:text-sm px-3 py-1.5",
-  normal: "text-sm sm:text-base px-4 py-2",
-  large: "text-base sm:text-xl px-5 py-2.5",
+  normal: "text-sm sm:text-lg px-4 py-2",
+  large: "text-base sm:text-2xl lg:text-3xl px-5 py-3",
 };
 
 interface OverlayProps {

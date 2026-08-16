@@ -27,8 +27,14 @@ export const ANTHROPIC_MODELS: ModelOption[] = [
 ];
 
 /** Konusma tanima icin: altyazi zaman damgalarini yalnizca bu model donduruyor. */
+// Saglayici adi etikete yaziliyor: bu listede secim yalnizca model bazinda
+// oldugu icin modelin kime ait oldugu baska yerden anlasilmiyor
 export const TRANSCRIBE_MODELS: ModelOption[] = [
-  { id: "whisper-1", label: "whisper-1", hint: "Zaman damgalı segment desteği" },
+  {
+    id: "whisper-1",
+    label: "OpenAI whisper-1",
+    hint: "Zaman damgalı segment desteği",
+  },
 ];
 
 export function modelsFor(provider: AiProvider): ModelOption[] {

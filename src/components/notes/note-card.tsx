@@ -108,26 +108,30 @@ export function NoteCard({ note }: NoteCardProps) {
               ("X (formerly Twitter)") ve satir sarmadan tasip tum sayfayi
               yatay kaydiriyordu */}
           <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-xs text-zinc-400">
-            {note.siteName && (
-              <span className="flex items-center gap-1 min-w-0">
-                <Globe size={12} className="shrink-0" />
-                <span className="truncate">{note.siteName}</span>
-                {note.sourceUrl && (
-                  // Kartin kendisi nota gidiyor; kaynagi acmak isteyen bu
-                  // ikona basar, tiklama karta yayilmasin diye durduruluyor
-                  <a
-                    href={note.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Kaynağı yeni sekmede aç"
-                    onClick={(e) => e.stopPropagation()}
-                    className="shrink-0 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
-                  >
-                    <ExternalLink size={12} />
-                  </a>
-                )}
-              </span>
-            )}
+            {note.siteName &&
+              // Kartin kendisi nota gidiyor; kaynagi acmak isteyen buraya
+              // basar, tiklama karta yayilmasin diye durduruluyor.
+              // Ikon ve site adi tek bir link: yalnizca ikon tiklanabilir
+              // olunca hedef kucuk kaliyor ve adin da link oldugu
+              // anlasilmiyordu.
+              (note.sourceUrl ? (
+                <a
+                  href={note.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Kaynağı yeni sekmede aç"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 min-w-0 text-zinc-400 hover:text-zinc-600 hover:underline dark:hover:text-zinc-200"
+                >
+                  <ExternalLink size={12} className="shrink-0" />
+                  <span className="truncate">{note.siteName}</span>
+                </a>
+              ) : (
+                <span className="flex items-center gap-1 min-w-0">
+                  <Globe size={12} className="shrink-0" />
+                  <span className="truncate">{note.siteName}</span>
+                </span>
+              ))}
             {note.readingTime && (
               <span className="flex items-center gap-1 shrink-0">
                 <Clock size={12} /> {note.readingTime} dk
