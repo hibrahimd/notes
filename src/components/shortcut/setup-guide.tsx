@@ -25,9 +25,11 @@ import { Smartphone, Copy, Check } from "lucide-react";
 // yalnizca iCloud baglantilarini kabul ediyor. Kurulum dogrudan indirme ile
 // yapiliyor.
 // Dosya adi onemli: iOS ice aktarirken kisayolun adini dosya adindan aliyor,
-// plist icindeki WFWorkflowName'den degil.
-export const SHORTCUT_FILE_NAME = "Notlarima-Ekle.shortcut";
-export const SHORTCUT_FILE_URL = `/${SHORTCUT_FILE_NAME}`;
+// plist icindeki WFWorkflowName'den degil. Bu yuzden ad Turkce ve bosluklu.
+// ASCII adli kopya (Notlarima-Ekle.shortcut) public altinda duruyor: yuzde
+// kodlamasi iOS tarafinda cozulmezse tek satirla ona donulebilir.
+export const SHORTCUT_FILE_NAME = "Notlarıma Ekle.shortcut";
+export const SHORTCUT_FILE_URL = `/${encodeURIComponent(SHORTCUT_FILE_NAME)}`;
 
 const STEPS = [
   {
