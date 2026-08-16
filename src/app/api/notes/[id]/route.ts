@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rm } from "fs/promises";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getStoragePath } from "@/lib/storage";
 
 
 export async function GET(
@@ -94,6 +96,11 @@ export async function DELETE(
   }
 
   await prisma.note.delete({ where: { id } });
+
+  // Video ve altyazi dosyalari veritabaniyla birlikte gitmez; klasoru de sil
+  await rm(getStoragePath("notes", id), { recursive: true, force: true }).catch(
+    (error) => console.error("Medya klasörü silinemedi:", error)
+  );
 
   return NextResponse.json({ message: "Not silindi" });
 }

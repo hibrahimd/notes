@@ -23,6 +23,7 @@ import {
   Sparkles,
   Languages,
   Tag,
+  Video,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,6 +66,18 @@ interface NoteProps {
     createdAt: string;
     updatedAt: string;
     jobs: NoteJob[];
+    media: {
+      id: string;
+      mediaType: string;
+      mimeType: string | null;
+      duration: number | null;
+    }[];
+    transcripts: {
+      id: string;
+      language: string;
+      transcriptText: string;
+      translatedText: string | null;
+    }[];
     shares: {
       id: string;
       token: string;
@@ -80,7 +93,9 @@ interface NoteProps {
 const statusMap: Record<string, { label: string; variant: "default" | "success" | "warning" | "error" | "info" }> = {
   pending: { label: "Bekliyor", variant: "default" },
   analyzing: { label: "Analiz ediliyor", variant: "info" },
+  downloading: { label: "Video indiriliyor", variant: "info" },
   extracting: { label: "İçerik çıkarılıyor", variant: "info" },
+  transcribing: { label: "Konuşma çözümleniyor", variant: "info" },
   translating: { label: "Çevriliyor", variant: "info" },
   summarizing: { label: "Özetleniyor", variant: "info" },
   categorizing: { label: "Kategorileniyor", variant: "info" },
@@ -114,11 +129,21 @@ export function NoteDetail({ note }: NoteProps) {
   const status = statusMap[note.status] || { label: note.status, variant: "default" as const };
   const skippedJobs = note.jobs.filter((job) => job.status === "skipped");
 
+  const [showTranscript, setShowTranscript] = useState(false);
+  const videoMedia = note.media.find((m) => m.mediaType === "video");
+  const subtitleOriginal = note.media.find((m) => m.mediaType === "subtitle_original");
+  const subtitleTranslated = note.media.find((m) => m.mediaType === "subtitle_translated");
+  const transcript = note.transcripts[0];
+  const mediaUrl = (mediaId: string) => `/api/notes/${note.id}/media/${mediaId}`;
+  const canTranscribe = Boolean(note.sourceUrl);
+
   const [enriching, setEnriching] = useState<string | null>(null);
   const busy = [
     "pending",
     "analyzing",
+    "downloading",
     "extracting",
+    "transcribing",
     "summarizing",
     "translating",
     "categorizing",
@@ -126,15 +151,14 @@ export function NoteDetail({ note }: NoteProps) {
 
   // Islem surerken sayfayi tazele ki sonuc geldiginde aninda gorunsun
   useEffect(() => {
-    if (!busy) {
-      setEnriching(null);
-      return;
-    }
+    if (!busy) return;
     const timer = setInterval(() => router.refresh(), 2500);
     return () => clearInterval(timer);
   }, [busy, router]);
 
-  async function runEnrich(action: "summarize" | "translate" | "categorize") {
+  async function runEnrich(
+    action: "summarize" | "translate" | "categorize" | "transcribe"
+  ) {
     setEnriching(action);
     await fetch(`/api/notes/${note.id}/enrich`, {
       method: "POST",
@@ -142,6 +166,8 @@ export function NoteDetail({ note }: NoteProps) {
       body: JSON.stringify({ action }),
     });
     router.refresh();
+    // Bundan sonrasini not.status uzerinden izliyoruz
+    setEnriching(null);
   }
 
   async function postShare(extra: Record<string, unknown> = {}) {
@@ -334,6 +360,20 @@ export function NoteDetail({ note }: NoteProps) {
             >
               <Tag size={16} /> {note.category ? "Kategoriyi Yenile" : "Kategorile"}
             </Button>
+            {canTranscribe && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => runEnrich("transcribe")}
+                loading={
+                  enriching === "transcribe" ||
+                  ["downloading", "transcribing"].includes(note.status)
+                }
+                disabled={busy}
+              >
+                <Video size={16} /> {transcript ? "Videoyu Yeniden İşle" : "Videoyu İşle"}
+              </Button>
+            )}
           </div>
           {busy && (
             <span className="text-xs text-zinc-400">
@@ -343,8 +383,72 @@ export function NoteDetail({ note }: NoteProps) {
         </div>
       </Card>
 
+      {/* Video oynatici: altyazilar ayri parca olarak eklenir, izleyici
+          Turkce ile orijinal arasinda gecis yapabilir */}
+      {videoMedia && (
+        <div className="mb-6">
+          <video
+            controls
+            playsInline
+            preload="metadata"
+            poster={note.coverImage || undefined}
+            className="w-full rounded-xl bg-black"
+          >
+            <source src={mediaUrl(videoMedia.id)} type={videoMedia.mimeType || "video/mp4"} />
+            {subtitleTranslated && (
+              <track
+                kind="subtitles"
+                src={mediaUrl(subtitleTranslated.id)}
+                srcLang="tr"
+                label="Çeviri"
+                default
+              />
+            )}
+            {subtitleOriginal && (
+              <track
+                kind="subtitles"
+                src={mediaUrl(subtitleOriginal.id)}
+                srcLang={transcript?.language || "en"}
+                label={`Orijinal${transcript?.language ? ` (${transcript.language})` : ""}`}
+              />
+            )}
+          </video>
+        </div>
+      )}
+
+      {/* Transkript */}
+      {transcript && (
+        <Card className="mb-6">
+          <button
+            onClick={() => setShowTranscript(!showTranscript)}
+            className="flex items-center gap-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider w-full"
+          >
+            Transkript{transcript.language ? ` (${transcript.language})` : ""}
+            {showTranscript ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+          {showTranscript && (
+            <div className="mt-3 space-y-4">
+              {transcript.translatedText && (
+                <div>
+                  <p className="text-xs text-zinc-400 mb-1">Çeviri</p>
+                  <p className="text-sm text-zinc-800 dark:text-zinc-200 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+                    {transcript.translatedText}
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs text-zinc-400 mb-1">Orijinal</p>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed whitespace-pre-wrap max-h-72 overflow-y-auto">
+                  {transcript.transcriptText}
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Kapak gorseli */}
-      {note.coverImage && (
+      {!videoMedia && note.coverImage && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={note.coverImage}

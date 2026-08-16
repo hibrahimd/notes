@@ -1,5 +1,3 @@
-import { PrismaClient } from "../../generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 import { tryDecrypt } from "../../lib/crypto";
@@ -10,9 +8,14 @@ import {
   translateLongText,
   type OpenAIConfig,
 } from "../../lib/openai";
-
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+import {
+  prisma,
+  updateStatus,
+  createJob,
+  skipJob,
+  completeJob,
+  failJob,
+} from "../db";
 
 const USER_AGENT =
   "Mozilla/5.0 (compatible; NotAl/1.0; +https://notes.kronomondo.org)";
@@ -79,7 +82,7 @@ interface AiContext {
  * OpenAI anahtarini once kullanici ayarlarindan, yoksa sistem ayarlarindan alir.
  * Hicbiri yoksa null doner ve cagiran taraf durumu nota gorunur sekilde yazar.
  */
-async function resolveAi(userId: string): Promise<AiContext | null> {
+export async function resolveAi(userId: string): Promise<AiContext | null> {
   const [systemSettings, userSettings] = await Promise.all([
     prisma.systemSettings.findUnique({ where: { id: "default" } }),
     prisma.userSettings.findUnique({ where: { userId } }),
@@ -479,63 +482,3 @@ function safeHostname(url: string): string | null {
   }
 }
 
-async function updateStatus(noteId: string, status: string) {
-  await prisma.note.update({ where: { id: noteId }, data: { status } });
-}
-
-async function createJob(
-  noteId: string,
-  jobType: string,
-  status: string,
-  message: string
-) {
-  await prisma.noteJob.create({
-    data: {
-      noteId,
-      jobType,
-      status,
-      message,
-      startedAt: new Date(),
-    },
-  });
-}
-
-/** Yapilmayan bir adimi kullaniciya gorunur sekilde kaydeder. */
-async function skipJob(noteId: string, jobType: string, message: string) {
-  await prisma.noteJob.create({
-    data: {
-      noteId,
-      jobType,
-      status: "skipped",
-      message,
-      startedAt: new Date(),
-      finishedAt: new Date(),
-    },
-  });
-}
-
-async function completeJob(noteId: string, jobType: string, message: string) {
-  const job = await prisma.noteJob.findFirst({
-    where: { noteId, jobType, status: "running" },
-    orderBy: { startedAt: "desc" },
-  });
-  if (job) {
-    await prisma.noteJob.update({
-      where: { id: job.id },
-      data: { status: "completed", message, finishedAt: new Date(), progress: 100 },
-    });
-  }
-}
-
-async function failJob(noteId: string, jobType: string, errorMessage: string) {
-  const job = await prisma.noteJob.findFirst({
-    where: { noteId, jobType, status: "running" },
-    orderBy: { startedAt: "desc" },
-  });
-  if (job) {
-    await prisma.noteJob.update({
-      where: { id: job.id },
-      data: { status: "failed", errorText: errorMessage, finishedAt: new Date() },
-    });
-  }
-}

@@ -1,5 +1,6 @@
-FROM node:20-alpine AS base
-RUN apk add --no-cache python3 make g++
+# Debian tabanli: ffmpeg apt'ten geliyor ve yt-dlp'nin resmi tek dosyalik
+# binary'si glibc icin derlendiginden Alpine/musl uzerinde calismiyor.
+FROM node:20-bookworm-slim AS base
 
 # Sadece uretim bagimliliklari (tsx uretim bagimliligidir: worker onunla calisir)
 FROM base AS deps
@@ -12,6 +13,15 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends ffmpeg ca-certificates curl \
+  && curl -fsSL -o /usr/local/bin/yt-dlp \
+     https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+  && chmod a+rx /usr/local/bin/yt-dlp \
+  && apt-get purge -y curl \
+  && apt-get autoremove -y \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json package-lock.json prisma.config.ts tsconfig.json ./
 COPY prisma ./prisma
@@ -20,8 +30,8 @@ COPY src ./src
 # Prisma client'i guncel semadan uret
 RUN npx prisma generate
 
-RUN addgroup --system --gid 1001 nodejs \
-  && adduser --system --uid 1001 worker \
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs worker \
   && mkdir -p /data/notal-storage \
   && chown -R worker:nodejs /data/notal-storage /app
 

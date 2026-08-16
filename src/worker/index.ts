@@ -2,6 +2,7 @@ import "dotenv/config";
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { processNote, enrichNote } from "./processors/note-processor";
+import { transcribeNote } from "./processors/video-processor";
 
 // Worker, kullanicilarin sifreli API anahtarlarini cozmek zorunda; anahtar
 // yoksa AI adimlari sessizce atlanir, o yuzden baslangicta uyar.
@@ -27,6 +28,9 @@ const worker = new Worker(
         break;
       case "enrich-note":
         await enrichNote(job.data.noteId, job.data.userId, job.data.action);
+        break;
+      case "transcribe-note":
+        await transcribeNote(job.data.noteId, job.data.userId);
         break;
       default:
         console.warn(`[Worker] Unknown job type: ${job.name}`);

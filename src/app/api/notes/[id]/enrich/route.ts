@@ -3,13 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getNoteQueue } from "@/lib/queue";
 
-const ACTIONS = ["summarize", "translate", "categorize"] as const;
+const ACTIONS = ["summarize", "translate", "categorize", "transcribe"] as const;
 type Action = (typeof ACTIONS)[number];
 
 const STATUS_FOR: Record<Action, string> = {
   summarize: "summarizing",
   translate: "translating",
   categorize: "categorizing",
+  transcribe: "downloading",
+};
+
+/** Video hatti ayri bir is turu; digerleri tek AI adimi olarak calisiyor. */
+const JOB_FOR: Record<Action, string> = {
+  summarize: "enrich-note",
+  translate: "enrich-note",
+  categorize: "enrich-note",
+  transcribe: "transcribe-note",
 };
 
 /**
@@ -51,7 +60,7 @@ export async function POST(
 
   try {
     await getNoteQueue().add(
-      "enrich-note",
+      JOB_FOR[action as Action],
       { noteId: id, userId: session.userId, action },
       { jobId: `enrich-${id}-${action}-${Date.now()}` }
     );
