@@ -102,8 +102,27 @@ function showToast(message, ok) {
   text.textContent = message.replace(/^[✅❌]\s*/, "");
   text.style.cssText = "font-size:15px;font-weight:600;line-height:1.35";
 
+  // Kapatma dugmesi: bildirim kendiliginden kayboluyor ama kullanici
+  // beklemek zorunda kalmamali
+  const close = document.createElement("button");
+  close.type = "button";
+  close.textContent = "×";
+  close.setAttribute("aria-label", "Kapat");
+  close.style.cssText = [
+    "flex-shrink:0",
+    "margin:-4px -6px 0 0",
+    "padding:0 6px",
+    "border:0",
+    "background:none",
+    "color:inherit",
+    "opacity:.55",
+    "font:400 22px/1 inherit",
+    "cursor:pointer",
+    "pointer-events:auto",
+  ].join(";");
+
   body.append(title, text);
-  box.append(icon, body);
+  box.append(icon, body, close);
 
   box.style.cssText = [
     "position:fixed",
@@ -125,6 +144,7 @@ function showToast(message, ok) {
     "opacity:0",
     "transform:translateX(16px)",
     "transition:opacity .2s ease,transform .2s ease",
+    // Kutunun kendisi tiklamalari yutmasin, yalnizca kapatma dugmesi alsin
     "pointer-events:none",
   ].join(";");
 
@@ -134,11 +154,19 @@ function showToast(message, ok) {
     box.style.transform = "translateX(0)";
   });
 
-  setTimeout(() => {
+  let timer;
+
+  const dismiss = () => {
+    clearTimeout(timer);
     box.style.opacity = "0";
     box.style.transform = "translateX(16px)";
     setTimeout(() => box.remove(), 250);
-  }, 3800);
+  };
+
+  close.addEventListener("click", dismiss);
+  body.style.flex = "1";
+
+  timer = setTimeout(dismiss, 4500);
 }
 
 /**

@@ -41,6 +41,7 @@ export type NoteMinAggregateOutputType = {
   userId: string | null
   type: string | null
   sourceUrl: string | null
+  sourceUrlKey: string | null
   originalText: string | null
   title: string | null
   status: string | null
@@ -69,6 +70,7 @@ export type NoteMaxAggregateOutputType = {
   userId: string | null
   type: string | null
   sourceUrl: string | null
+  sourceUrlKey: string | null
   originalText: string | null
   title: string | null
   status: string | null
@@ -97,6 +99,7 @@ export type NoteCountAggregateOutputType = {
   userId: number
   type: number
   sourceUrl: number
+  sourceUrlKey: number
   originalText: number
   title: number
   status: number
@@ -139,6 +142,7 @@ export type NoteMinAggregateInputType = {
   userId?: true
   type?: true
   sourceUrl?: true
+  sourceUrlKey?: true
   originalText?: true
   title?: true
   status?: true
@@ -167,6 +171,7 @@ export type NoteMaxAggregateInputType = {
   userId?: true
   type?: true
   sourceUrl?: true
+  sourceUrlKey?: true
   originalText?: true
   title?: true
   status?: true
@@ -195,6 +200,7 @@ export type NoteCountAggregateInputType = {
   userId?: true
   type?: true
   sourceUrl?: true
+  sourceUrlKey?: true
   originalText?: true
   title?: true
   status?: true
@@ -312,6 +318,7 @@ export type NoteGroupByOutputType = {
   userId: string
   type: string
   sourceUrl: string | null
+  sourceUrlKey: string | null
   originalText: string | null
   title: string | null
   status: string
@@ -365,6 +372,7 @@ export type NoteWhereInput = {
   userId?: Prisma.StringFilter<"Note"> | string
   type?: Prisma.StringFilter<"Note"> | string
   sourceUrl?: Prisma.StringNullableFilter<"Note"> | string | null
+  sourceUrlKey?: Prisma.StringNullableFilter<"Note"> | string | null
   originalText?: Prisma.StringNullableFilter<"Note"> | string | null
   title?: Prisma.StringNullableFilter<"Note"> | string | null
   status?: Prisma.StringFilter<"Note"> | string
@@ -400,6 +408,7 @@ export type NoteOrderByWithRelationInput = {
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceUrlKey?: Prisma.SortOrderInput | Prisma.SortOrder
   originalText?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -439,6 +448,7 @@ export type NoteWhereUniqueInput = Prisma.AtLeast<{
   userId?: Prisma.StringFilter<"Note"> | string
   type?: Prisma.StringFilter<"Note"> | string
   sourceUrl?: Prisma.StringNullableFilter<"Note"> | string | null
+  sourceUrlKey?: Prisma.StringNullableFilter<"Note"> | string | null
   originalText?: Prisma.StringNullableFilter<"Note"> | string | null
   title?: Prisma.StringNullableFilter<"Note"> | string | null
   status?: Prisma.StringFilter<"Note"> | string
@@ -473,6 +483,7 @@ export type NoteOrderByWithAggregationInput = {
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  sourceUrlKey?: Prisma.SortOrderInput | Prisma.SortOrder
   originalText?: Prisma.SortOrderInput | Prisma.SortOrder
   title?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -511,6 +522,7 @@ export type NoteScalarWhereWithAggregatesInput = {
   userId?: Prisma.StringWithAggregatesFilter<"Note"> | string
   type?: Prisma.StringWithAggregatesFilter<"Note"> | string
   sourceUrl?: Prisma.StringNullableWithAggregatesFilter<"Note"> | string | null
+  sourceUrlKey?: Prisma.StringNullableWithAggregatesFilter<"Note"> | string | null
   originalText?: Prisma.StringNullableWithAggregatesFilter<"Note"> | string | null
   title?: Prisma.StringNullableWithAggregatesFilter<"Note"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"Note"> | string
@@ -540,6 +552,7 @@ export type NoteCreateInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -575,6 +588,7 @@ export type NoteUncheckedCreateInput = {
   userId: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -608,6 +622,7 @@ export type NoteUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -643,6 +658,7 @@ export type NoteUncheckedUpdateInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -677,6 +693,7 @@ export type NoteCreateManyInput = {
   userId: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -706,6 +723,7 @@ export type NoteUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -736,6 +754,7 @@ export type NoteUncheckedUpdateManyInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -784,6 +803,7 @@ export type NoteCountOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrder
+  sourceUrlKey?: Prisma.SortOrder
   originalText?: Prisma.SortOrder
   title?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -819,6 +839,7 @@ export type NoteMaxOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrder
+  sourceUrlKey?: Prisma.SortOrder
   originalText?: Prisma.SortOrder
   title?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -847,6 +868,7 @@ export type NoteMinOrderByAggregateInput = {
   userId?: Prisma.SortOrder
   type?: Prisma.SortOrder
   sourceUrl?: Prisma.SortOrder
+  sourceUrlKey?: Prisma.SortOrder
   originalText?: Prisma.SortOrder
   title?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -999,6 +1021,7 @@ export type NoteCreateWithoutUserInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1032,6 +1055,7 @@ export type NoteUncheckedCreateWithoutUserInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1095,6 +1119,7 @@ export type NoteScalarWhereInput = {
   userId?: Prisma.StringFilter<"Note"> | string
   type?: Prisma.StringFilter<"Note"> | string
   sourceUrl?: Prisma.StringNullableFilter<"Note"> | string | null
+  sourceUrlKey?: Prisma.StringNullableFilter<"Note"> | string | null
   originalText?: Prisma.StringNullableFilter<"Note"> | string | null
   title?: Prisma.StringNullableFilter<"Note"> | string | null
   status?: Prisma.StringFilter<"Note"> | string
@@ -1124,6 +1149,7 @@ export type NoteCreateWithoutMediaInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1158,6 +1184,7 @@ export type NoteUncheckedCreateWithoutMediaInput = {
   userId: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1206,6 +1233,7 @@ export type NoteUpdateWithoutMediaInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1240,6 +1268,7 @@ export type NoteUncheckedUpdateWithoutMediaInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1272,6 +1301,7 @@ export type NoteCreateWithoutTranscriptsInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1306,6 +1336,7 @@ export type NoteUncheckedCreateWithoutTranscriptsInput = {
   userId: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1354,6 +1385,7 @@ export type NoteUpdateWithoutTranscriptsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1388,6 +1420,7 @@ export type NoteUncheckedUpdateWithoutTranscriptsInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1420,6 +1453,7 @@ export type NoteCreateWithoutJobsInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1454,6 +1488,7 @@ export type NoteUncheckedCreateWithoutJobsInput = {
   userId: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1502,6 +1537,7 @@ export type NoteUpdateWithoutJobsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1536,6 +1572,7 @@ export type NoteUncheckedUpdateWithoutJobsInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1568,6 +1605,7 @@ export type NoteCreateWithoutSharesInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1602,6 +1640,7 @@ export type NoteUncheckedCreateWithoutSharesInput = {
   userId: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1650,6 +1689,7 @@ export type NoteUpdateWithoutSharesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1684,6 +1724,7 @@ export type NoteUncheckedUpdateWithoutSharesInput = {
   userId?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1716,6 +1757,7 @@ export type NoteCreateManyUserInput = {
   id?: string
   type?: string
   sourceUrl?: string | null
+  sourceUrlKey?: string | null
   originalText?: string | null
   title?: string | null
   status?: string
@@ -1745,6 +1787,7 @@ export type NoteUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1778,6 +1821,7 @@ export type NoteUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1811,6 +1855,7 @@ export type NoteUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   type?: Prisma.StringFieldUpdateOperationsInput | string
   sourceUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceUrlKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   originalText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   title?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1899,6 +1944,7 @@ export type NoteSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   userId?: boolean
   type?: boolean
   sourceUrl?: boolean
+  sourceUrlKey?: boolean
   originalText?: boolean
   title?: boolean
   status?: boolean
@@ -1935,6 +1981,7 @@ export type NoteSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   userId?: boolean
   type?: boolean
   sourceUrl?: boolean
+  sourceUrlKey?: boolean
   originalText?: boolean
   title?: boolean
   status?: boolean
@@ -1966,6 +2013,7 @@ export type NoteSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   userId?: boolean
   type?: boolean
   sourceUrl?: boolean
+  sourceUrlKey?: boolean
   originalText?: boolean
   title?: boolean
   status?: boolean
@@ -1997,6 +2045,7 @@ export type NoteSelectScalar = {
   userId?: boolean
   type?: boolean
   sourceUrl?: boolean
+  sourceUrlKey?: boolean
   originalText?: boolean
   title?: boolean
   status?: boolean
@@ -2022,7 +2071,7 @@ export type NoteSelectScalar = {
   updatedAt?: boolean
 }
 
-export type NoteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "sourceUrl" | "originalText" | "title" | "status" | "visibility" | "publicToken" | "languageDetected" | "category" | "tags" | "summary" | "translatedTitle" | "translatedText" | "metadataJson" | "siteName" | "coverImage" | "readingTime" | "importance" | "inbox" | "favorite" | "archived" | "errorText" | "userNote" | "createdAt" | "updatedAt", ExtArgs["result"]["note"]>
+export type NoteOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "type" | "sourceUrl" | "sourceUrlKey" | "originalText" | "title" | "status" | "visibility" | "publicToken" | "languageDetected" | "category" | "tags" | "summary" | "translatedTitle" | "translatedText" | "metadataJson" | "siteName" | "coverImage" | "readingTime" | "importance" | "inbox" | "favorite" | "archived" | "errorText" | "userNote" | "createdAt" | "updatedAt", ExtArgs["result"]["note"]>
 export type NoteInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   media?: boolean | Prisma.Note$mediaArgs<ExtArgs>
@@ -2052,6 +2101,11 @@ export type $NotePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     userId: string
     type: string
     sourceUrl: string | null
+    /**
+     * Karsilastirma anahtari: izleme parametreleri ve "www." temizlenmis hali.
+     * Ayni icerigin farkli adreslerle ikinci kez kaydedilmesini engelliyor.
+     */
+    sourceUrlKey: string | null
     originalText: string | null
     title: string | null
     status: string
@@ -2510,6 +2564,7 @@ export interface NoteFieldRefs {
   readonly userId: Prisma.FieldRef<"Note", 'String'>
   readonly type: Prisma.FieldRef<"Note", 'String'>
   readonly sourceUrl: Prisma.FieldRef<"Note", 'String'>
+  readonly sourceUrlKey: Prisma.FieldRef<"Note", 'String'>
   readonly originalText: Prisma.FieldRef<"Note", 'String'>
   readonly title: Prisma.FieldRef<"Note", 'String'>
   readonly status: Prisma.FieldRef<"Note", 'String'>

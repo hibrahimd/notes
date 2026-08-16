@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { urlKey } from "@/lib/url";
 import { getNoteQueue } from "@/lib/queue";
 import { authenticateRequest } from "@/lib/api-auth";
 
@@ -49,12 +50,39 @@ export async function POST(req: NextRequest) {
     }
 
     const noteType = url ? "link" : "text";
+    const key = url ? urlKey(url) : null;
+
+    // Ayni icerik ikinci kez gonderilirse yeni not acilmiyor. Adres birebir
+    // ayni olmayabiliyor: paylas dugmesi izleme parametresi ekliyor, bazi
+    // kaynaklar "www." koyuyor. Karsilastirma normallestirilmis anahtarla.
+    if (key) {
+      const existing = await prisma.note.findFirst({
+        where: {
+          userId: user.id,
+          OR: [
+            { sourceUrlKey: key },
+            // Anahtari henuz doldurulmamis eski kayitlar icin
+            { sourceUrl: url },
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+
+      if (existing) {
+        return reply(200, "ℹ️ Bu içerik zaten kayıtlı", {
+          noteId: existing.id,
+          duplicate: true,
+        });
+      }
+    }
 
     const note = await prisma.note.create({
       data: {
         userId: user.id,
         type: noteType,
         sourceUrl: url || null,
+        sourceUrlKey: key,
         originalText: text || null,
         title: title || null,
         metadataJson: source ? { source } : undefined,

@@ -155,6 +155,7 @@ export const NoteScalarFieldEnum = {
   userId: 'userId',
   type: 'type',
   sourceUrl: 'sourceUrl',
+  sourceUrlKey: 'sourceUrlKey',
   originalText: 'originalText',
   title: 'title',
   status: 'status',

@@ -107,6 +107,9 @@ model Note {
   userId           String   @map("user_id")
   type             String   @default("link") // link, article, video, image, text, mixed
   sourceUrl        String?  @map("source_url")
+  /// Karsilastirma anahtari: izleme parametreleri ve "www." temizlenmis hali.
+  /// Ayni icerigin farkli adreslerle ikinci kez kaydedilmesini engelliyor.
+  sourceUrlKey     String?  @map("source_url_key")
   originalText     String?  @map("original_text")
   title            String?
   status           String   @default("pending") // pending, analyzing, queued, downloading, extracting, transcribing, translating, summarizing, categorizing, ready, failed
@@ -141,6 +144,7 @@ model Note {
   @@index([userId, createdAt(sort: Desc)])
   @@index([userId, status])
   @@index([userId, category])
+  @@index([userId, sourceUrlKey])
   @@map("notes")
 }
 

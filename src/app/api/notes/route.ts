@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { urlKey } from "@/lib/url";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getNoteQueue } from "@/lib/queue";
@@ -82,12 +83,34 @@ export async function POST(req: NextRequest) {
     }
 
     const noteType = type || (sourceUrl ? "link" : "text");
+    const key = sourceUrl ? urlKey(sourceUrl) : null;
+
+    // Ayni icerik ikinci kez eklenirse mevcut not donuyor (bkz. /api/ingest)
+    if (key) {
+      const existing = await prisma.note.findFirst({
+        where: {
+          userId: session.userId,
+          OR: [{ sourceUrlKey: key }, { sourceUrl }],
+        },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      });
+
+      if (existing) {
+        return NextResponse.json({
+          note: existing,
+          duplicate: true,
+          message: "Bu içerik zaten kayıtlı",
+        });
+      }
+    }
 
     const note = await prisma.note.create({
       data: {
         userId: session.userId,
         type: noteType,
         sourceUrl: sourceUrl || null,
+        sourceUrlKey: key,
         originalText: text || null,
         title: title || null,
         status: "pending",

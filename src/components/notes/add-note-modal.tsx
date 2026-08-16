@@ -46,9 +46,18 @@ export function AddNoteModal({ open, onClose }: AddNoteModalProps) {
         body: JSON.stringify(body),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         setError(data.error || "Hata oluştu");
+        return;
+      }
+
+      // Ayni icerik zaten kayitliysa yeni not acilmiyor; sessizce kapanmak
+      // yerine kullaniciyi notuna goturuyoruz
+      if (data.duplicate && data.note?.id) {
+        onClose();
+        router.push(`/dashboard/notes/${data.note.id}`);
         return;
       }
 
