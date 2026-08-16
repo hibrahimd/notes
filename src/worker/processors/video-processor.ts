@@ -22,19 +22,20 @@ import {
   failJob,
 } from "../db";
 import { resolveAi, resolveTranscription } from "../ai-config";
+import { youtubeVideoId } from "../../lib/utils";
 
 /**
- * Video isleme hatti. Iki yolu var:
+ * Video isleme hatti.
  *
- *   1. Altyazi yolu — video sitesinin kendi altyazisi indirilir. Ne video
- *      indirilir ne konusma tanima calisir; saniyeler surer ve hicbir API
- *      anahtari gerektirmez.
- *   2. Konusma yolu — altyazi yoksa video indirilir, sesi ayrilir ve Whisper
- *      ile cozumlenir.
+ * Metin iki kaynaktan gelebiliyor:
+ *   1. Sitenin kendi altyazisi — once bu denenir. Saniyeler surer, bedavadir
+ *      ve hicbir API anahtari gerektirmez. YouTube ve X'te var.
+ *   2. Konusma tanima — altyazi yoksa videonun sesi Whisper'a gonderilir.
  *
- * Altyazi yolu once denenir. YouTube sunucu IP'lerinden medya akisini 403 ile
- * kapatiyor ama altyazi uc noktasi acik oldugu icin YouTube pratikte yalnizca
- * bu yoldan islenebiliyor. Ayrica indirilmeyen her video diskte yer kaplamiyor.
+ * Video dosyasi bundan ayri bir karar: izlemek icin gerekiyor. YouTube'da
+ * indirilmiyor cunku medya akisi sunucu IP'lerine 403 donuyor ve oynatici
+ * zaten not detayina gomulu geliyor. Diger kaynaklarda izlemenin baska yolu
+ * olmadigi icin indiriliyor — altyazi bulunmus olsa bile.
  *
  * Talep uzerine calisir; otomatik degil.
  */
@@ -84,6 +85,9 @@ export async function transcribeNote(noteId: string, userId: string) {
     // Yeniden calistirildiginda eski medya kayitlari birikmesin
     await prisma.noteMedia.deleteMany({ where: { noteId } });
 
+    // Gomulu oynatilabilen kaynaklarda video dosyasi saklanmiyor
+    const embeddable = youtubeVideoId(note.sourceUrl) !== null;
+
     // 2) Altyazi yolu
     let segments: Segment[] | null = null;
     let sourceLanguage: string | null = null;
@@ -96,7 +100,7 @@ export async function transcribeNote(noteId: string, userId: string) {
         noteId,
         "transcribe",
         choice.manual ? "Altyazı indiriliyor..." : "Otomatik altyazı indiriliyor...",
-        25
+        20
       );
 
       const captions = await fetchCaptions(note.sourceUrl, dir, choice);
@@ -109,8 +113,48 @@ export async function transcribeNote(noteId: string, userId: string) {
       }
     }
 
-    // 3) Konusma yolu — yalnizca altyazi bulunamadiginda
+    // 3) Video dosyasi — izlemek icin, altyazidan bagimsiz.
+    //    YouTube'da indirmiyoruz: medya akisi 403 donuyor ve zaten oynatici
+    //    not detayina gomulu geliyor (bkz. youtube-player.tsx). Diger
+    //    kaynaklarda izlemenin baska yolu olmadigi icin indiriyoruz.
+    let videoPath: string | null = null;
+
+    if (!embeddable) {
+      try {
+        await updateStatus(noteId, "downloading");
+        await progressJob(noteId, "transcribe", "Video indiriliyor...", 40);
+        const video = await downloadVideo(note.sourceUrl, dir);
+        videoPath = video.filePath;
+
+        await prisma.noteMedia.create({
+          data: {
+            noteId,
+            mediaType: "video",
+            storagePath: path.relative(getStoragePath(), video.filePath),
+            mimeType: "video/mp4",
+            duration: info.durationSeconds,
+            size: video.sizeBytes,
+          },
+        });
+      } catch (error) {
+        // Altyazi elimizdeyse indirme basarisizligi olumcul degil: not yine
+        // ozetlenebilir, sadece izlenemez
+        if (!segments) throw error;
+        console.warn(
+          `[Video] ${noteId}: video indirilemedi, altyazıyla devam ediliyor:`,
+          error instanceof Error ? error.message : error
+        );
+      }
+    }
+
+    // 4) Konusma yolu — yalnizca altyazi bulunamadiginda
     if (!segments) {
+      if (!videoPath) {
+        throw new MediaError(
+          "Videonun altyazısı yok ve dosyası indirilemediği için konuşma çözümlenemiyor."
+        );
+      }
+
       const whisper = await resolveTranscription(userId);
 
       if (!whisper) {
@@ -124,32 +168,22 @@ export async function transcribeNote(noteId: string, userId: string) {
             "OpenAI API anahtarınızı ekleyin (metin işlemleri için başka bir " +
             "sağlayıcı seçmiş olsanız bile)."
         );
+        // Video indi, altyazisiz da olsa izlenebilsin
+        await prisma.note.update({
+          where: { id: noteId },
+          data: { type: "video", title: note.title || info.title },
+        });
         await updateStatus(noteId, "ready");
         return;
       }
 
-      await updateStatus(noteId, "downloading");
-      await progressJob(noteId, "transcribe", "Video indiriliyor...", 10);
-      const video = await downloadVideo(note.sourceUrl, dir);
-
-      await prisma.noteMedia.create({
-        data: {
-          noteId,
-          mediaType: "video",
-          storagePath: path.relative(getStoragePath(), video.filePath),
-          mimeType: "video/mp4",
-          duration: info.durationSeconds,
-          size: video.sizeBytes,
-        },
-      });
-
       await updateStatus(noteId, "extracting");
-      await progressJob(noteId, "transcribe", "Ses ayrıştırılıyor...", 35);
-      const audio = await extractAudio(video.filePath, dir);
+      await progressJob(noteId, "transcribe", "Ses ayrıştırılıyor...", 55);
+      const audio = await extractAudio(videoPath, dir);
       audioPath = audio.filePath;
 
       await updateStatus(noteId, "transcribing");
-      await progressJob(noteId, "transcribe", "Konuşma çözümleniyor...", 50);
+      await progressJob(noteId, "transcribe", "Konuşma çözümleniyor...", 65);
       const transcription = await transcribeAudio(
         whisper.apiKey,
         whisper.model,
@@ -168,7 +202,7 @@ export async function transcribeNote(noteId: string, userId: string) {
     const originalVttPath = path.join(dir, "original.vtt");
     await writeFile(originalVttPath, buildVtt(segments), "utf-8");
 
-    // 4) Ceviri — kaynak zaten hedef dildeyse veya saglayici yoksa atlanir
+    // 5) Ceviri — kaynak zaten hedef dildeyse veya saglayici yoksa atlanir
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const targetLanguage = user?.translationLanguage || "tr";
     const target = targetLanguage.toLowerCase().slice(0, 2);
@@ -201,7 +235,7 @@ export async function transcribeNote(noteId: string, userId: string) {
       }
     }
 
-    // 5) Kayit. Iki altyazi da NoteMedia olarak yazilir ki oynatici ikisini de
+    // 6) Kayit. Iki altyazi da NoteMedia olarak yazilir ki oynatici ikisini de
     //    ayri parca olarak sunabilsin.
     await prisma.transcript.deleteMany({ where: { noteId } });
     await prisma.transcript.create({
