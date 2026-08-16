@@ -30,6 +30,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { metaDescription, youtubeVideoId } from "@/lib/utils";
 import { YouTubePlayer } from "./youtube-player";
+import { VideoPlayer } from "./video-player";
 
 interface NoteJob {
   id: string;
@@ -534,36 +535,17 @@ export function NoteDetail({ note }: NoteProps) {
         )}
       </Card>
 
-      {/* Video oynatici: altyazilar ayri parca olarak eklenir, izleyici
-          Turkce ile orijinal arasinda gecis yapabilir */}
+      {/* Video oynatici. Altyazi <track> ile degil elle ciziliyor: ::cue
+          konum ve bosluk ayarina izin vermiyor, iOS'ta altyazi karenin en
+          dibine yapisiyordu (bkz. subtitles.tsx). */}
       {videoMedia && (
         <div className="mb-6">
-          <video
-            controls
-            playsInline
-            preload="metadata"
-            poster={note.coverImage || undefined}
-            className="w-full rounded-xl bg-black"
-          >
-            <source src={mediaUrl(videoMedia.id)} type={videoMedia.mimeType || "video/mp4"} />
-            {subtitleTranslated && (
-              <track
-                kind="subtitles"
-                src={mediaUrl(subtitleTranslated.id)}
-                srcLang="tr"
-                label="Çeviri"
-                default
-              />
-            )}
-            {subtitleOriginal && (
-              <track
-                kind="subtitles"
-                src={mediaUrl(subtitleOriginal.id)}
-                srcLang={transcript?.language || "en"}
-                label={`Orijinal${transcript?.language ? ` (${transcript.language})` : ""}`}
-              />
-            )}
-          </video>
+          <VideoPlayer
+            src={mediaUrl(videoMedia.id)}
+            mimeType={videoMedia.mimeType}
+            poster={note.coverImage}
+            tracks={subtitleTracks}
+          />
           <div className="flex items-center justify-between gap-3 mt-2 flex-wrap">
             <span className="text-xs text-zinc-400">
               Video sunucuda saklanıyor
