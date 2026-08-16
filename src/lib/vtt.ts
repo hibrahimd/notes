@@ -22,12 +22,19 @@ function formatTimestamp(seconds: number): string {
   return `${pad(hours)}:${pad(minutes)}:${pad(secs)}.${pad(millis, 3)}`;
 }
 
-export function buildVtt(segments: Segment[]): string {
+/**
+ * @param cueSettings Zamanlama satirinin sonuna eklenen WebVTT cue ayarlari
+ *   ("line:50% align:center" gibi). Tam ekranda altyaziyi oynaticinin kendisi
+ *   ciziyor ve CSS'imizi bilmiyor; konumu ancak bu ayarlarla verebiliyoruz.
+ */
+export function buildVtt(segments: Segment[], cueSettings = ""): string {
+  const suffix = cueSettings ? ` ${cueSettings}` : "";
+
   const cues = segments
     .filter((s) => s.text.trim())
     .map(
       (s, i) =>
-        `${i + 1}\n${formatTimestamp(s.start)} --> ${formatTimestamp(s.end)}\n${s.text.trim()}`
+        `${i + 1}\n${formatTimestamp(s.start)} --> ${formatTimestamp(s.end)}${suffix}\n${s.text.trim()}`
     );
 
   return `WEBVTT\n\n${cues.join("\n\n")}\n`;

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { cueAt } from "@/lib/vtt";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildVtt, cueAt } from "@/lib/vtt";
 import {
   SubtitleOverlay,
   SubtitleControls,
+  POSITION_CUE_SETTINGS,
   useSubtitlePrefs,
   useSubtitleSegments,
   type SubtitlePrefs,
@@ -22,6 +23,10 @@ import {
  * Bu yuzden altyazi ayrica <track> olarak da veriliyor ama kipi "hidden"
  * tutuluyor; yalnizca tam ekranda "showing" yapiliyor. Boylece pencere icinde
  * bizim gorunumumuz, tam ekranda oynaticinin kendi cizimi kullaniliyor.
+ *
+ * Tam ekrandaki parca sunucudaki dosya degil, secilen konuma gore tarayicida
+ * uretilen bir kopya: WebVTT cue ayarlari ("line:50%") sistem oynaticisinda
+ * da gecerli oldugu icin konum tercihi tam ekranda da korunuyor.
  */
 
 interface Props {
@@ -49,6 +54,29 @@ export function VideoPlayer({
 
   const activeTrack = tracks.find((t) => t.id === activeTrackId) ?? null;
   const segments = useSubtitleSegments(activeTrack?.url ?? null);
+
+  // Tam ekran parcasi konum tercihi gomulu halde yeniden uretiliyor
+  const [fullscreenTrackUrl, setFullscreenTrackUrl] = useState<string | null>(null);
+  const vttText = useMemo(
+    () =>
+      segments.length
+        ? buildVtt(segments, POSITION_CUE_SETTINGS[prefs.position])
+        : null,
+    [segments, prefs.position]
+  );
+
+  useEffect(() => {
+    if (!vttText) {
+      setFullscreenTrackUrl(null);
+      return;
+    }
+
+    const url = URL.createObjectURL(new Blob([vttText], { type: "text/vtt" }));
+    setFullscreenTrackUrl(url);
+
+    // Blob adresleri sekme kapanana kadar bellekte kalir, elle birakiliyor
+    return () => URL.revokeObjectURL(url);
+  }, [vttText]);
 
   // Tam ekrana giris/cikis. iOS video icin standart fullscreenchange
   // tetiklemiyor, kendi webkit olaylarini kullaniyor.
@@ -80,7 +108,7 @@ export function VideoPlayer({
     for (const track of Array.from(video.textTracks)) {
       track.mode = mode;
     }
-  }, [fullscreen, activeTrack, segments]);
+  }, [fullscreen, activeTrack, fullscreenTrackUrl]);
 
   return (
     // Dis bosluk cagirana ait: bu bilesenin altinda dosya bilgisi satiri var
@@ -100,13 +128,13 @@ export function VideoPlayer({
           }}
         >
           <source src={src} type={mimeType || "video/mp4"} />
-          {activeTrack && (
+          {activeTrack && fullscreenTrackUrl && (
             // key: parca degisince ogenin yeniden kurulmasi gerekiyor,
             // src degisimi tek basina yeni altyaziyi yuklemiyor
             <track
-              key={activeTrack.url}
+              key={fullscreenTrackUrl}
               kind="subtitles"
-              src={activeTrack.url}
+              src={fullscreenTrackUrl}
               label={activeTrack.label}
               default
             />

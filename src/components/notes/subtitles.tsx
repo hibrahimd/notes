@@ -58,12 +58,27 @@ export function useSubtitlePrefs(
   return [prefs, update];
 }
 
-// Alt konumda kontrol cubugunun uzerinde duruyor; oynaticinin kendi
-// kontrolleri yaklasik 40-48 px yer kapliyor
+// Alt konum kontrol cubugunun hemen uzerinde. Onceden 56-64 px yukaridaydi
+// ama telefonda 16:9 video zaten kisa: buyuk fontla uc satir olunca kutu
+// "orta" ile neredeyse ayni yere dusuyordu.
 const POSITION_CLASS: Record<SubtitlePosition, string> = {
-  bottom: "bottom-14 sm:bottom-16",
+  bottom: "bottom-9 sm:bottom-12",
   middle: "top-1/2 -translate-y-1/2",
-  top: "top-4",
+  top: "top-2 sm:top-4",
+};
+
+/**
+ * Tam ekranda altyaziyi oynaticinin kendisi ciziyor ve CSS'imizi bilmiyor.
+ * Konumu ancak WebVTT cue ayarlariyla verebiliyoruz; bunlar sistem
+ * oynaticisinda da gecerli.
+ *
+ * Yazi boyutu ayni sekilde verilemiyor: iOS tam ekranda kendi
+ * "Altyazi ve Sesli Betimleme" ayarini uyguluyor.
+ */
+export const POSITION_CUE_SETTINGS: Record<SubtitlePosition, string> = {
+  bottom: "line:85% align:center",
+  middle: "line:50% align:center",
+  top: "line:10% align:center",
 };
 
 const SIZE_CLASS: Record<SubtitleSize, string> = {
