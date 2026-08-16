@@ -6,12 +6,25 @@ FROM node:20-bookworm-slim AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev --ignore-scripts
+# Next.js, React ve ikon paketi uretim bagimliligi ama worker'in ice aktarma
+# zinciri (34 dosya) hicbirine dokunmuyor; imajda 460 MB yer kapliyorlardi.
+RUN npm ci --omit=dev --ignore-scripts \
+  && rm -rf node_modules/next node_modules/@next \
+            node_modules/react node_modules/react-dom \
+            node_modules/lucide-react
 
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+
+# Kullanici once olusturuluyor: dosyalar --chown ile kopyalanabilsin.
+# Onceden en sonda "chown -R /app" vardi ve node_modules'un tamamini ikinci
+# kez yaziyordu — tek basina 929 MB'lik bir katman uretiyordu.
+RUN groupadd --system --gid 1001 nodejs \
+  && useradd --system --uid 1001 --gid nodejs worker \
+  && mkdir -p /data/notal-storage \
+  && chown worker:nodejs /data/notal-storage
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ffmpeg ca-certificates curl \
@@ -22,19 +35,14 @@ RUN apt-get update \
   && apt-get autoremove -y \
   && rm -rf /var/lib/apt/lists/*
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY package.json package-lock.json prisma.config.ts tsconfig.json ./
-COPY prisma ./prisma
-COPY src ./src
+COPY --from=deps --chown=worker:nodejs /app/node_modules ./node_modules
+COPY --chown=worker:nodejs package.json package-lock.json prisma.config.ts tsconfig.json ./
+COPY --chown=worker:nodejs prisma ./prisma
+COPY --chown=worker:nodejs src ./src
+
+USER worker
 
 # Prisma client'i guncel semadan uret
 RUN npx prisma generate
-
-RUN groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs worker \
-  && mkdir -p /data/notal-storage \
-  && chown -R worker:nodejs /data/notal-storage /app
-
-USER worker
 
 CMD ["npx", "tsx", "src/worker/index.ts"]
