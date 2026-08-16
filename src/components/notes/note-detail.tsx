@@ -31,6 +31,7 @@ import { useRouter } from "next/navigation";
 import { metaDescription, youtubeVideoId } from "@/lib/utils";
 import { YouTubePlayer } from "./youtube-player";
 import { VideoPlayer } from "./video-player";
+import type { SubtitlePrefs } from "./subtitles";
 
 interface NoteJob {
   id: string;
@@ -93,6 +94,7 @@ interface NoteProps {
       hasPassword: boolean;
     }[];
   };
+  subtitlePrefs: SubtitlePrefs;
 }
 
 const statusMap: Record<string, { label: string; variant: "default" | "success" | "warning" | "error" | "info" }> = {
@@ -126,7 +128,7 @@ function daysUntil(date: string | null): string {
   return days > 0 ? String(days) : "";
 }
 
-export function NoteDetail({ note }: NoteProps) {
+export function NoteDetail({ note, subtitlePrefs }: NoteProps) {
   const router = useRouter();
   const share = note.shares[0];
   const [showOriginal, setShowOriginal] = useState(false);
@@ -545,6 +547,7 @@ export function NoteDetail({ note }: NoteProps) {
             mimeType={videoMedia.mimeType}
             poster={note.coverImage}
             tracks={subtitleTracks}
+            initialPrefs={subtitlePrefs}
           />
           <div className="flex items-center justify-between gap-3 mt-2 flex-wrap">
             <span className="text-xs text-zinc-400">
@@ -568,7 +571,11 @@ export function NoteDetail({ note }: NoteProps) {
       {/* YouTube: dosya sunucuda yok, oynatici gomulu geliyor ve altyazi
           uzerine biniyor */}
       {!videoMedia && youtubeId && subtitleTracks.length > 0 && (
-        <YouTubePlayer videoId={youtubeId} tracks={subtitleTracks} />
+        <YouTubePlayer
+          videoId={youtubeId}
+          tracks={subtitleTracks}
+          initialPrefs={subtitlePrefs}
+        />
       )}
 
       {/* Video silinmis ama altyazi duruyorsa kullanici neden oynatici

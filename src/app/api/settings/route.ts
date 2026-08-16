@@ -109,6 +109,15 @@ export async function PUT(req: NextRequest) {
     updateData.transcribeModel = body.transcribeModel.trim() || null;
   }
 
+  // Altyazi gorunumu oynaticidan tek alanlik istekle de gelebiliyor; bilinmeyen
+  // deger gonderilirse yok sayilir, kayitli tercih bozulmaz
+  if (["bottom", "middle", "top"].includes(body.subtitlePosition)) {
+    updateData.subtitlePosition = body.subtitlePosition;
+  }
+  if (["small", "normal", "large"].includes(body.subtitleSize)) {
+    updateData.subtitleSize = body.subtitleSize;
+  }
+
   if (Object.keys(updateData).length > 0) {
     await prisma.userSettings.upsert({
       where: { userId: session.userId },

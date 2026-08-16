@@ -124,6 +124,8 @@ export const UserSettingsScalarFieldEnum = {
   autoTranslate: 'autoTranslate',
   autoTranscribe: 'autoTranscribe',
   autoCategorize: 'autoCategorize',
+  subtitlePosition: 'subtitlePosition',
+  subtitleSize: 'subtitleSize',
   shortcutTokenHash: 'shortcutTokenHash',
   shortcutTokenPrefix: 'shortcutTokenPrefix',
   shortcutTokenEncrypted: 'shortcutTokenEncrypted',

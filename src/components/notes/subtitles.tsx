@@ -21,39 +21,37 @@ export interface SubtitlePrefs {
   size: SubtitleSize;
 }
 
-const STORAGE_KEY = "notal.subtitlePrefs";
-const DEFAULT_PREFS: SubtitlePrefs = { position: "bottom", size: "normal" };
+export const DEFAULT_SUBTITLE_PREFS: SubtitlePrefs = {
+  position: "bottom",
+  size: "normal",
+};
 
 /**
- * Tercihler localStorage'da: kullanici her notta bastan ayarlamasin.
+ * Tercihler kullanici ayarlarinda tutulur, tarayicida degil: telefonda
+ * yapilan ayar masaustunde de gecerli olsun.
  *
- * Ilk render sunucu ciktisiyla ayni olsun diye varsayilanla basliyor,
- * kayitli deger sonra yukleniyor.
+ * Baslangic degeri sunucudan prop olarak geliyor; degisiklik once ekrana
+ * yansiyor, kayit arka planda gidiyor. Basarisiz olursa ekrandaki secim
+ * bozulmuyor — bir sonraki yuklemede eski deger geri geliyor, o kadar.
  */
-export function useSubtitlePrefs(): [
-  SubtitlePrefs,
-  (next: Partial<SubtitlePrefs>) => void,
-] {
-  const [prefs, setPrefs] = useState<SubtitlePrefs>(DEFAULT_PREFS);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) setPrefs({ ...DEFAULT_PREFS, ...JSON.parse(saved) });
-    } catch {
-      // bozuk kayit varsayilani bozmasin
-    }
-  }, []);
+export function useSubtitlePrefs(
+  initial: SubtitlePrefs
+): [SubtitlePrefs, (next: Partial<SubtitlePrefs>) => void] {
+  const [prefs, setPrefs] = useState<SubtitlePrefs>(initial);
 
   const update = (next: Partial<SubtitlePrefs>) => {
-    setPrefs((current) => {
-      const merged = { ...current, ...next };
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-      } catch {
-        // gizli sekmede yazamayabiliriz, tercih yine de bu oturumda gecerli
-      }
-      return merged;
+    const merged = { ...prefs, ...next };
+    setPrefs(merged);
+
+    fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        subtitlePosition: merged.position,
+        subtitleSize: merged.size,
+      }),
+    }).catch(() => {
+      // Aginda sorun varsa secim bu oturumda gecerli kalir
     });
   };
 

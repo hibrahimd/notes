@@ -41,6 +41,8 @@ export type UserSettingsMinAggregateOutputType = {
   autoTranslate: boolean | null
   autoTranscribe: boolean | null
   autoCategorize: boolean | null
+  subtitlePosition: string | null
+  subtitleSize: string | null
   shortcutTokenHash: string | null
   shortcutTokenPrefix: string | null
   shortcutTokenEncrypted: string | null
@@ -65,6 +67,8 @@ export type UserSettingsMaxAggregateOutputType = {
   autoTranslate: boolean | null
   autoTranscribe: boolean | null
   autoCategorize: boolean | null
+  subtitlePosition: string | null
+  subtitleSize: string | null
   shortcutTokenHash: string | null
   shortcutTokenPrefix: string | null
   shortcutTokenEncrypted: string | null
@@ -89,6 +93,8 @@ export type UserSettingsCountAggregateOutputType = {
   autoTranslate: number
   autoTranscribe: number
   autoCategorize: number
+  subtitlePosition: number
+  subtitleSize: number
   shortcutTokenHash: number
   shortcutTokenPrefix: number
   shortcutTokenEncrypted: number
@@ -115,6 +121,8 @@ export type UserSettingsMinAggregateInputType = {
   autoTranslate?: true
   autoTranscribe?: true
   autoCategorize?: true
+  subtitlePosition?: true
+  subtitleSize?: true
   shortcutTokenHash?: true
   shortcutTokenPrefix?: true
   shortcutTokenEncrypted?: true
@@ -139,6 +147,8 @@ export type UserSettingsMaxAggregateInputType = {
   autoTranslate?: true
   autoTranscribe?: true
   autoCategorize?: true
+  subtitlePosition?: true
+  subtitleSize?: true
   shortcutTokenHash?: true
   shortcutTokenPrefix?: true
   shortcutTokenEncrypted?: true
@@ -163,6 +173,8 @@ export type UserSettingsCountAggregateInputType = {
   autoTranslate?: true
   autoTranscribe?: true
   autoCategorize?: true
+  subtitlePosition?: true
+  subtitleSize?: true
   shortcutTokenHash?: true
   shortcutTokenPrefix?: true
   shortcutTokenEncrypted?: true
@@ -260,6 +272,8 @@ export type UserSettingsGroupByOutputType = {
   autoTranslate: boolean
   autoTranscribe: boolean
   autoCategorize: boolean
+  subtitlePosition: string
+  subtitleSize: string
   shortcutTokenHash: string | null
   shortcutTokenPrefix: string | null
   shortcutTokenEncrypted: string | null
@@ -305,6 +319,8 @@ export type UserSettingsWhereInput = {
   autoTranslate?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoTranscribe?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoCategorize?: Prisma.BoolFilter<"UserSettings"> | boolean
+  subtitlePosition?: Prisma.StringFilter<"UserSettings"> | string
+  subtitleSize?: Prisma.StringFilter<"UserSettings"> | string
   shortcutTokenHash?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   shortcutTokenPrefix?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   shortcutTokenEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
@@ -330,6 +346,8 @@ export type UserSettingsOrderByWithRelationInput = {
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
+  subtitlePosition?: Prisma.SortOrder
+  subtitleSize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   shortcutTokenPrefix?: Prisma.SortOrderInput | Prisma.SortOrder
   shortcutTokenEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -358,6 +376,8 @@ export type UserSettingsWhereUniqueInput = Prisma.AtLeast<{
   autoTranslate?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoTranscribe?: Prisma.BoolFilter<"UserSettings"> | boolean
   autoCategorize?: Prisma.BoolFilter<"UserSettings"> | boolean
+  subtitlePosition?: Prisma.StringFilter<"UserSettings"> | string
+  subtitleSize?: Prisma.StringFilter<"UserSettings"> | string
   shortcutTokenHash?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   shortcutTokenPrefix?: Prisma.StringNullableFilter<"UserSettings"> | string | null
   shortcutTokenEncrypted?: Prisma.StringNullableFilter<"UserSettings"> | string | null
@@ -383,6 +403,8 @@ export type UserSettingsOrderByWithAggregationInput = {
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
+  subtitlePosition?: Prisma.SortOrder
+  subtitleSize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrderInput | Prisma.SortOrder
   shortcutTokenPrefix?: Prisma.SortOrderInput | Prisma.SortOrder
   shortcutTokenEncrypted?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -413,6 +435,8 @@ export type UserSettingsScalarWhereWithAggregatesInput = {
   autoTranslate?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   autoTranscribe?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
   autoCategorize?: Prisma.BoolWithAggregatesFilter<"UserSettings"> | boolean
+  subtitlePosition?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
+  subtitleSize?: Prisma.StringWithAggregatesFilter<"UserSettings"> | string
   shortcutTokenHash?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
   shortcutTokenPrefix?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
   shortcutTokenEncrypted?: Prisma.StringNullableWithAggregatesFilter<"UserSettings"> | string | null
@@ -436,6 +460,8 @@ export type UserSettingsCreateInput = {
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: string
+  subtitleSize?: string
   shortcutTokenHash?: string | null
   shortcutTokenPrefix?: string | null
   shortcutTokenEncrypted?: string | null
@@ -461,6 +487,8 @@ export type UserSettingsUncheckedCreateInput = {
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: string
+  subtitleSize?: string
   shortcutTokenHash?: string | null
   shortcutTokenPrefix?: string | null
   shortcutTokenEncrypted?: string | null
@@ -484,6 +512,8 @@ export type UserSettingsUpdateInput = {
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subtitlePosition?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleSize?: Prisma.StringFieldUpdateOperationsInput | string
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -509,6 +539,8 @@ export type UserSettingsUncheckedUpdateInput = {
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subtitlePosition?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleSize?: Prisma.StringFieldUpdateOperationsInput | string
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -533,6 +565,8 @@ export type UserSettingsCreateManyInput = {
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: string
+  subtitleSize?: string
   shortcutTokenHash?: string | null
   shortcutTokenPrefix?: string | null
   shortcutTokenEncrypted?: string | null
@@ -556,6 +590,8 @@ export type UserSettingsUpdateManyMutationInput = {
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subtitlePosition?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleSize?: Prisma.StringFieldUpdateOperationsInput | string
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -580,6 +616,8 @@ export type UserSettingsUncheckedUpdateManyInput = {
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subtitlePosition?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleSize?: Prisma.StringFieldUpdateOperationsInput | string
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -609,6 +647,8 @@ export type UserSettingsCountOrderByAggregateInput = {
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
+  subtitlePosition?: Prisma.SortOrder
+  subtitleSize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrder
   shortcutTokenPrefix?: Prisma.SortOrder
   shortcutTokenEncrypted?: Prisma.SortOrder
@@ -633,6 +673,8 @@ export type UserSettingsMaxOrderByAggregateInput = {
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
+  subtitlePosition?: Prisma.SortOrder
+  subtitleSize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrder
   shortcutTokenPrefix?: Prisma.SortOrder
   shortcutTokenEncrypted?: Prisma.SortOrder
@@ -657,6 +699,8 @@ export type UserSettingsMinOrderByAggregateInput = {
   autoTranslate?: Prisma.SortOrder
   autoTranscribe?: Prisma.SortOrder
   autoCategorize?: Prisma.SortOrder
+  subtitlePosition?: Prisma.SortOrder
+  subtitleSize?: Prisma.SortOrder
   shortcutTokenHash?: Prisma.SortOrder
   shortcutTokenPrefix?: Prisma.SortOrder
   shortcutTokenEncrypted?: Prisma.SortOrder
@@ -716,6 +760,8 @@ export type UserSettingsCreateWithoutUserInput = {
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: string
+  subtitleSize?: string
   shortcutTokenHash?: string | null
   shortcutTokenPrefix?: string | null
   shortcutTokenEncrypted?: string | null
@@ -739,6 +785,8 @@ export type UserSettingsUncheckedCreateWithoutUserInput = {
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: string
+  subtitleSize?: string
   shortcutTokenHash?: string | null
   shortcutTokenPrefix?: string | null
   shortcutTokenEncrypted?: string | null
@@ -778,6 +826,8 @@ export type UserSettingsUpdateWithoutUserInput = {
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subtitlePosition?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleSize?: Prisma.StringFieldUpdateOperationsInput | string
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -801,6 +851,8 @@ export type UserSettingsUncheckedUpdateWithoutUserInput = {
   autoTranslate?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoTranscribe?: Prisma.BoolFieldUpdateOperationsInput | boolean
   autoCategorize?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  subtitlePosition?: Prisma.StringFieldUpdateOperationsInput | string
+  subtitleSize?: Prisma.StringFieldUpdateOperationsInput | string
   shortcutTokenHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenPrefix?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   shortcutTokenEncrypted?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -827,6 +879,8 @@ export type UserSettingsSelect<ExtArgs extends runtime.Types.Extensions.Internal
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: boolean
+  subtitleSize?: boolean
   shortcutTokenHash?: boolean
   shortcutTokenPrefix?: boolean
   shortcutTokenEncrypted?: boolean
@@ -852,6 +906,8 @@ export type UserSettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: boolean
+  subtitleSize?: boolean
   shortcutTokenHash?: boolean
   shortcutTokenPrefix?: boolean
   shortcutTokenEncrypted?: boolean
@@ -877,6 +933,8 @@ export type UserSettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: boolean
+  subtitleSize?: boolean
   shortcutTokenHash?: boolean
   shortcutTokenPrefix?: boolean
   shortcutTokenEncrypted?: boolean
@@ -902,6 +960,8 @@ export type UserSettingsSelectScalar = {
   autoTranslate?: boolean
   autoTranscribe?: boolean
   autoCategorize?: boolean
+  subtitlePosition?: boolean
+  subtitleSize?: boolean
   shortcutTokenHash?: boolean
   shortcutTokenPrefix?: boolean
   shortcutTokenEncrypted?: boolean
@@ -909,7 +969,7 @@ export type UserSettingsSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "deeplApiKeyEncrypted" | "openaiApiKeyEncrypted" | "anthropicApiKeyEncrypted" | "summarizeProvider" | "summarizeModel" | "translateProvider" | "translateModel" | "categorizeProvider" | "categorizeModel" | "transcribeModel" | "autoSummarize" | "autoTranslate" | "autoTranscribe" | "autoCategorize" | "shortcutTokenHash" | "shortcutTokenPrefix" | "shortcutTokenEncrypted" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
+export type UserSettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "deeplApiKeyEncrypted" | "openaiApiKeyEncrypted" | "anthropicApiKeyEncrypted" | "summarizeProvider" | "summarizeModel" | "translateProvider" | "translateModel" | "categorizeProvider" | "categorizeModel" | "transcribeModel" | "autoSummarize" | "autoTranslate" | "autoTranscribe" | "autoCategorize" | "subtitlePosition" | "subtitleSize" | "shortcutTokenHash" | "shortcutTokenPrefix" | "shortcutTokenEncrypted" | "createdAt" | "updatedAt", ExtArgs["result"]["userSettings"]>
 export type UserSettingsInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -942,6 +1002,8 @@ export type $UserSettingsPayload<ExtArgs extends runtime.Types.Extensions.Intern
     autoTranslate: boolean
     autoTranscribe: boolean
     autoCategorize: boolean
+    subtitlePosition: string
+    subtitleSize: string
     shortcutTokenHash: string | null
     shortcutTokenPrefix: string | null
     shortcutTokenEncrypted: string | null
@@ -1387,6 +1449,8 @@ export interface UserSettingsFieldRefs {
   readonly autoTranslate: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly autoTranscribe: Prisma.FieldRef<"UserSettings", 'Boolean'>
   readonly autoCategorize: Prisma.FieldRef<"UserSettings", 'Boolean'>
+  readonly subtitlePosition: Prisma.FieldRef<"UserSettings", 'String'>
+  readonly subtitleSize: Prisma.FieldRef<"UserSettings", 'String'>
   readonly shortcutTokenHash: Prisma.FieldRef<"UserSettings", 'String'>
   readonly shortcutTokenPrefix: Prisma.FieldRef<"UserSettings", 'String'>
   readonly shortcutTokenEncrypted: Prisma.FieldRef<"UserSettings", 'String'>

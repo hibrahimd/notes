@@ -67,6 +67,10 @@ model UserSettings {
   autoTranslate         Boolean  @default(false) @map("auto_translate")
   autoTranscribe        Boolean  @default(false) @map("auto_transcribe")
   autoCategorize        Boolean  @default(false) @map("auto_categorize")
+  // Altyazi gorunumu: cihaza degil hesaba bagli olsun ki telefonda ve
+  // masaustunde ayni gorunsun
+  subtitlePosition      String   @default("bottom") @map("subtitle_position")
+  subtitleSize          String   @default("normal") @map("subtitle_size")
   shortcutTokenHash     String?  @map("shortcut_token_hash")
   shortcutTokenPrefix   String?  @map("shortcut_token_prefix")
   // Kisayol tokeni kurulum icin tekrar gosterilebilmeli: kullanici telefonunda

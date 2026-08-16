@@ -1,21 +1,27 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cueAt } from "@/lib/vtt";
 import {
   SubtitleOverlay,
   SubtitleControls,
   useSubtitlePrefs,
   useSubtitleSegments,
+  type SubtitlePrefs,
   type SubtitleTrack,
 } from "./subtitles";
 
 /**
  * Sunucuda duran videolar icin oynatici.
  *
- * Altyazi <track> ile degil elle ciziliyor; sebebi ve karsiligi subtitles.tsx
- * icinde anlatiliyor. Gomulu YouTube oynaticisi da ayni katmani kullaniyor,
- * boylece iki oynaticida altyazi ayni gorunuyor ve ayni ayarlari paylasiyor.
+ * Altyazi normalde elle ciziliyor (sebebi subtitles.tsx icinde). Tam ekranda
+ * ise durum tersine donuyor: tam ekrana geciyor olan <video> ogesinin kendisi
+ * ve bizim katmanimiz onun disinda kaldigi icin gorunmuyor. iPhone'da video
+ * sistem oynaticisina devrediyor, oraya hicbir sey bindirilemiyor.
+ *
+ * Bu yuzden altyazi ayrica <track> olarak da veriliyor ama kipi "hidden"
+ * tutuluyor; yalnizca tam ekranda "showing" yapiliyor. Boylece pencere icinde
+ * bizim gorunumumuz, tam ekranda oynaticinin kendi cizimi kullaniliyor.
  */
 
 interface Props {
@@ -23,21 +29,61 @@ interface Props {
   mimeType: string | null;
   poster: string | null;
   tracks: SubtitleTrack[];
+  initialPrefs: SubtitlePrefs;
 }
 
-export function VideoPlayer({ src, mimeType, poster, tracks }: Props) {
+export function VideoPlayer({
+  src,
+  mimeType,
+  poster,
+  tracks,
+  initialPrefs,
+}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [activeTrackId, setActiveTrackId] = useState<string | null>(
     tracks[0]?.id ?? null
   );
   const [cue, setCue] = useState("");
-  const [prefs, setPrefs] = useSubtitlePrefs();
+  const [fullscreen, setFullscreen] = useState(false);
+  const [prefs, setPrefs] = useSubtitlePrefs(initialPrefs);
 
-  const activeTrackUrl = tracks.find((t) => t.id === activeTrackId)?.url ?? null;
-  const segments = useSubtitleSegments(activeTrackUrl);
+  const activeTrack = tracks.find((t) => t.id === activeTrackId) ?? null;
+  const segments = useSubtitleSegments(activeTrack?.url ?? null);
 
-  // Dis bosluk cagirana ait: bu bilesenin altinda dosya bilgisi satiri var
+  // Tam ekrana giris/cikis. iOS video icin standart fullscreenchange
+  // tetiklemiyor, kendi webkit olaylarini kullaniyor.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const enter = () => setFullscreen(true);
+    const exit = () => setFullscreen(false);
+    const change = () => setFullscreen(document.fullscreenElement !== null);
+
+    video.addEventListener("webkitbeginfullscreen", enter);
+    video.addEventListener("webkitendfullscreen", exit);
+    document.addEventListener("fullscreenchange", change);
+
+    return () => {
+      video.removeEventListener("webkitbeginfullscreen", enter);
+      video.removeEventListener("webkitendfullscreen", exit);
+      document.removeEventListener("fullscreenchange", change);
+    };
+  }, []);
+
+  // Yerlesik altyazi yalnizca tam ekranda gorunur
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const mode = fullscreen && activeTrack ? "showing" : "hidden";
+    for (const track of Array.from(video.textTracks)) {
+      track.mode = mode;
+    }
+  }, [fullscreen, activeTrack, segments]);
+
   return (
+    // Dis bosluk cagirana ait: bu bilesenin altinda dosya bilgisi satiri var
     <>
       <div className="relative w-full rounded-xl overflow-hidden bg-black">
         <video
@@ -54,9 +100,22 @@ export function VideoPlayer({ src, mimeType, poster, tracks }: Props) {
           }}
         >
           <source src={src} type={mimeType || "video/mp4"} />
+          {activeTrack && (
+            // key: parca degisince ogenin yeniden kurulmasi gerekiyor,
+            // src degisimi tek basina yeni altyaziyi yuklemiyor
+            <track
+              key={activeTrack.url}
+              kind="subtitles"
+              src={activeTrack.url}
+              label={activeTrack.label}
+              default
+            />
+          )}
         </video>
 
-        {activeTrackId && <SubtitleOverlay text={cue} prefs={prefs} />}
+        {activeTrack && !fullscreen && (
+          <SubtitleOverlay text={cue} prefs={prefs} />
+        )}
       </div>
 
       <SubtitleControls

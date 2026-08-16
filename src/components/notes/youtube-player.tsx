@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cueAt, type Segment } from "@/lib/vtt";
+import { Maximize2, Minimize2 } from "lucide-react";
 import {
   SubtitleOverlay,
   SubtitleControls,
   useSubtitlePrefs,
   useSubtitleSegments,
+  type SubtitlePrefs,
   type SubtitleTrack,
 } from "./subtitles";
 
@@ -23,6 +25,7 @@ import {
 interface Props {
   videoId: string;
   tracks: SubtitleTrack[];
+  initialPrefs: SubtitlePrefs;
 }
 
 interface YouTubePlayer {
@@ -77,7 +80,7 @@ function loadYouTubeApi(): Promise<YouTubeApi> {
   return apiPromise;
 }
 
-export function YouTubePlayer({ videoId, tracks }: Props) {
+export function YouTubePlayer({ videoId, tracks, initialPrefs }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<YouTubePlayer | null>(null);
 
@@ -86,7 +89,8 @@ export function YouTubePlayer({ videoId, tracks }: Props) {
   );
   const [cue, setCue] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [prefs, setPrefs] = useSubtitlePrefs();
+  const [expanded, setExpanded] = useState(false);
+  const [prefs, setPrefs] = useSubtitlePrefs(initialPrefs);
 
   const activeTrackUrl = tracks.find((t) => t.id === activeTrackId)?.url ?? null;
   const segments = useSubtitleSegments(activeTrackUrl);
@@ -121,6 +125,10 @@ export function YouTubePlayer({ videoId, tracks }: Props) {
             modestbranding: 1,
             // YouTube'un kendi altyazisi kapali: kendi parcamizi bindiriyoruz
             cc_load_policy: 0,
+            // YouTube'un kendi tam ekran dugmesi kapali: iframe tam ekrana
+            // gecince altyazi katmanimiz disarida kaliyor. Yerine kendi
+            // genis gorunumumuz var.
+            fs: 0,
             origin: window.location.origin,
           },
         });
@@ -149,6 +157,25 @@ export function YouTubePlayer({ videoId, tracks }: Props) {
     };
   }, [videoId]);
 
+  // Genis gorunum CSS ile yapiliyor, Fullscreen API ile degil: iPhone'da
+  // <video> disindaki ogeler tam ekrana alinamiyor ve API sessizce
+  // reddediyor. Sabit konumlu kap her platformda calisiyor.
+  useEffect(() => {
+    if (!expanded) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpanded(false);
+    };
+    document.addEventListener("keydown", onKey);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [expanded]);
 
   if (error) {
     return (
@@ -159,12 +186,29 @@ export function YouTubePlayer({ videoId, tracks }: Props) {
   }
 
   return (
-    <div className="mb-6">
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-black">
+    <div
+      className={
+        expanded
+          ? "fixed inset-0 z-50 bg-black flex flex-col justify-center p-3 sm:p-6"
+          : "mb-6"
+      }
+    >
+      <div
+        className={`relative w-full aspect-video bg-black ${expanded ? "" : "rounded-xl overflow-hidden"}`}
+      >
         {/* Oynatici bu kabin icine imperatif olarak ekleniyor */}
         <div ref={mountRef} className="absolute inset-0 [&>iframe]:w-full [&>iframe]:h-full" />
 
         {activeTrackId && <SubtitleOverlay text={cue} prefs={prefs} />}
+
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          aria-label={expanded ? "Geniş görünümden çık" : "Geniş görünüm"}
+          className="absolute top-2 right-2 p-2 rounded-lg bg-black/60 text-white hover:bg-black/80 cursor-pointer"
+        >
+          {expanded ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+        </button>
       </div>
 
       <SubtitleControls
