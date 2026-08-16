@@ -60,6 +60,7 @@ export async function PATCH(
     "inbox",
     "favorite",
     "archived",
+    "userNote",
   ];
   const updateData: Record<string, unknown> = {};
   for (const field of allowedFields) {

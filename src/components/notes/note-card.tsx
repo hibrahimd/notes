@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Clock, Globe } from "lucide-react";
+import { ExternalLink, Clock, Globe, PenLine } from "lucide-react";
 import Link from "next/link";
 import { metaDescription } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ interface NoteCardProps {
     title: string | null;
     sourceUrl: string | null;
     summary: string | null;
+    userNote: string | null;
     category: string | null;
     tags: string[];
     status: string;
@@ -87,6 +88,15 @@ export function NoteCard({ note }: NoteCardProps) {
           <h3 className="font-medium text-zinc-900 dark:text-zinc-100 truncate mt-2">
             {note.title || note.sourceUrl || "İsimsiz Not"}
           </h3>
+
+          {/* Kendi notu ozetin ustunde: listeye donup bakildiginda ilk
+              hatirlanmak istenen sey "bunu neden kaydettim" */}
+          {note.userNote && (
+            <p className="flex items-start gap-1.5 text-sm text-zinc-700 dark:text-zinc-300 mt-1.5 line-clamp-2">
+              <PenLine size={13} className="text-zinc-400 mt-0.5 shrink-0" />
+              <span>{note.userNote}</span>
+            </p>
+          )}
 
           {preview && (
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 line-clamp-2">

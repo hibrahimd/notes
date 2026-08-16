@@ -1,3 +1,5 @@
+import { SetupActions } from "./setup-actions";
+
 interface Props {
   params: Promise<{ token: string }>;
 }
@@ -119,76 +121,6 @@ export default async function ShortcutSetupPage({ params }: Props) {
           .btn:hover { background: #0077ed; }
           .note { font-size: 12px; color: #aeaeb2; text-align: center; margin-top: 12px; line-height: 1.5; }
         `}</style>
-        <script dangerouslySetInnerHTML={{ __html: `
-          var TOKEN = ${JSON.stringify(token)};
-
-          function hint(text, revert) {
-            var el = document.getElementById('copy-hint');
-            el.textContent = text;
-            if (revert) {
-              setTimeout(function() {
-                el.textContent = 'Kopyalamak için dokun';
-              }, 2500);
-            }
-          }
-
-          // navigator.clipboard iOS'ta sayfa odakta degilse veya izin
-          // verilmediginde sessizce reddediyor. Secim + execCommand eski bir
-          // yontem ama Safari'de hala calisiyor ve tek yedegimiz.
-          function legacyCopy(text) {
-            var field = document.createElement('textarea');
-            field.value = text;
-            field.setAttribute('readonly', '');
-            field.style.position = 'fixed';
-            field.style.top = '0';
-            field.style.opacity = '0';
-            document.body.appendChild(field);
-
-            field.focus();
-            field.select();
-            // iOS'ta select() tek basina yetmiyor, arali acikca vermek gerekiyor
-            if (field.setSelectionRange) {
-              field.setSelectionRange(0, text.length);
-            }
-
-            var ok = false;
-            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
-
-            document.body.removeChild(field);
-            return ok;
-          }
-
-          function copyToken(quiet) {
-            function done() {
-              hint(quiet ? '✅ Token panoya kopyalandı' : '✅ Kopyalandı!', !quiet);
-            }
-            function fallback() {
-              if (legacyCopy(TOKEN)) done();
-              else hint("Kopyalanamadı — token'a uzun basıp elle kopyalayın", true);
-            }
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-              try {
-                navigator.clipboard.writeText(TOKEN).then(done, fallback);
-                return;
-              } catch (e) {
-                // asagidaki yedege duser
-              }
-            }
-            fallback();
-          }
-
-          document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('token-box').addEventListener('click', function() {
-              copyToken(false);
-            });
-            // Indirme baslamadan once token panoya yazilir ki import ekrani
-            // sordugunda hazir olsun. Indirmeyi engellemeyiz.
-            document.getElementById('download-btn').addEventListener('click', function() {
-              copyToken(true);
-            });
-          });
-        `}} />
       </head>
       <body>
         <div className="card">
@@ -230,21 +162,7 @@ export default async function ShortcutSetupPage({ params }: Props) {
             </div>
           </div>
 
-          {/* download niteligi yok: Safari'nin dosyayi indirmek yerine
-              Kisayollar'a devredebilmesi icin dogrudan gezinmesi gerekiyor */}
-          <a href={SHORTCUT_FILE_URL} className="btn" id="download-btn">
-            Kısayolu İndir
-          </a>
-          <p className="note">iPhone&apos;dan Safari ile açın.</p>
-
-          <hr className="divider" />
-
-          <div className="copy-hint" id="copy-hint">Kopyalamak için dokun</div>
-          {/* button, div degil: iOS Safari etkilesimli olmayan ogelerde
-              dokunusu click olayina cevirmiyor */}
-          <button type="button" className="token-box" id="token-box">
-            {token}
-          </button>
+          <SetupActions token={token} fileUrl={SHORTCUT_FILE_URL} />
         </div>
       </body>
     </html>

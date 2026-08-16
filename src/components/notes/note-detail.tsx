@@ -24,6 +24,7 @@ import {
   Languages,
   Tag,
   Video,
+  PenLine,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -63,6 +64,7 @@ interface NoteProps {
     metadataJson: unknown;
     importance: number | null;
     errorText: string | null;
+    userNote: string | null;
     languageDetected: string | null;
     createdAt: string;
     updatedAt: string;
@@ -183,6 +185,30 @@ export function NoteDetail({ note }: NoteProps) {
   const canTranscribe =
     Boolean(note.sourceUrl) && (note.type === "video" || Boolean(transcript));
   const [deletingVideo, setDeletingVideo] = useState(false);
+
+  const [userNote, setUserNote] = useState(note.userNote || "");
+  const [savingNote, setSavingNote] = useState(false);
+  const [noteSaved, setNoteSaved] = useState(false);
+
+  async function saveUserNote() {
+    setSavingNote(true);
+    setNoteSaved(false);
+
+    const res = await fetch(`/api/notes/${note.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      // Bos metin null olarak kaydedilir ki "not yok" ile "bos not" ayni olsun
+      body: JSON.stringify({ userNote: userNote.trim() || null }),
+    });
+
+    setSavingNote(false);
+
+    if (res.ok) {
+      setNoteSaved(true);
+      setTimeout(() => setNoteSaved(false), 2500);
+      router.refresh();
+    }
+  }
 
   async function deleteVideoFile(mediaId: string) {
     if (
@@ -467,6 +493,44 @@ export function NoteDetail({ note }: NoteProps) {
         </div>
         {enrichError && (
           <p className="mt-3 text-sm text-red-500">{enrichError}</p>
+        )}
+      </Card>
+
+      {/* Kendi notum: icerigin ozeti degil, kullanicinin bunu neden
+          kaydettigi. Ozetin ustunde duruyor cunku donup bakildiginda ilk
+          aranan sey bu. */}
+      <Card className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <PenLine size={16} className="text-zinc-400" />
+          <span className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+            Kendi Notum
+          </span>
+        </div>
+        <textarea
+          value={userNote}
+          onChange={(e) => setUserNote(e.target.value)}
+          placeholder="Bunu neden kaydettin? Aklında ne vardı?"
+          rows={3}
+          className="w-full resize-y rounded-lg border border-zinc-200 dark:border-zinc-800 bg-transparent px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-700"
+        />
+        {/* Buton yalnizca degisiklik varken: bos bir kaydet butonu her
+            notun tepesinde gereksiz duruyor */}
+        {userNote !== (note.userNote || "") && (
+          <div className="flex items-center justify-end gap-3 mt-2">
+            <button
+              type="button"
+              onClick={() => setUserNote(note.userNote || "")}
+              className="text-xs text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer"
+            >
+              Vazgeç
+            </button>
+            <Button size="sm" onClick={saveUserNote} loading={savingNote}>
+              Kaydet
+            </Button>
+          </div>
+        )}
+        {noteSaved && (
+          <p className="text-xs text-emerald-500 text-right mt-2">Kaydedildi</p>
         )}
       </Card>
 

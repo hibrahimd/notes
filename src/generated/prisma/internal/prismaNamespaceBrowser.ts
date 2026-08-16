@@ -173,6 +173,7 @@ export const NoteScalarFieldEnum = {
   favorite: 'favorite',
   archived: 'archived',
   errorText: 'errorText',
+  userNote: 'userNote',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

@@ -123,6 +123,8 @@ model Note {
   favorite         Boolean  @default(false)
   archived         Boolean  @default(false)
   errorText        String?  @map("error_text")
+  /// Kullanicinin kendi ekledigi not: "bunu neden kaydettim"
+  userNote         String?  @map("user_note")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
