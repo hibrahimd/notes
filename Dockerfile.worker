@@ -1,18 +1,22 @@
-# Debian tabanli: ffmpeg apt'ten geliyor ve yt-dlp'nin resmi tek dosyalik
-# binary'si glibc icin derlendiginden Alpine/musl uzerinde calismiyor.
-FROM node:20-bookworm-slim AS base
+# Alpine tabanli. Debian'in ffmpeg paketi butun kodek kutuphaneleriyle
+# birlikte 515 MB geliyordu; bize yalnizca aac/opus/vorbis cozumu, mono
+# 16 kHz yeniden orneklemesi, libmp3lame kodlamasi ve mp4 muxer lazim
+# (bkz. lib/media.ts: extractAudio ve yt-dlp --merge-output-format).
+#
+# yt-dlp'nin "yt-dlp_linux" ikilisi glibc icin derlenmis ve musl'da
+# calismiyor; resmi musl yapisi kullaniliyor.
+FROM node:20-alpine AS base
 
-# Sadece uretim bagimliliklari (tsx uretim bagimliligidir: worker onunla calisir)
 FROM base AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
-# Next.js, React ve ikon paketi uretim bagimliligi ama worker'in ice aktarma
-# zinciri (34 dosya) hicbirine dokunmuyor; imajda 460 MB yer kapliyorlardi.
-RUN --mount=type=cache,id=notal-npm-debian,target=/root/.npm \
+# next/react/lucide uretim bagimliligi ama worker'in ice aktarma zinciri
+# hicbirine dokunmuyor. @img (sharp) de oyle: Next gorsel optimizasyonunun.
+RUN --mount=type=cache,id=notal-npm-alpine,target=/root/.npm \
     npm ci --omit=dev --ignore-scripts \
   && rm -rf node_modules/next node_modules/@next \
             node_modules/react node_modules/react-dom \
-            node_modules/lucide-react
+            node_modules/lucide-react node_modules/@img
 
 FROM base AS runner
 WORKDIR /app
@@ -20,21 +24,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # Kullanici once olusturuluyor: dosyalar --chown ile kopyalanabilsin.
-# Onceden en sonda "chown -R /app" vardi ve node_modules'un tamamini ikinci
-# kez yaziyordu — tek basina 929 MB'lik bir katman uretiyordu.
-RUN groupadd --system --gid 1001 nodejs \
-  && useradd --system --uid 1001 --gid nodejs worker \
+# Sondaki "chown -R /app" node_modules'un tamamini ikinci kez yaziyordu.
+RUN addgroup -S -g 1001 nodejs \
+  && adduser -S -u 1001 -G nodejs worker \
   && mkdir -p /data/notal-storage \
   && chown worker:nodejs /data/notal-storage
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends ffmpeg ca-certificates curl \
+RUN apk add --no-cache ffmpeg ca-certificates openssl \
+  && apk add --no-cache --virtual .indirme curl \
   && curl -fsSL -o /usr/local/bin/yt-dlp \
-     https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux \
+     https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_musllinux \
   && chmod a+rx /usr/local/bin/yt-dlp \
-  && apt-get purge -y curl \
-  && apt-get autoremove -y \
-  && rm -rf /var/lib/apt/lists/*
+  && apk del .indirme
 
 COPY --from=deps --chown=worker:nodejs /app/node_modules ./node_modules
 COPY --chown=worker:nodejs package.json package-lock.json prisma.config.ts tsconfig.json ./
