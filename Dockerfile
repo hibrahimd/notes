@@ -34,14 +34,23 @@ RUN --mount=type=cache,id=notal-next-build,target=/app/.next/cache \
 FROM base AS tools
 # Bos bir dizine kuruluyor: package.json yanindayken "npm i <paket>" tum
 # projeyi de kuruyor ve next geri geliyor (imaji 300 MB sisirmisti).
+#
+# @prisma/client, @prisma/adapter-pg ve pg standalone'da da var ama Next
+# izleyicisi yalnizca ESM yapilarini kopyaliyor (dist/index.mjs). Uygulama
+# ESM kullandigi icin calisiyor, tsx ise CJS yolundan gidip dist/index.js
+# ariyor ve bakim betigi kiriliyor. Tam paketler buradan geliyor.
 WORKDIR /tools
 COPY package-lock.json /lock/package-lock.json
 RUN --mount=type=cache,id=notal-npm-alpine,target=/root/.npm \
     PRISMA=$(node -p "require('/lock/package-lock.json').packages['node_modules/prisma'].version") \
     DOTENV=$(node -p "require('/lock/package-lock.json').packages['node_modules/dotenv'].version") \
     TSX=$(node -p "require('/lock/package-lock.json').packages['node_modules/tsx'].version") \
+    PCLIENT=$(node -p "require('/lock/package-lock.json').packages['node_modules/@prisma/client'].version") \
+    PADAPTER=$(node -p "require('/lock/package-lock.json').packages['node_modules/@prisma/adapter-pg'].version") \
+    PG=$(node -p "require('/lock/package-lock.json').packages['node_modules/pg'].version") \
     && npm i --no-save --omit=optional \
-         prisma@$PRISMA dotenv@$DOTENV tsx@$TSX
+         prisma@$PRISMA dotenv@$DOTENV tsx@$TSX \
+         @prisma/client@$PCLIENT @prisma/adapter-pg@$PADAPTER pg@$PG
 
 # Calisma imaji. Derleme araclari (python3/make/g++) bilerek yok:
 # yalnizca native paket derlemek icin gerekiyorlar ve ~300 MB yer kapliyorlar.
