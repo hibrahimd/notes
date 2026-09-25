@@ -8,7 +8,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 # Next.js, React ve ikon paketi uretim bagimliligi ama worker'in ice aktarma
 # zinciri (34 dosya) hicbirine dokunmuyor; imajda 460 MB yer kapliyorlardi.
-RUN npm ci --omit=dev --ignore-scripts \
+RUN --mount=type=cache,id=notal-npm-debian,target=/root/.npm \
+    npm ci --omit=dev --ignore-scripts \
   && rm -rf node_modules/next node_modules/@next \
             node_modules/react node_modules/react-dom \
             node_modules/lucide-react

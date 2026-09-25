@@ -4,6 +4,15 @@ const nextConfig: NextConfig = {
   output: "standalone",
   serverExternalPackages: ["jsdom", "pg", "@prisma/adapter-pg", "ioredis", "bullmq"],
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  experimental: {
+    // Turbopack derleme onbellegi .next/cache altinda tutuluyor. Dockerfile
+    // orayi cache mount ile bagliyor, boylece onbellek deploy'lar arasi
+    // korunuyor ve derleme bastan yapilmiyor.
+    //
+    // Next 16 belgelerinde uretim derlemeleri icin "deneysel" olarak
+    // isaretli; derleme bozulursa once Dockerfile'daki mount kaldirilir.
+    turbopackFileSystemCacheForBuild: true,
+  },
   async headers() {
     return [
       {
